@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JwtFilter implements Filter {
 
-	private static final String[] AUTH_WHITELIST = { "/auth/login"
+	private static final String[] AUTH_WHITELIST = { "/auth/login", "/api/hotels", "/api/bookings"
 	};
 
 	@Override

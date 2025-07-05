@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yakrooms.be.dto.mapper.HotelMapper;
@@ -19,12 +21,18 @@ import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.util.HotelSearchCriteria;
 
+@Service
 public class HotelServiceImpl implements HotelService {
 
 	@Autowired
 	HotelRepository hotelRepository;
 
-	private HotelMapper hotelMapper;
+	private final HotelMapper hotelMapper;
+
+	@Autowired
+	public HotelServiceImpl(HotelMapper hotelMapper) {
+		this.hotelMapper = hotelMapper;
+	}
 
 	@Override
 	public HotelResponse createHotel(HotelRequest request) {
@@ -83,46 +91,39 @@ public class HotelServiceImpl implements HotelService {
 	@Override
 	public void verifyHotel(Long id) {
 		Hotel hotel = hotelRepository.findById(id)
-	            .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
+				.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
-	    hotel.setVerified(true); 
-	    hotelRepository.save(hotel);
+		hotel.setVerified(true);
+		hotelRepository.save(hotel);
 
 	}
 
 	@Override
 	public List<HotelResponse> searchHotels(HotelSearchCriteria criteria) {
-	    Specification<Hotel> spec = Specification.where(null);
+		Specification<Hotel> spec = Specification.where(null);
 
-	    if (criteria.getLocation() != null) {
-	        spec = spec.and((root, query, cb) ->
-	            cb.like(cb.lower(root.get("location")), "%" + criteria.getLocation().toLowerCase() + "%"));
-	    }
+		if (criteria.getLocation() != null) {
+			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("location")),
+					"%" + criteria.getLocation().toLowerCase() + "%"));
+		}
 
-	    if (criteria.getMinPrice() != null && criteria.getMaxPrice() != null) {
-	        spec = spec.and((root, query, cb) ->
-	            cb.between(root.get("pricePerNight"), criteria.getMinPrice(), criteria.getMaxPrice()));
-	    }
+		if (criteria.getMinPrice() != null && criteria.getMaxPrice() != null) {
+			spec = spec.and((root, query, cb) -> cb.between(root.get("pricePerNight"), criteria.getMinPrice(),
+					criteria.getMaxPrice()));
+		}
 
-	    if (criteria.getMinRating() != null) {
-	        spec = spec.and((root, query, cb) ->
-	            cb.greaterThanOrEqualTo(root.get("rating"), criteria.getMinRating()));
-	    }
+		if (criteria.getMinRating() != null) {
+			spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("rating"), criteria.getMinRating()));
+		}
 
-	    if (criteria.getKeyword() != null) {
-	        spec = spec.and((root, query, cb) ->
-	            cb.or(
-	                cb.like(cb.lower(root.get("name")), "%" + criteria.getKeyword().toLowerCase() + "%"),
-	                cb.like(cb.lower(root.get("description")), "%" + criteria.getKeyword().toLowerCase() + "%")
-	            )
-	        );
-	    }
+		if (criteria.getKeyword() != null) {
+			spec = spec.and((root, query, cb) -> cb.or(
+					cb.like(cb.lower(root.get("name")), "%" + criteria.getKeyword().toLowerCase() + "%"),
+					cb.like(cb.lower(root.get("description")), "%" + criteria.getKeyword().toLowerCase() + "%")));
+		}
 
-	    List<Hotel> hotels = hotelRepository.findAll(spec);
-	    return hotels.stream()
-	            .map(hotelMapper::toDto)
-	            .collect(Collectors.toList());
+		List<Hotel> hotels = hotelRepository.findAll(spec);
+		return hotels.stream().map(hotelMapper::toDto).collect(Collectors.toList());
 	}
-
 
 }

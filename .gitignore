@@ -20,7 +20,7 @@ target/
 *.ipr
 
 **/resources/firebase-service-account.json
-
+mvnw.cmd
 
 ### NetBeans ###
 /nbproject/private/
