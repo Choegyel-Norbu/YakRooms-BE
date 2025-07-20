@@ -15,9 +15,9 @@ import org.springframework.util.AntPathMatcher;
 public class JwtFilter implements Filter {
 
     private static final String[] AUTH_WHITELIST = {
-        "/api/auth/firebase",
+        "/auth/firebase",
         "/api/hotels/**",
-        "/api/bookings/**",
+//        "/api/bookings/**",
         "/api/rooms/**",
         "/api/upload"
     };

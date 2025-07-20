@@ -17,7 +17,7 @@ import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.service.FirebaseService;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
 	@Autowired
