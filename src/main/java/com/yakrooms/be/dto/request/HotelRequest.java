@@ -1,6 +1,10 @@
 package com.yakrooms.be.dto.request;
 
+import java.util.List;
+
 import org.springframework.web.multipart.MultipartFile;
+
+import com.yakrooms.be.model.enums.HotelType;
 
 public class HotelRequest {
 
@@ -9,9 +13,53 @@ public class HotelRequest {
 	private String phone;
 	private String address;
 	private String district;
-	private MultipartFile logo;
 	private String description;
 	private String websiteUrl;
+	private List<String> photoUrls;
+	private String licenseUrl;
+	private String idProofUrl;
+	private List<String> amenities;
+	private HotelType hoteType;
+
+	public List<String> getAmenities() {
+		return amenities;
+	}
+
+	public void setAmenities(List<String> amenities) {
+		this.amenities = amenities;
+	}
+
+	public List<String> getPhotoUrls() {
+		return photoUrls;
+	}
+
+	public HotelType getHoteType() {
+		return hoteType;
+	}
+
+	public void setHoteType(HotelType hoteType) {
+		this.hoteType = hoteType;
+	}
+
+	public void setPhotoUrls(List<String> photoUrls) {
+		this.photoUrls = photoUrls;
+	}
+
+	public String getLicenseUrl() {
+		return licenseUrl;
+	}
+
+	public void setLicenseUrl(String licenseUrl) {
+		this.licenseUrl = licenseUrl;
+	}
+
+	public String getIdProofUrl() {
+		return idProofUrl;
+	}
+
+	public void setIdProofUrl(String idProofUrl) {
+		this.idProofUrl = idProofUrl;
+	}
 
 	public String getName() {
 		return name;
@@ -51,14 +99,6 @@ public class HotelRequest {
 
 	public void setDistrict(String district) {
 		this.district = district;
-	}
-
-	public MultipartFile getLogo() {
-		return logo;
-	}
-
-	public void setLogo(MultipartFile logo) {
-		this.logo = logo;
 	}
 
 	public String getDescription() {

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.yakrooms.be.model.enums.BookingStatus;
+import com.yakrooms.be.model.enums.PaymentStatus;
 
 import jakarta.persistence.*;
 
@@ -27,9 +28,13 @@ public class Booking {
 	private LocalDate checkInDate;
 	private LocalDate checkOutDate;
 	private int guests;
+	private String checkInPasscode;
 
 	@Enumerated(EnumType.STRING)
 	private BookingStatus status;
+
+	@Enumerated(EnumType.STRING)
+	private PaymentStatus paymentStatus;
 
 	private Double totalPrice;
 
@@ -106,6 +111,22 @@ public class Booking {
 
 	public Double getTotalPrice() {
 		return totalPrice;
+	}
+
+	public String getCheckInPasscode() {
+		return checkInPasscode;
+	}
+
+	public void setCheckInPasscode(String checkInPasscode) {
+		this.checkInPasscode = checkInPasscode;
+	}
+
+	public PaymentStatus getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(PaymentStatus paymentStatus) {
+		this.paymentStatus = paymentStatus;
 	}
 
 	public void setTotalPrice(Double totalPrice) {

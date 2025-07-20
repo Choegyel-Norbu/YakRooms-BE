@@ -1,28 +1,39 @@
-package com.yakrooms.be.dto.response;
+package com.yakrooms.be.dto;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.yakrooms.be.model.enums.HotelType;
 
-public class HotelResponse {
-
+public class HotelListingDto {
 	private Long id;
 	private String name;
-	private String email;
-	private String phone;
 	private String address;
 	private String district;
-	private String logoUrl;
 	private String description;
-	private boolean isVerified;
-	private String websiteUrl;
+	private String phone;
+	private Boolean isVerified;
 	private LocalDateTime createdAt;
 	private List<String> photoUrls;
-	private String licenseUrl;
-	private String idProofUrl;
 	private List<String> amenities;
-	private HotelType hotelType;
+	private String hotelType;
+
+	public HotelListingDto(Long id, String name, String address, String district, String description, String phone,
+			Boolean isVerified, LocalDateTime createdAt, String photoUrlsStr, String amenitiesStr, String hotelType) {
+		this.id = id;
+		this.name = name;
+		this.address = address;
+		this.district = district;
+		this.description = description;
+		this.phone = phone;
+		this.isVerified = isVerified;
+		this.createdAt = createdAt;
+		this.photoUrls = photoUrlsStr != null ? Arrays.asList(photoUrlsStr.split(",")) : Collections.emptyList();
+		this.amenities = amenitiesStr != null ? Arrays.asList(amenitiesStr.split(",")) : Collections.emptyList();
+		this.hotelType = hotelType;
+	}
 
 	public Long getId() {
 		return id;
@@ -36,32 +47,16 @@ public class HotelResponse {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public HotelType getHotelType() {
+	public String getHotelType() {
 		return hotelType;
 	}
 
-	public void setHotelType(HotelType hotelType) {
+	public void setHotelType(String hotelType) {
 		this.hotelType = hotelType;
 	}
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getAddress() {
@@ -80,14 +75,6 @@ public class HotelResponse {
 		this.district = district;
 	}
 
-	public String getLogoUrl() {
-		return logoUrl;
-	}
-
-	public void setLogoUrl(String logoUrl) {
-		this.logoUrl = logoUrl;
-	}
-
 	public String getDescription() {
 		return description;
 	}
@@ -96,20 +83,20 @@ public class HotelResponse {
 		this.description = description;
 	}
 
-	public boolean isVerified() {
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public Boolean getIsVerified() {
 		return isVerified;
 	}
 
-	public void setVerified(boolean isVerified) {
+	public void setIsVerified(Boolean isVerified) {
 		this.isVerified = isVerified;
-	}
-
-	public String getWebsiteUrl() {
-		return websiteUrl;
-	}
-
-	public void setWebsiteUrl(String websiteUrl) {
-		this.websiteUrl = websiteUrl;
 	}
 
 	public LocalDateTime getCreatedAt() {
@@ -126,22 +113,6 @@ public class HotelResponse {
 
 	public void setPhotoUrls(List<String> photoUrls) {
 		this.photoUrls = photoUrls;
-	}
-
-	public String getLicenseUrl() {
-		return licenseUrl;
-	}
-
-	public void setLicenseUrl(String licenseUrl) {
-		this.licenseUrl = licenseUrl;
-	}
-
-	public String getIdProofUrl() {
-		return idProofUrl;
-	}
-
-	public void setIdProofUrl(String idProofUrl) {
-		this.idProofUrl = idProofUrl;
 	}
 
 	public List<String> getAmenities() {

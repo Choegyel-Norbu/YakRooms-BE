@@ -11,6 +11,5 @@ import com.yakrooms.be.util.FirebaseUserData;
 public interface FirebaseService {
 	
 	public JwtLoginResponse verifyTokenAndGetUser(String idToken);
-	
 
 }

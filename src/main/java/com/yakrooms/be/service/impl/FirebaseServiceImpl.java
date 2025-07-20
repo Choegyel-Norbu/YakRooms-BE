@@ -40,6 +40,7 @@ public class FirebaseServiceImpl implements FirebaseService {
 			data.setEmail(email);
 			data.setName(name);
 			return handleUser(data);
+			
 		} catch (FirebaseAuthException e) {
 			throw new RuntimeException("Invalid Firebase ID token", e);
 		}

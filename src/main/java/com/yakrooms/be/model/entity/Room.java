@@ -1,9 +1,15 @@
 package com.yakrooms.be.model.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
+import com.yakrooms.be.model.enums.RoomType;
 
 import jakarta.persistence.*;
 
@@ -13,17 +19,31 @@ public class Room {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-    @Enumerated(EnumType.STRING)
-	private String roomType;
+	@Enumerated(EnumType.STRING)
+	private RoomType roomType;
 	private String description;
 	private Double price;
 	private boolean isAvailable;
+	private String roomNumber;
 
 	@ManyToOne
 	@JoinColumn(name = "hotel_id")
 	private Hotel hotel;
 
 	private int maxGuests;
+
+	@ElementCollection
+	@CollectionTable(name = "room_amenities", joinColumns = @JoinColumn(name = "room_id"))
+	@Column(name = "amenity")
+	private List<String> amenities = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "room_image_urls", joinColumns = @JoinColumn(name = "room_id"))
+	@Column(name = "url")
+	private List<String> imageUrl = new ArrayList<>();
+
+	@OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<RoomItem> items = new ArrayList<>();
 
 	@CreationTimestamp
 	private LocalDateTime createdAt;
@@ -39,15 +59,40 @@ public class Room {
 		return id;
 	}
 
+
+	public String getRoomNumber() {
+		return roomNumber;
+	}
+
+	public void setRoomNumber(String roomNumber) {
+		this.roomNumber = roomNumber;
+	}
+
 	public void setId(Long id) {
 		this.id = id;
 	}
 
-	public String getRoomType() {
+	public RoomType getRoomType() {
 		return roomType;
 	}
 
-	public void setRoomType(String roomType) {
+	public boolean getAvailable() {
+		return isAvailable;
+	}
+
+	public void setAvailable(boolean isAvailable) {
+		this.isAvailable = isAvailable;
+	}
+
+	public List<String> getAmenities() {
+		return amenities;
+	}
+
+	public void setAmenities(List<String> amenities) {
+		this.amenities = amenities;
+	}
+
+	public void setRoomType(RoomType roomType) {
 		this.roomType = roomType;
 	}
 
@@ -67,16 +112,24 @@ public class Room {
 		this.price = price;
 	}
 
-	public boolean isAvailable() {
-		return isAvailable;
+	public List<RoomItem> getItems() {
+		return items;
 	}
 
-	public void setAvailable(boolean isAvailable) {
-		this.isAvailable = isAvailable;
+	public void setItems(List<RoomItem> items) {
+		this.items = items;
 	}
 
 	public Hotel getHotel() {
 		return hotel;
+	}
+
+	public List<String> getImageUrl() {
+		return imageUrl;
+	}
+
+	public void setImageUrl(List<String> imageUrl) {
+		this.imageUrl = imageUrl;
 	}
 
 	public void setHotel(Hotel hotel) {

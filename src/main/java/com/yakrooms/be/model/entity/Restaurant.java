@@ -24,6 +24,10 @@ public class Restaurant {
 	@ManyToOne
 	private User owner;
 
+	@OneToOne
+	@JoinColumn(name = "hotel_id")
+	private Hotel hotel;
+
 	@OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
 	private List<MenuItem> menuItems;
 
@@ -32,6 +36,14 @@ public class Restaurant {
 
 	public Restaurant() {
 		super();
+	}
+
+	public Hotel getHotel() {
+		return hotel;
+	}
+
+	public void setHotel(Hotel hotel) {
+		this.hotel = hotel;
 	}
 
 	public Long getId() {

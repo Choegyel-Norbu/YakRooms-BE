@@ -1,4 +1,5 @@
 package com.yakrooms.be.security;
+
 import java.io.IOException;
 
 import jakarta.servlet.Filter;
@@ -9,58 +10,66 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.util.AntPathMatcher;
+
 public class JwtFilter implements Filter {
 
-	private static final String[] AUTH_WHITELIST = { "/auth/login", "/api/hotels", "/api/bookings"
-	};
+    private static final String[] AUTH_WHITELIST = {
+        "/api/auth/firebase",
+        "/api/hotels/**",
+        "/api/bookings/**",
+        "/api/rooms/**",
+        "/api/upload"
+    };
 
-	@Override
-	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-			throws IOException, ServletException {
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-		HttpServletRequest httpRequest = (HttpServletRequest) request;
-		HttpServletResponse httpResponse = (HttpServletResponse) response;
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
 
-		String path = httpRequest.getRequestURI();
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-		if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
-			httpResponse.setStatus(HttpServletResponse.SC_OK);
-			chain.doFilter(httpRequest, httpResponse);
-			return;
-		}
+        String path = httpRequest.getRequestURI();
 
-		if (isPathInWhitelist(path)) {
-			chain.doFilter(httpRequest, httpResponse);
-			return;
-		}
+        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
+            httpResponse.setStatus(HttpServletResponse.SC_OK);
+            chain.doFilter(httpRequest, httpResponse);
+            return;
+        }
 
-		String authorizationHeader = httpRequest.getHeader("Authorization");
+        if (isPathInWhitelist(path)) {
+            chain.doFilter(httpRequest, httpResponse);
+            return;
+        }
 
-		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-			httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or Invalid token");
-			return;
-		}
+        String authorizationHeader = httpRequest.getHeader("Authorization");
 
-		try {
-			if (!JwtUtil.validateToken(authorizationHeader.substring(7))) {
-				httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
-				return;
-			}
-		} catch (Exception e) {
-			httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation failed");
-			return;
-		}
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or Invalid token");
+            return;
+        }
 
-		chain.doFilter(httpRequest, httpResponse);
-	}
+        try {
+            if (!JwtUtil.validateToken(authorizationHeader.substring(7))) {
+                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+                return;
+            }
+        } catch (Exception e) {
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation failed");
+            return;
+        }
 
-	private boolean isPathInWhitelist(String path) {
-		for (String whitelistedPath : AUTH_WHITELIST) {
-			if (path.equals(whitelistedPath)) {
-				return true;
-			}
-		}
-		return false;
-	}
+        chain.doFilter(httpRequest, httpResponse);
+    }
 
+    private boolean isPathInWhitelist(String path) {
+        for (String whitelistedPath : AUTH_WHITELIST) {
+            if (pathMatcher.match(whitelistedPath, path)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

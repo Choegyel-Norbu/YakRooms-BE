@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f6f6f6; padding: 20px; }
+        .card {
+            background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .header { font-size: 24px; font-weight: bold; color: #007BFF; }
+        .content { margin-top: 20px; font-size: 16px; line-height: 1.5; }
+        .footer { margin-top: 30px; font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="header">Your Hotel Listing is Verified!</div>
+    <div class="content">
+        <p>Dear <strong th:text="${hotelName}">Hotel Name</strong>,</p>
+
+        <p>We are pleased to inform you that your hotel has been successfully verified on <strong>YakRooms</strong>.</p>
+
+        <p>You may now access your admin dashboard, manage your listing, and start receiving bookings.</p>
+
+        <p>If you have any questions, feel free to contact us at support@yakrooms.bt.</p>
+
+        <p>Welcome aboard!</p>
+
+        <p>Warm regards,<br/>
+           <strong>YakRooms Admin Team</strong>
+        </p>
+    </div>
+    <div class="footer">
+        YakRooms · Bhutan's first local hotel platform · yakrooms.bt
+    </div>
+</div>
+</body>
+</html>

@@ -3,10 +3,14 @@ package com.yakrooms.be.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.yakrooms.be.model.enums.HotelType;
 
 @Entity
 @Table(name = "hotels")
@@ -26,22 +30,88 @@ public class Hotel {
 	private String description;
 	private boolean isVerified;
 	private String websiteUrl;
+	private String licenseUrl;
+	private String idProofUrl;
 
-	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
-	private List<User> users;
+	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<User> users = new ArrayList<>();
 
-    @CreationTimestamp
-	private LocalDateTime createdAt = LocalDateTime.now();
-    
-    @UpdateTimestamp
-	private LocalDateTime updatedAt = LocalDateTime.now();
+	@OneToOne(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Restaurant restaurant;
+
+	@Enumerated(EnumType.STRING)
+	private HotelType hotelType;
+
+	@ElementCollection
+	@CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))
+	@Column(name = "amenity")
+	private List<String> amenities = new ArrayList<>();
+
+	@ElementCollection
+	@CollectionTable(name = "hotel_photo_urls", joinColumns = @JoinColumn(name = "hotel_id"))
+	@Column(name = "url")
+	private List<String> photoUrls = new ArrayList<>();
+
+	@CreationTimestamp
+	private LocalDateTime createdAt;
+
+	@UpdateTimestamp
+	private LocalDateTime updatedAt;
 
 	public Hotel() {
 		super();
 	}
 
+	public List<String> getPhotoUrls() {
+		return photoUrls;
+	}
+
+	public HotelType getHotelType() {
+		return hotelType;
+	}
+
+	public void setHotelType(HotelType hotelType) {
+		this.hotelType = hotelType;
+	}
+
+	public void setPhotoUrls(List<String> photoUrls) {
+		this.photoUrls = photoUrls;
+	}
+
+	public String getLicenseUrl() {
+		return licenseUrl;
+	}
+
+	public void setLicenseUrl(String licenseUrl) {
+		this.licenseUrl = licenseUrl;
+	}
+
+	public String getIdProofUrl() {
+		return idProofUrl;
+	}
+
+	public void setIdProofUrl(String idProofUrl) {
+		this.idProofUrl = idProofUrl;
+	}
+
 	public Long getId() {
 		return id;
+	}
+
+	public Restaurant getRestaurant() {
+		return restaurant;
+	}
+
+	public List<String> getAmenities() {
+		return amenities;
+	}
+
+	public void setAmenities(List<String> amenities) {
+		this.amenities = amenities;
+	}
+
+	public void setRestaurant(Restaurant restaurant) {
+		this.restaurant = restaurant;
 	}
 
 	public void setId(Long id) {
