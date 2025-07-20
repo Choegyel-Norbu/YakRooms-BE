@@ -47,7 +47,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			Pageable pageable);
 
 	@Query(value = """
-					    SELECT
+			SELECT
 			    h.id,
 			    h.name,
 			    h.email,
@@ -65,10 +65,11 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    GROUP_CONCAT(hpu.url) AS photo_urls
 			FROM hotels h
 			LEFT JOIN hotel_photo_urls hpu ON h.id = hpu.hotel_id
+			WHERE h.is_verified = true
 			GROUP BY h.id
 			ORDER BY h.id ASC
 			LIMIT 3;
-					    """, nativeQuery = true)
-	List<HotelWithPriceProjection> findTop3HotelsWithPhotosAndPrice();
+			""", nativeQuery = true)
+	List<HotelWithPriceProjection> findTop3VerifiedHotelsWithPhotosAndPrice();
 
 }

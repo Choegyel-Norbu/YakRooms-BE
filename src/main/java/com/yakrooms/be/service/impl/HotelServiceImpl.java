@@ -199,7 +199,7 @@ public class HotelServiceImpl implements HotelService {
 
 	@Override
 	public List<HotelWithPriceProjection> getTopThreeHotels() {
-		List<HotelWithPriceProjection> hotels = hotelRepository.findTop3HotelsWithPhotosAndPrice();
+		List<HotelWithPriceProjection> hotels = hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
 
 		return hotels;
 	}
