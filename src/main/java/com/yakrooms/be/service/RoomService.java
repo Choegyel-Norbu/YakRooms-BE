@@ -12,7 +12,7 @@ import com.yakrooms.be.dto.response.RoomResponse;
 
 @Service
 public interface RoomService {
-	boolean createRoom(Long hotelId, RoomRequest request);
+	RoomResponseDTO createRoom(Long hotelId, RoomRequest request);
 
 	RoomResponseDTO getRoomById(Long roomId);
 

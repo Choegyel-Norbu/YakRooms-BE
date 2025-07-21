@@ -11,8 +11,8 @@ import com.yakrooms.be.dto.response.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-	
-	@ExceptionHandler(ResourceConflictException.class)
+
+    @ExceptionHandler(ResourceConflictException.class)
     public ResponseEntity<ErrorResponse> handleResourceConflict(ResourceConflictException ex) {
         ErrorResponse error = new ErrorResponse(
             HttpStatus.CONFLICT.value(),
@@ -22,15 +22,15 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
-	
-	@ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceConflictException ex) {
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         ErrorResponse error = new ErrorResponse(
-            HttpStatus.CONFLICT.value(),
-            "Conflict",
+            HttpStatus.NOT_FOUND.value(),
+            "Not Found",
             ex.getMessage(),
             Instant.now()
         );
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 }

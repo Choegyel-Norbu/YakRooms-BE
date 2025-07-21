@@ -41,7 +41,7 @@ public class RoomServiceImpl implements RoomService {
 	}
 
 	@Override
-	public boolean createRoom(Long hotelId, RoomRequest request) {
+	public RoomResponseDTO createRoom(Long hotelId, RoomRequest request) {
 		Hotel hotel = hotelRepository.findById(hotelId)
 				.orElseThrow(() -> new ResourceNotFoundException("Hotel not found"));
 
@@ -51,7 +51,7 @@ public class RoomServiceImpl implements RoomService {
 		room.setHotel(hotel);
 
 		Room savedRoom = roomRepository.save(room);
-		return true;
+		return RoomMapper.toDto(savedRoom);
 	}
 
 	@Override
