@@ -17,7 +17,7 @@ public class JwtFilter implements Filter {
     private static final String[] AUTH_WHITELIST = {
         "/auth/firebase",
         "/api/hotels/**",
-//        "/api/bookings/**",
+        "/api/bookings/**",
         "/api/rooms/**",
         "/api/upload"
     };

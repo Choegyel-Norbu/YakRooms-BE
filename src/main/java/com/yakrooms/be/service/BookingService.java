@@ -33,4 +33,6 @@ public interface BookingService {
     public boolean updateBookingStatus(Long bookingId, String newStatus);
     
     public void deleteBookingById(Long bookingId);
+
+    Page<BookingResponse> listAllBookingByHotel(Long hotelId, Pageable pageable);
 }

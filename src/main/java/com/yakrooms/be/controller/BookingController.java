@@ -22,7 +22,6 @@ import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.service.BookingService;
 
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -62,10 +61,14 @@ public class BookingController {
 	
 	@GetMapping("/")
 	public Page<BookingResponse> getAllBookings(
+	    @RequestParam(required = false) Long hotelId,
 	    @RequestParam(defaultValue = "0") int page,
 	    @RequestParam(defaultValue = "10") int size) {
 	    
 	    Pageable pageable = PageRequest.of(page, size);
+	    if (hotelId != null) {
+	        return bookingService.listAllBookingByHotel(hotelId, pageable);
+	    }
 	    return bookingService.listAllBooking(pageable);
 	}
 

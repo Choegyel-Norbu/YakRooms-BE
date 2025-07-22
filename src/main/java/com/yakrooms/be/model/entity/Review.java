@@ -1,90 +1,46 @@
 package com.yakrooms.be.model.entity;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
-import jakarta.persistence.*;
-
 @Entity
+@Table(name = "reviews")
 public class Review {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private int rating; // 1 to 5
-	private String comment;
+    private int rating;
 
-	@ManyToOne
-	private User user;
+    @Column(length = 1000)
+    private String comment;
 
-	@ManyToOne
-	private Hotel hotel;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hotel_id", nullable = false)
+    private Hotel hotel;
 
-	@ManyToOne
-	private Restaurant restaurant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-	@CreationTimestamp
-	private LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
-	public Review() {
-		super();
-	}
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-	public Long getId() {
-		return id;
-	}
+    public int getRating() { return rating; }
+    public void setRating(int rating) { this.rating = rating; }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public String getComment() { return comment; }
+    public void setComment(String comment) { this.comment = comment; }
 
-	public int getRating() {
-		return rating;
-	}
+    public Hotel getHotel() { return hotel; }
+    public void setHotel(Hotel hotel) { this.hotel = hotel; }
 
-	public void setRating(int rating) {
-		this.rating = rating;
-	}
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-	public String getComment() {
-		return comment;
-	}
-
-	public void setComment(String comment) {
-		this.comment = comment;
-	}
-
-	public User getUser() {
-		return user;
-	}
-
-	public void setUser(User user) {
-		this.user = user;
-	}
-
-	public Hotel getHotel() {
-		return hotel;
-	}
-
-	public void setHotel(Hotel hotel) {
-		this.hotel = hotel;
-	}
-
-	public Restaurant getRestaurant() {
-		return restaurant;
-	}
-
-	public void setRestaurant(Restaurant restaurant) {
-		this.restaurant = restaurant;
-	}
-
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
-
-}
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+} 

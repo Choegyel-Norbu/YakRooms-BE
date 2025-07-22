@@ -59,9 +59,13 @@ public class BookingServiceImpl implements BookingService {
 		Room room = roomRepository.findById(request.getRoomId())
 				.orElseThrow(() -> new RuntimeException("Room not found"));
 
+		Hotel hotel = hotelRepository.findById(request.getHotelId())
+				.orElseThrow(() -> new RuntimeException("Hotel not found"));
+
 		Booking booking = new Booking();
 		booking.setUser(user);
 		booking.setRoom(room);
+		booking.setHotel(hotel);
 		booking.setCheckInDate(request.getCheckInDate());
 		booking.setCheckOutDate(request.getCheckOutDate());
 		booking.setGuests(request.getGuests());
@@ -142,6 +146,12 @@ public class BookingServiceImpl implements BookingService {
 	@Transactional(readOnly = true)
 	public Page<BookingResponse> listAllBooking(Pageable pageable) {
 		return bookingRepository.findAll(pageable).map(BookingMapper::toDTO);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<BookingResponse> listAllBookingByHotel(Long hotelId, Pageable pageable) {
+		return bookingRepository.findAllByHotelId(hotelId, pageable).map(BookingMapper::toDTO);
 	}
 
 	@Override

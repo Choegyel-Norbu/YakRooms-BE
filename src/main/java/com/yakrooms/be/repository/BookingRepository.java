@@ -3,6 +3,8 @@ package com.yakrooms.be.repository;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +20,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long>{
 
 	@Query(value = "SELECT * FROM bookings WHERE hotel_id = :hotelId", nativeQuery = true)
 	List<Booking> findAllByHotelId(@Param("hotelId") Long hotelId);
+
+	Page<Booking> findAllByHotelId(Long hotelId, Pageable pageable);
+
+	List<Booking> findByHotelIdAndUserIdAndStatus(Long hotelId, Long userId, String status);
 
 	@Query(value = """
 	    SELECT * FROM bookings 
