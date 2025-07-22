@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.yakrooms.be.model.enums.HotelType;
 
+// NOTE: This DTO is no longer used for the getAllHotels endpoint. Remove if not used elsewhere.
 public class HotelResponse {
 
 	private Long id;

@@ -24,6 +24,7 @@ import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.HotelType;
 import com.yakrooms.be.model.enums.Role;
 import com.yakrooms.be.projection.HotelListingProjection;
+import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.UserRepository;
@@ -95,8 +96,8 @@ public class HotelServiceImpl implements HotelService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Page<HotelResponse> getAllHotels(Pageable pageable) {
-		return hotelRepository.findAllByIsVerifiedTrue(pageable).map(hotelMapper::toDto);
+	public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
+		return hotelRepository.findAllVerifiedHotelsWithLowestPrice(pageable);
 
 	}
 	
@@ -147,33 +148,7 @@ public class HotelServiceImpl implements HotelService {
 
 	}
 
-	@Override
-	public List<HotelResponse> searchHotels(HotelSearchCriteria criteria) {
-		Specification<Hotel> spec = Specification.where(null);
-
-		if (criteria.getLocation() != null) {
-			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("location")),
-					"%" + criteria.getLocation().toLowerCase() + "%"));
-		}
-
-		if (criteria.getMinPrice() != null && criteria.getMaxPrice() != null) {
-			spec = spec.and((root, query, cb) -> cb.between(root.get("pricePerNight"), criteria.getMinPrice(),
-					criteria.getMaxPrice()));
-		}
-
-		if (criteria.getMinRating() != null) {
-			spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("rating"), criteria.getMinRating()));
-		}
-
-		if (criteria.getKeyword() != null) {
-			spec = spec.and((root, query, cb) -> cb.or(
-					cb.like(cb.lower(root.get("name")), "%" + criteria.getKeyword().toLowerCase() + "%"),
-					cb.like(cb.lower(root.get("description")), "%" + criteria.getKeyword().toLowerCase() + "%")));
-		}
-
-		List<Hotel> hotels = hotelRepository.findAll(spec);
-		return hotels.stream().map(hotelMapper::toDto).collect(Collectors.toList());
-	}
+	
 
 	@Override
 	@Transactional(readOnly = true)
@@ -203,4 +178,17 @@ public class HotelServiceImpl implements HotelService {
 
 		return hotels;
 	}
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<com.yakrooms.be.projection.HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
+        return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<com.yakrooms.be.projection.HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
+        return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
+    }
+
 }

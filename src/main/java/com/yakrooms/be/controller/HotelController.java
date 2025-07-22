@@ -22,6 +22,7 @@ import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.projection.HotelListingProjection;
+import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.util.HotelSearchCriteria;
@@ -53,15 +54,24 @@ public class HotelController {
 
 	// Get all hotels with pagination
 	@GetMapping
-	public ResponseEntity<Page<HotelResponse>> getAllHotels(@PageableDefault(size = 10) Pageable pageable) {
-		Page<HotelResponse> hotels = hotelService.getAllHotels(pageable);
-		return ResponseEntity.ok(hotels);
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotels(@PageableDefault(size = 10) Pageable pageable) {
+		return ResponseEntity.ok(hotelService.getAllHotels(pageable));
 	}
 	
 	@GetMapping("/superAdmin")
 	public ResponseEntity<Page<HotelResponse>> getAllHotelsForSuperAdmin(@PageableDefault(size = 10) Pageable pageable) {
 		Page<HotelResponse> hotels = hotelService.getAllHotelsForSuperAdmin(pageable);
 		return ResponseEntity.ok(hotels);
+	}
+
+	@GetMapping("/sortedByLowestPrice")
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByLowestPrice(@PageableDefault(size = 10) Pageable pageable) {
+		return ResponseEntity.ok(hotelService.getAllHotelsSortedByLowestPrice(pageable));
+	}
+
+	@GetMapping("/sortedByHighestPrice")
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByHighestPrice(@PageableDefault(size = 10) Pageable pageable) {
+		return ResponseEntity.ok(hotelService.getAllHotelsSortedByHighestPrice(pageable));
 	}
 
 	// Update a hotel by ID

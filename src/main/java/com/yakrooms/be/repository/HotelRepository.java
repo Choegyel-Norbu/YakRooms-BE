@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.google.common.base.Optional;
 import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 
 public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecificationExecutor<Hotel> {
@@ -71,5 +72,14 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			LIMIT 3;
 			""", nativeQuery = true)
 	List<HotelWithPriceProjection> findTop3VerifiedHotelsWithPhotosAndPrice();
+
+	@Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice FROM hotels h WHERE h.is_verified = true", nativeQuery = true)
+	Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPrice(Pageable pageable);
+
+    @Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice FROM hotels h WHERE h.is_verified = true ORDER BY lowestPrice ASC", nativeQuery = true)
+    Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceSorted(Pageable pageable);
+
+    @Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice FROM hotels h WHERE h.is_verified = true ORDER BY lowestPrice DESC", nativeQuery = true)
+    Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceDesc(Pageable pageable);
 
 }
