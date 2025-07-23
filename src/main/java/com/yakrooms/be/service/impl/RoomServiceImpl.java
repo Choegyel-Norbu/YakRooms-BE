@@ -3,10 +3,14 @@ package com.yakrooms.be.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
 import com.yakrooms.be.dto.mapper.RoomMapper;
@@ -21,106 +25,192 @@ import com.yakrooms.be.repository.RoomItemRepository;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.service.RoomService;
 
-@Component
+@Service
+@Transactional
 public class RoomServiceImpl implements RoomService {
 
-	@Autowired
-	private RoomRepository roomRepository;
+    private static final Logger logger = LoggerFactory.getLogger(RoomServiceImpl.class);
 
-	@Autowired
-	private HotelRepository hotelRepository;
+    private final RoomRepository roomRepository;
+    private final HotelRepository hotelRepository;
+    private final RoomItemRepository roomItemRepository;
+    private final RoomMapper roomMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
-	@Autowired
-	private RoomItemRepository roomItemRepository;
+    @Autowired
+    public RoomServiceImpl(RoomRepository roomRepository,
+                          HotelRepository hotelRepository,
+                          RoomItemRepository roomItemRepository,
+                          RoomMapper roomMapper,
+                          SimpMessagingTemplate messagingTemplate) {
+        this.roomRepository = roomRepository;
+        this.hotelRepository = hotelRepository;
+        this.roomItemRepository = roomItemRepository;
+        this.roomMapper = roomMapper;
+        this.messagingTemplate = messagingTemplate;
+    }
 
-	private final RoomMapper roomMapper;
+    @Override
+    public RoomResponseDTO createRoom(Long hotelId, RoomRequest request) {
+        // Validate input
+        if (hotelId == null || request == null) {
+            throw new IllegalArgumentException("Hotel ID and room request cannot be null");
+        }
 
-	@Autowired
-	RoomServiceImpl(RoomMapper roomMapper) {
-		this.roomMapper = roomMapper;
-	}
+        // Find hotel
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + hotelId));
 
-	@Override
-	public RoomResponseDTO createRoom(Long hotelId, RoomRequest request) {
-		Hotel hotel = hotelRepository.findById(hotelId)
-				.orElseThrow(() -> new ResourceNotFoundException("Hotel not found"));
+        // Create room using mapper (it handles the enum conversion)
+        Room room = roomMapper.toEntity(request);
+        room.setHotel(hotel);
 
-		Room room = roomMapper.toEntity(request);
-		room.setAvailable(request.available);
-		setRoomType(room, request.getRoomType());
-		room.setHotel(hotel);
+        Room savedRoom = roomRepository.save(room);
+        logger.info("Created new room with ID: {} for hotel: {}", savedRoom.getId(), hotelId);
 
-		Room savedRoom = roomRepository.save(room);
-		return RoomMapper.toDto(savedRoom);
-	}
+        return roomMapper.toDto(savedRoom);
+    }
 
-	@Override
-	public RoomResponseDTO getRoomById(Long roomId) {
-		Room room = roomRepository.findById(roomId)
-				.orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
-		return RoomMapper.toDto(room);
-	}
+    @Override
+    @Transactional(readOnly = true)
+    public RoomResponseDTO getRoomById(Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID cannot be null");
+        }
 
-	@Override
-	public List<RoomResponseDTO> getRoomsByHotel(Long hotelId) {
-		List<Room> rooms = roomRepository.findByHotelId(hotelId);
-		return rooms.stream().map(RoomMapper::toDto).toList();
-	}
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+        
+        return roomMapper.toDto(room);
+    }
 
-	@Override
-	public RoomResponseDTO updateRoom(Long roomId, RoomRequest request) {
-		Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found"));
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoomResponseDTO> getRoomsByHotel(Long hotelId) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
 
-		roomMapper.updateRoomFromRequest(request, room);
-		return RoomMapper.toDto(roomRepository.save(room));
-	}
+        List<Room> rooms = roomRepository.findByHotelId(hotelId);
+        return rooms.stream()
+                .map(roomMapper::toDto)
+                .collect(Collectors.toList());
+    }
 
-	@Override
-	public void deleteRoom(Long roomId) {
-		Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found"));
-		roomRepository.delete(room);
-	}
+    @Override
+    public RoomResponseDTO updateRoom(Long roomId, RoomRequest request) {
+        // Validate input
+        if (roomId == null || request == null) {
+            throw new IllegalArgumentException("Room ID and request cannot be null");
+        }
 
-	@Override
-	public RoomResponseDTO toggleAvailability(Long roomId, boolean isAvailable) {
-		Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room not found"));
-		room.setAvailable(isAvailable);
-		return RoomMapper.toDto(roomRepository.save(room));
-	}
+        // Find and update room
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
 
-	private void setRoomType(Room room, String type) {
-		switch (type.toUpperCase()) {
-		case "SINGLE":
-			room.setRoomType(RoomType.SINGLE);
-			break;
-		case "DOUBLE":
-			room.setRoomType(RoomType.DOUBLE);
-			break;
-		case "DELUXE":
-			room.setRoomType(RoomType.DELUXE);
-			break;
-		case "SUITE":
-			room.setRoomType(RoomType.SUITE);
-			break;
-		case "FAMILY":
-			room.setRoomType(RoomType.FAMILY);
-			break;
-		case "TWIN":
-			room.setRoomType(RoomType.TWIN);
-			break;
-		case "KING":
-			room.setRoomType(RoomType.KING);
-			break;
-		case "QUEEN":
-			room.setRoomType(RoomType.QUEEN);
-			break;
-		default:
-			throw new IllegalArgumentException("Invalid room type: " + type);
-		}
-	}
+        // Update room using mapper
+        roomMapper.updateRoomFromRequest(request, room);
+        Room updatedRoom = roomRepository.save(room);
 
-	public Page<RoomResponseDTO> getAvailableRooms(Long hotelId, Pageable pageable) {
-		return roomRepository.findActiveAvailableRoomsByHotelId(hotelId, pageable).map(RoomMapper::toDto);
-	}
+        // Get hotelId for WebSocket notification
+        Long hotelId = updatedRoom.getHotel() != null ? updatedRoom.getHotel().getId() : null;
 
+        // Broadcast updated room list via WebSocket
+        if (hotelId != null) {
+            try {
+                List<Room> activeRooms = roomRepository
+                        .findActiveAvailableRoomsByHotelId(hotelId, Pageable.unpaged())
+                        .getContent();
+
+                List<RoomResponseDTO> activeRoomDTOs = activeRooms.stream()
+                        .map(roomMapper::toDto)
+                        .collect(Collectors.toList());
+
+                messagingTemplate.convertAndSend("/topic/rooms/" + hotelId, activeRoomDTOs);
+                logger.debug("Broadcasted room updates for hotel: {}", hotelId);
+            } catch (Exception e) {
+                logger.error("Failed to broadcast room updates for hotel: {}", hotelId, e);
+                // Don't throw exception here as room update was successful
+            }
+        }
+
+        logger.info("Updated room with ID: {}", roomId);
+        return roomMapper.toDto(updatedRoom);
+    }
+
+    @Override
+    public void deleteRoom(Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID cannot be null");
+        }
+
+        if (!roomRepository.existsById(roomId)) {
+            throw new ResourceNotFoundException("Room not found with id: " + roomId);
+        }
+
+        roomRepository.deleteById(roomId);
+        logger.info("Deleted room with ID: {}", roomId);
+    }
+
+    @Override
+    public RoomResponseDTO toggleAvailability(Long roomId, boolean isAvailable) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID cannot be null");
+        }
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+
+        room.setAvailable(isAvailable);
+        Room savedRoom = roomRepository.save(room);
+        
+        logger.info("Toggled availability for room ID: {} to: {}", roomId, isAvailable);
+        return roomMapper.toDto(savedRoom);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RoomResponseDTO> getAvailableRooms(Long hotelId, Pageable pageable) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+
+        return roomRepository.findActiveAvailableRoomsByHotelId(hotelId, pageable)
+                .map(roomMapper::toDto);
+    }
+
+    // Additional method to get RoomResponse instead of RoomResponseDTO
+    @Transactional(readOnly = true)
+    public RoomResponse getRoomResponseById(Long roomId) {
+        if (roomId == null) {
+            throw new IllegalArgumentException("Room ID cannot be null");
+        }
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+        
+        return roomMapper.toDtoResponse(room);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RoomResponse> getRoomResponsesByHotel(Long hotelId) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+
+        List<Room> rooms = roomRepository.findByHotelId(hotelId);
+        return rooms.stream()
+                .map(roomMapper::toDtoResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RoomResponse> getAvailableRoomResponses(Long hotelId, Pageable pageable) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+
+        return roomRepository.findActiveAvailableRoomsByHotelId(hotelId, pageable)
+                .map(roomMapper::toDtoResponse);
+    }
 }

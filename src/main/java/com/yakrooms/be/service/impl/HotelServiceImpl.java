@@ -2,16 +2,16 @@ package com.yakrooms.be.service.impl;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.yakrooms.be.dto.HotelListingDto;
 import com.yakrooms.be.dto.mapper.HotelMapper;
@@ -21,163 +21,210 @@ import com.yakrooms.be.exception.ResourceConflictException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.entity.User;
-import com.yakrooms.be.model.enums.HotelType;
 import com.yakrooms.be.model.enums.Role;
-import com.yakrooms.be.projection.HotelListingProjection;
 import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.service.MailService;
-import com.yakrooms.be.util.HotelSearchCriteria;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
+@Transactional
 public class HotelServiceImpl implements HotelService {
 
-	@Autowired
-	HotelRepository hotelRepository;
+    private static final Logger logger = LoggerFactory.getLogger(HotelServiceImpl.class);
 
-	@Autowired
-	UserRepository userRepository;
+    private final HotelRepository hotelRepository;
+    private final UserRepository userRepository;
+    private final HotelMapper hotelMapper;
+    private final MailService mailService;
 
-	private final HotelMapper hotelMapper;
+    @Autowired
+    public HotelServiceImpl(HotelRepository hotelRepository, 
+                           UserRepository userRepository,
+                           HotelMapper hotelMapper, 
+                           MailService mailService) {
+        this.hotelRepository = hotelRepository;
+        this.userRepository = userRepository;
+        this.hotelMapper = hotelMapper;
+        this.mailService = mailService;
+    }
 
-	@Autowired
-	private MailService mailService;
+    @Override
+    public HotelResponse createHotel(HotelRequest request, Long userId) {
+        // Validate input
+        if (request == null || userId == null) {
+            throw new IllegalArgumentException("Hotel request and user ID cannot be null");
+        }
 
-	@Autowired
-	public HotelServiceImpl(HotelMapper hotelMapper) {
-		this.hotelMapper = hotelMapper;
-	}
+        if (hotelRepository.existsByEmail(request.getEmail())) {
+            throw new ResourceConflictException("Hotel with this email already exists");
+        }
 
-	@Override
-	public HotelResponse createHotel(HotelRequest request, Long userId) {
-		if (hotelRepository.existsByEmail(request.getEmail())) {
-			throw new ResourceConflictException("There was problem submitting listing");
-		}
+        // Find user first to fail fast if not found
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
-		Hotel hotel = hotelMapper.toEntity(request);
-		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-		user.setHotel(hotel);
-		user.setRole(Role.HOTEL_ADMIN);
+        // Create and save hotel
+        Hotel hotel = hotelMapper.toEntity(request);
+        hotel.getUsers().add(user);
+        
+        // Update user relationship
+        user.setHotel(hotel);
+        user.setRole(Role.HOTEL_ADMIN);
 
-		hotel.getUsers().add(user);
+        Hotel savedHotel = hotelRepository.save(hotel);
+        logger.info("Created new hotel with ID: {} for user: {}", savedHotel.getId(), userId);
 
-		return hotelMapper.toDto(hotelRepository.save(hotel));
-	}
+        return hotelMapper.toDto(savedHotel);
+    }
 
-	@Override
-	@Transactional(readOnly = true)
-	public HotelListingDto getListingForUser(Long userId) {
-		List<Object[]> rawResults = hotelRepository.findRawHotelListingByUserId(userId);
+    @Override
+    @Transactional(readOnly = true)
+    public HotelListingDto getListingForUser(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
 
-		if (rawResults.isEmpty()) {
-			throw new EntityNotFoundException("No hotel found for user ID: " + userId);
-		}
+        List<Object[]> rawResults = hotelRepository.findRawHotelListingByUserId(userId);
 
-		Object[] row = rawResults.get(0);
+        if (rawResults.isEmpty()) {
+            throw new EntityNotFoundException("No hotel found for user ID: " + userId);
+        }
 
-		return new HotelListingDto(((Number) row[0]).longValue(), // id
-				(String) row[1], // name
-				(String) row[2], // address
-				(String) row[3], // district
-				(String) row[4], // description
-				(String) row[5], // phone
-				(Boolean) row[6], // isVerified
-				((Timestamp) row[7]).toLocalDateTime(), // createdAt
-				(String) row[9], // photoUrls (comma-separated)
-				(String) row[10], // amenities (comma-separated),
-				(String) row[8]);
-	}
+        Object[] row = rawResults.get(0);
 
-	@Override
-	@Transactional(readOnly = true)
-	public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
-		return hotelRepository.findAllVerifiedHotelsWithLowestPrice(pageable);
+        return new HotelListingDto(
+                ((Number) row[0]).longValue(), // id
+                (String) row[1],               // name
+                (String) row[2],               // address
+                (String) row[3],               // district
+                (String) row[4],               // description
+                (String) row[5],               // phone
+                (Boolean) row[6],              // isVerified
+                ((Timestamp) row[7]).toLocalDateTime(), // createdAt
+                (String) row[9],               // photoUrls (comma-separated)
+                (String) row[10],              // amenities (comma-separated)
+                (String) row[8]                // additional field
+        );
+    }
 
-	}
-	
-	@Override
-	@Transactional(readOnly = true)
-	public Page<HotelResponse> getAllHotelsForSuperAdmin(Pageable pageable) {
-		return hotelRepository.findAll(pageable).map(hotelMapper::toDto);
-	}
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
+        return hotelRepository.findAllVerifiedHotelsWithLowestPrice(pageable);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HotelResponse> getAllHotelsForSuperAdmin(Pageable pageable) {
+        return hotelRepository.findAll(pageable).map(hotelMapper::toDto);
+    }
 
-	@Override
-	public HotelResponse updateHotel(Long id, HotelRequest request) {
-		Hotel hotel = hotelRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hotel not found"));
+    @Override
+    public HotelResponse updateHotel(Long id, HotelRequest request) {
+        if (id == null || request == null) {
+            throw new IllegalArgumentException("Hotel ID and request cannot be null");
+        }
 
-		hotelMapper.updateHotelFromRequest(request, hotel);
-		hotel.setAddress(request.getAddress());
-		hotel.setAmenities(request.getAmenities());
-		hotel.setDescription(request.getDescription());
-		hotel.setName(request.getName());
-		hotel.setPhone(request.getPhone());
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
-		hotelRepository.save(hotel);
+        // Use mapper to update - it handles null checking
+        hotelMapper.updateHotelFromRequest(request, hotel);
 
-		return hotelMapper.toDto(hotel);
-	}
+        Hotel savedHotel = hotelRepository.save(hotel);
+        logger.info("Updated hotel with ID: {}", id);
 
-	@Override
-	public void deleteHotel(Long id) {
-		Hotel hotel = hotelRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
+        return hotelMapper.toDto(savedHotel);
+    }
 
-		hotelRepository.delete(hotel);
+    @Override
+    public void deleteHotel(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
 
-	}
+        if (!hotelRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Hotel not found with id: " + id);
+        }
 
-	@Override
-	public void verifyHotel(Long id) {
-		Hotel hotel = hotelRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
+        hotelRepository.deleteById(id);
+        logger.info("Deleted hotel with ID: {}", id);
+    }
 
-		hotel.setVerified(true);
-		hotelRepository.save(hotel);
+    @Override
+    public void verifyHotel(Long id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
 
-		if (hotel.getEmail() != null && !hotel.getEmail().isBlank()) {
-			String email = hotelRepository.findOwnerEmailByHotelId(id);
-			System.out.println("Email: " + email);
-			mailService.sendHotelVerificationEmail(email, hotel.getName());
-		}
+        Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
-	}
+        if (hotel.isVerified()) {
+            logger.warn("Hotel with ID: {} is already verified", id);
+            return; // Already verified, no need to process
+        }
 
-	
+        hotel.setVerified(true);
+        hotelRepository.save(hotel);
 
-	@Override
-	@Transactional(readOnly = true)
-	public HotelResponse getHotelById(Long hotelId) {
-		Hotel hotel = hotelRepository.findById(hotelId)
-				.orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " + hotelId));
+        // Send verification email if hotel has email
+        if (StringUtils.hasText(hotel.getEmail())) {
+            try {
+                // Use hotel's email directly instead of separate query
+                mailService.sendHotelVerificationEmail(hotel.getEmail(), hotel.getName());
+                logger.info("Verification email sent for hotel: {}", hotel.getName());
+            } catch (Exception e) {
+                logger.error("Failed to send verification email for hotel ID: {}", id, e);
+                // Don't throw exception here as hotel is already verified
+            }
+        }
 
-		return hotelMapper.toDto(hotel);
-	}
+        logger.info("Verified hotel with ID: {}", id);
+    }
 
-	@Override
-	public Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size) {
-		Pageable pageable = PageRequest.of(page, size);
+    @Override
+    @Transactional(readOnly = true)
+    public HotelResponse getHotelById(Long hotelId) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
 
-		// Normalize empty string to null
-		String cleanDistrict = (district != null && !district.trim().isEmpty()) ? district : null;
-		String cleanHotelType = (hotelType != null && !hotelType.trim().isEmpty()) ? hotelType : null;
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " + hotelId));
 
-		Page<Hotel> hotelPage = hotelRepository.findByDistrictAndHotelType(cleanDistrict, cleanHotelType, pageable);
+        return hotelMapper.toDto(hotel);
+    }
 
-		return hotelPage.map(hotelMapper::toDto);
-	}
+    @Override
+    @Transactional(readOnly = true)
+    public Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size) {
+        // Validate pagination parameters
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Page must be >= 0 and size must be > 0");
+        }
 
-	@Override
-	public List<HotelWithPriceProjection> getTopThreeHotels() {
-		List<HotelWithPriceProjection> hotels = hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
+        Pageable pageable = PageRequest.of(page, size);
 
-		return hotels;
-	}
+        // Normalize empty strings to null
+        String cleanDistrict = StringUtils.hasText(district) ? district.trim() : null;
+        String cleanHotelType = StringUtils.hasText(hotelType) ? hotelType.trim() : null;
+
+        Page<Hotel> hotelPage = hotelRepository.findByDistrictAndHotelType(cleanDistrict, cleanHotelType, pageable);
+
+        return hotelPage.map(hotelMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<HotelWithPriceProjection> getTopThreeHotels() {
+        return hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -190,5 +237,4 @@ public class HotelServiceImpl implements HotelService {
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
     }
-
 }

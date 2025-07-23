@@ -15,5 +15,5 @@ public class RoomResponse {
 	public int roomNumber;
 	public LocalDateTime createdAt;
 	public LocalDateTime updatedAt;
-	private List<String> amenities;
+	public List<String> amenities;
 }

@@ -1,34 +1,145 @@
 package com.yakrooms.be.dto.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.springframework.stereotype.Component;
 
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.model.entity.Booking;
+import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.model.entity.Room;
+import com.yakrooms.be.model.entity.User;
+import com.yakrooms.be.model.enums.BookingStatus;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-public interface BookingMapper {
+@Component
+public class BookingMapper {
 	
-    Booking toEntity(BookingRequest request);
-    
-    public static BookingResponse toDTO(Booking booking) {
-    	BookingResponse dto = new BookingResponse();
-    	dto.setUserId(booking.getUser().getId());
-    	dto.setRoomId(booking.getRoom().getId());
-    	dto.setCheckInDate(booking.getCheckInDate());
-    	dto.setCheckOutDate(booking.getCheckOutDate());
-    	dto.setGuests(booking.getGuests());
-    	dto.setId(booking.getId());
-    	dto.setStatus(booking.getStatus());
-    	dto.setTotalPrice(booking.getTotalPrice());
-    	dto.setName(booking.getUser().getName());
-    	dto.setPhone(booking.getUser().getPhone());
-    	dto.setEmail(booking.getUser().getEmail());
-    	dto.setRoomNumber(booking.getRoom().getRoomNumber());
-    	return dto;
-    }
-    
-    BookingResponse toDto(Booking booking);
+	public Booking toEntity(BookingRequest request) {
+        if (request == null) {
+            return null;
+        }
 
+        Booking booking = new Booking();
+        
+        // Set User (you'll need to fetch from repository)
+        if (request.getUserId() != null) {
+            User user = new User();
+            user.setId(request.getUserId());
+            booking.setUser(user);
+        }
+        
+        // Set Hotel (you'll need to fetch from repository)
+        if (request.getHotelId() != null) {
+            Hotel hotel = new Hotel();
+            hotel.setId(request.getHotelId());
+            booking.setHotel(hotel);
+        }
+        
+        // Set Room (you'll need to fetch from repository)
+        if (request.getRoomId() != null) {
+            Room room = new Room();
+            room.setId(request.getRoomId());
+            booking.setRoom(room);
+        }
+        
+        booking.setCheckInDate(request.getCheckInDate());
+        booking.setCheckOutDate(request.getCheckOutDate());
+        booking.setGuests(request.getGuests());
+        booking.setTotalPrice(request.getTotalPrice());
+        
+        return booking;
+    }
+
+    public BookingResponse toDto(Booking booking) {
+        if (booking == null) {
+            return null;
+        }
+
+        BookingResponse response = new BookingResponse();
+        
+        response.setId(booking.getId());
+        
+        // Extract userId from User entity
+        if (booking.getUser() != null) {
+            response.setUserId(booking.getUser().getId());
+        }
+        
+        // Extract roomId from Room entity
+        if (booking.getRoom() != null) {
+            response.setRoomId(booking.getRoom().getId());
+        }
+        
+        response.setCheckInDate(booking.getCheckInDate());
+        response.setCheckOutDate(booking.getCheckOutDate());
+        response.setGuests(booking.getGuests());
+        response.setStatus(booking.getStatus());
+        response.setTotalPrice(booking.getTotalPrice());
+        response.setCreatedAt(booking.getCreatedAt());
+        
+        // These fields seem to be additional user/room details
+        // You may need to populate these from the related entities
+        if (booking.getUser() != null) {
+            response.setName(booking.getUser().getName()); // Assuming User has getName()
+            response.setPhone(booking.getUser().getPhone()); // Assuming User has getPhone()
+            response.setEmail(booking.getUser().getEmail()); // Assuming User has getEmail()
+        }
+        
+        if (booking.getRoom() != null) {
+            response.setRoomNumber(booking.getRoom().getRoomNumber()); // Assuming Room has getRoomNumber()
+        }
+        
+        return response;
+    }
+
+    // Alternative toEntity method that accepts full entities (when you have them from repositories)
+    public Booking toEntity(BookingRequest request, User user, Hotel hotel, Room room) {
+        if (request == null) {
+            return null;
+        }
+
+        Booking booking = new Booking();
+        
+        booking.setUser(user);
+        booking.setHotel(hotel);
+        booking.setRoom(room);
+        booking.setCheckInDate(request.getCheckInDate());
+        booking.setCheckOutDate(request.getCheckOutDate());
+        booking.setGuests(request.getGuests());
+        booking.setTotalPrice(request.getTotalPrice());
+        
+        return booking;
+    }
+
+    // Method to create entity for booking creation (sets default status)
+    public Booking toEntityForCreation(BookingRequest request, User user, Hotel hotel, Room room) {
+        if (request == null) {
+            return null;
+        }
+
+        Booking booking = new Booking();
+        
+        booking.setUser(user);
+        booking.setHotel(hotel);
+        booking.setRoom(room);
+        booking.setCheckInDate(request.getCheckInDate());
+        booking.setCheckOutDate(request.getCheckOutDate());
+        booking.setGuests(request.getGuests());
+        booking.setTotalPrice(request.getTotalPrice());
+        booking.setStatus(BookingStatus.CONFIRMED); // Default status for new bookings
+        
+        return booking;
+    }
+
+    // Method to update existing entity from request
+    public void updateEntityFromRequest(Booking booking, BookingRequest request) {
+        if (booking == null || request == null) {
+            return;
+        }
+        
+        booking.setCheckInDate(request.getCheckInDate());
+        booking.setCheckOutDate(request.getCheckOutDate());
+        booking.setGuests(request.getGuests());
+        booking.setTotalPrice(request.getTotalPrice());
+        // Note: User, Hotel, Room relationships should be handled separately
+        // as they require repository lookups
+    }
 }

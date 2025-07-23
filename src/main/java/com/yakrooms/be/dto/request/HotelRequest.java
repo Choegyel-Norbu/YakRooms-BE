@@ -2,8 +2,6 @@ package com.yakrooms.be.dto.request;
 
 import java.util.List;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import com.yakrooms.be.model.enums.HotelType;
 
 public class HotelRequest {
