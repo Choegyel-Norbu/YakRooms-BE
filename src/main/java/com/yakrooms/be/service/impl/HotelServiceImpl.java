@@ -181,13 +181,13 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<com.yakrooms.be.projection.HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
+    public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<com.yakrooms.be.projection.HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
+    public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
     }
 

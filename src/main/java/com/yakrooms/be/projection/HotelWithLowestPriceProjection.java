@@ -22,4 +22,6 @@ public interface HotelWithLowestPriceProjection {
     List<String> getAmenities();
     HotelType getHotelType();
     Double getLowestPrice();
+    String getPhotoUrl();
+
 } 

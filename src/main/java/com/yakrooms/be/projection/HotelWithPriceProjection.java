@@ -18,4 +18,6 @@ public interface HotelWithPriceProjection {
     String getIdProofUrl();
     Double getLowestPrice();
     String getPhotoUrls();
+    String getPhotoUrl();
+
 }

@@ -73,13 +73,25 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			""", nativeQuery = true)
 	List<HotelWithPriceProjection> findTop3VerifiedHotelsWithPhotosAndPrice();
 
-	@Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice FROM hotels h WHERE h.is_verified = true", nativeQuery = true)
+	@Query(value = "SELECT h.id AS id, " + "h.name AS name, " + "h.email AS email, " + "h.phone AS phone, "
+			+ "h.address AS address, " + "h.district AS district, " + "h.logo_url AS logoUrl, "
+			+ "h.description AS description, " + "h.is_verified AS isVerified, " + "h.website_url AS websiteUrl, "
+			+ "h.created_at AS createdAt, " + "h.license_url AS licenseUrl, " + "h.id_proof_url AS idProofUrl, "
+			+ "h.hotel_type AS hotelType, "
+			+ "(SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice, "
+			+ "GROUP_CONCAT(hp.url) AS photoUrls " + "FROM hotels h "
+			+ "LEFT JOIN hotel_photo_urls hp ON hp.hotel_id = h.id " + "WHERE h.is_verified = true "
+			+ "GROUP BY h.id, h.name, h.email, h.phone, h.address, h.district, h.logo_url, h.description, "
+			+ "h.is_verified, h.website_url, h.created_at, h.license_url, h.id_proof_url, h.hotel_type "
+			+ "ORDER BY lowestPrice ASC",
+
+			countQuery = "SELECT COUNT(DISTINCT h.id) FROM hotels h WHERE h.is_verified = true", nativeQuery = true)
 	Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPrice(Pageable pageable);
 
-    @Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice FROM hotels h WHERE h.is_verified = true ORDER BY lowestPrice ASC", nativeQuery = true)
-    Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceSorted(Pageable pageable);
+	@Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice, GROUP_CONCAT(hp.url) AS photoUrls FROM hotels h LEFT JOIN hotel_photo_urls hp ON hp.hotel_id = h.id WHERE h.is_verified = true GROUP BY h.id ORDER BY lowestPrice ASC", countQuery = "SELECT COUNT(*) FROM hotels h WHERE h.is_verified = true", nativeQuery = true)
+	Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceSorted(Pageable pageable);
 
-    @Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice FROM hotels h WHERE h.is_verified = true ORDER BY lowestPrice DESC", nativeQuery = true)
-    Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceDesc(Pageable pageable);
+	@Query(value = "SELECT h.id AS id, h.name AS name, h.email AS email, h.phone AS phone, h.address AS address, h.district AS district, h.logo_url AS logoUrl, h.description AS description, h.is_verified AS isVerified, h.website_url AS websiteUrl, h.created_at AS createdAt, h.license_url AS licenseUrl, h.id_proof_url AS idProofUrl, h.hotel_type AS hotelType, (SELECT MIN(r.price) FROM room r WHERE r.hotel_id = h.id) AS lowestPrice, GROUP_CONCAT(hp.url) AS photoUrls FROM hotels h LEFT JOIN hotel_photo_urls hp ON hp.hotel_id = h.id WHERE h.is_verified = true GROUP BY h.id ORDER BY lowestPrice DESC", countQuery = "SELECT COUNT(*) FROM hotels h WHERE h.is_verified = true", nativeQuery = true)
+	Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceDesc(Pageable pageable);
 
 }
