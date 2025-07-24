@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yakrooms.be.dto.NotificationMessage;
 import com.yakrooms.be.dto.mapper.BookingMapper;
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
@@ -46,15 +47,19 @@ public class BookingServiceImpl implements BookingService {
     private UserRepository userRepository;
     
     private final BookingMapper bookingMapper;
+    
+    private final NotificationService notificationService; // <-- Inject the service
+
 
     @Autowired
     public BookingServiceImpl(BookingMapper bookingMapper) {
         this.bookingMapper = bookingMapper;
+		this.notificationService = null;
     }
 
     @Override
     public BookingResponse createBooking(BookingRequest request) {
-        User user = userRepository.findById(request.getUserId())
+        User guest = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Room room = roomRepository.findById(request.getRoomId())
@@ -63,11 +68,37 @@ public class BookingServiceImpl implements BookingService {
         Hotel hotel = hotelRepository.findById(request.getHotelId())
                 .orElseThrow(() -> new RuntimeException("Hotel not found"));
 
-        // Use the mapper instead of manual mapping
-        Booking booking = bookingMapper.toEntityForCreation(request, user, hotel, room);
+        Booking booking = bookingMapper.toEntityForCreation(request, guest, hotel, room);
+        Booking savedBooking = bookingRepository.save(booking);
 
-        Booking saved = bookingRepository.save(booking);
-        return bookingMapper.toDto(saved);
+        // --- START: NOTIFICATION LOGIC ---
+
+        // Assuming your Hotel entity has a relationship to its owner (User).
+        User hotelAdmin = userRepository.findByHotelId(request.getHotelId()).orElse(null);
+
+        if (hotelAdmin != null && hotelAdmin.getId() != null) {
+            // 1. Construct a clear message for the notification.
+            String notificationMsg = String.format(
+                "New booking for Room %s by %s.",
+                room.getRoomNumber(), // Assumes Room has a getRoomNumber()
+                guest.getName()// Assumes User has a getFullName()
+            );
+
+            // 2. Create the notification payload object.
+            NotificationMessage payload = new NotificationMessage(
+                "New Booking!",
+                notificationMsg,
+                "BOOKING"
+            );
+
+            // 3. Send the notification to the hotel admin's specific topic.
+            // The user ID must be a string to build the destination topic.
+            notificationService.notifyUser(String.valueOf(hotelAdmin.getId()), payload);
+        }
+
+        // --- END: NOTIFICATION LOGIC ---
+
+        return bookingMapper.toDto(savedBooking);
     }
 
     @Override
