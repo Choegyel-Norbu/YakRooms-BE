@@ -45,6 +45,9 @@ public class Room {
 	@OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<RoomItem> items = new ArrayList<>();
 
+	@OneToOne(mappedBy = "room", fetch = FetchType.LAZY)
+	private Notification notification;
+
 	@CreationTimestamp
 	private LocalDateTime createdAt;
 
@@ -160,4 +163,6 @@ public class Room {
 		this.updatedAt = updatedAt;
 	}
 
+	public Notification getNotification() { return notification; }
+	public void setNotification(Notification notification) { this.notification = notification; }
 }

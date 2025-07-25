@@ -22,14 +22,19 @@ import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Booking;
 import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.BookingStatus;
 import com.yakrooms.be.repository.BookingRepository;
 import com.yakrooms.be.repository.HotelRepository;
+import com.yakrooms.be.repository.NotificationRepository;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.BookingService;
+import com.yakrooms.be.service.MailService;
+import org.springframework.scheduling.annotation.Async;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class BookingServiceImpl implements BookingService {
@@ -46,15 +51,21 @@ public class BookingServiceImpl implements BookingService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private NotificationRepository notificationRepository;
+    
+    @Autowired
+    private MailService mailService;
+    
     private final BookingMapper bookingMapper;
     
     private final NotificationService notificationService; // <-- Inject the service
 
 
     @Autowired
-    public BookingServiceImpl(BookingMapper bookingMapper) {
+    public BookingServiceImpl(BookingMapper bookingMapper, NotificationService notificationService) {
         this.bookingMapper = bookingMapper;
-		this.notificationService = null;
+		this.notificationService = notificationService;
     }
 
     @Override
@@ -76,24 +87,47 @@ public class BookingServiceImpl implements BookingService {
         // Assuming your Hotel entity has a relationship to its owner (User).
         User hotelAdmin = userRepository.findByHotelId(request.getHotelId()).orElse(null);
 
+        // Get hotel admin
+        System.out.println("=== NOTIFICATION DEBUG ===");
+        System.out.println("Hotel ID: " + hotel.getId());
+        System.out.println("Hotel Owner: " + hotelAdmin);
+        System.out.println("Hotel Owner ID: " + (hotelAdmin != null ? hotelAdmin.getId() : "NULL"));
+        
         if (hotelAdmin != null && hotelAdmin.getId() != null) {
-            // 1. Construct a clear message for the notification.
-            String notificationMsg = String.format(
-                "New booking for Room %s by %s.",
-                room.getRoomNumber(), // Assumes Room has a getRoomNumber()
-                guest.getName()// Assumes User has a getFullName()
-            );
+            try {
+                NotificationMessage notification = new NotificationMessage(
+                    "New Booking!",
+                    String.format("New booking for Room %s by %s", room.getRoomNumber(), guest.getName()),
+                    "BOOKING"
+                );
+                System.out.println("Sending notification: " + notification);
+                notificationService.notifyUser(String.valueOf(hotelAdmin.getId()), notification);
+                System.out.println("Notification sent to userId: " + hotelAdmin.getId());
 
-            // 2. Create the notification payload object.
-            NotificationMessage payload = new NotificationMessage(
-                "New Booking!",
-                notificationMsg,
-                "BOOKING"
-            );
+                // Save notification in the database
+                com.yakrooms.be.model.entity.Notification dbNotification = new com.yakrooms.be.model.entity.Notification();
+                dbNotification.setUser(hotelAdmin);
+                dbNotification.setTitle("New Booking!");
+                dbNotification.setMessage(String.format("Booking for Room %s by %s", room.getRoomNumber(), guest.getName()));
+                dbNotification.setType("BOOKING");
+                dbNotification.setRead(false);
+                dbNotification.setCreatedAt(java.time.LocalDateTime.now());
+                notificationRepository.save(dbNotification);
 
-            // 3. Send the notification to the hotel admin's specific topic.
-            // The user ID must be a string to build the destination topic.
-            notificationService.notifyUser(String.valueOf(hotelAdmin.getId()), payload);
+                // Send email notification asynchronously
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        mailService.sendBookingNotificationEmail(hotelAdmin.getEmail(), hotel.getName(), room.getRoomNumber(), guest.getName());
+                    } catch (Exception e) {
+                        System.err.println("Failed to send email notification: " + e.getMessage());
+                    }
+                });
+            } catch (Exception e) {
+                System.err.println("Failed to send notification: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("No hotel admin found!");
         }
 
         // --- END: NOTIFICATION LOGIC ---

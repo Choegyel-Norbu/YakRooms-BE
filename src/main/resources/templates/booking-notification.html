@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YakRooms: New Booking Alert!</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; color: #222; }
+        .container { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; max-width: 500px; margin: 40px auto; padding: 32px; }
+        .header { color: #2b7a78; font-size: 1.5em; margin-bottom: 16px; }
+        .details { margin: 24px 0; }
+        .label { font-weight: bold; }
+        .footer { margin-top: 32px; font-size: 0.95em; color: #888; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">New Booking Received!</div>
+    <div class="details">
+        <p><span class="label">Hotel:</span> <span th:text="${hotelName}">${hotelName}</span></p>
+        <p><span class="label">Room Number:</span> <span th:text="${roomNumber}">${roomNumber}</span></p>
+        <p><span class="label">Guest Name:</span> <span th:text="${guestName}">${guestName}</span></p>
+    </div>
+    <p>You have received a new booking on YakRooms. Please check your dashboard for more details.</p>
+    <div class="footer">
+        &copy; YakRooms | This is an automated notification. Please do not reply to this email.
+    </div>
+</div>
+</body>
+</html> 

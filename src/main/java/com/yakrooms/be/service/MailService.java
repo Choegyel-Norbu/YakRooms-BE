@@ -41,4 +41,26 @@ public class MailService {
 			throw new IllegalStateException("Failed to send verification email", e);
 		}
 	}
+
+	public void sendBookingNotificationEmail(String toEmail, String hotelName, String roomNumber, String guestName) {
+		Context context = new Context();
+		context.setVariable("hotelName", hotelName);
+		context.setVariable("roomNumber", roomNumber);
+		context.setVariable("guestName", guestName);
+
+		String htmlContent = templateEngine.process("booking-notification.html", context);
+
+		MimeMessage mimeMessage = mailSender.createMimeMessage();
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+			helper.setTo(toEmail);
+			helper.setSubject("YakRooms: New Booking Alert! 🎉");
+			helper.setText(htmlContent, true); // true = isHtml
+
+			mailSender.send(mimeMessage);
+		} catch (MessagingException e) {
+			throw new IllegalStateException("Failed to send booking notification email", e);
+		}
+	}
 }
