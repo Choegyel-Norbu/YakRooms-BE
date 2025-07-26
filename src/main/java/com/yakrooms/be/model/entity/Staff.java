@@ -1,26 +1,63 @@
 package com.yakrooms.be.model.entity;
 
-import java.time.LocalDate;
-
-import com.yakrooms.be.model.enums.Role;
-
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
+@Table(name = "staff")
 public class Staff {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String phone;
-    private LocalDate dateOfJoining;
-    
-    @Enumerated(EnumType.STRING)
-    private Role role;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@Column(nullable = false, unique = true)
+	private String email;
+
+	@Column(nullable = false)
+	private String phoneNumber;
+
+	private String position;
+
+	private LocalDate dateJoined;
+
+	@ManyToOne
+	@JoinColumn(name = "hotel_id", nullable = false)
+	private Hotel hotel;
+
+	
+	@OneToOne(optional = false)
+	@JoinColumn(name = "user_id")
+	private User user;
+
+	
 
 	public Staff() {
-		super();
+	}
+
+	public String getPosition() {
+		return position;
+	}
+
+	public void setPosition(String position) {
+		this.position = position;
+	}
+
+	public Hotel getHotel() {
+		return hotel;
+	}
+
+	public void setHotel(Hotel hotel) {
+		this.hotel = hotel;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	public Long getId() {
@@ -31,22 +68,6 @@ public class Staff {
 		this.id = id;
 	}
 
-	public String getFirstName() {
-		return firstName;
-	}
-
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
-
-	public String getLastName() {
-		return lastName;
-	}
-
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
-
 	public String getEmail() {
 		return email;
 	}
@@ -55,29 +76,21 @@ public class Staff {
 		this.email = email;
 	}
 
-	public String getPhone() {
-		return phone;
+	public String getPhoneNumber() {
+		return phoneNumber;
 	}
 
-	public void setPhone(String phone) {
-		this.phone = phone;
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
 	}
 
-	public LocalDate getDateOfJoining() {
-		return dateOfJoining;
+	public LocalDate getDateJoined() {
+		return dateJoined;
 	}
 
-	public void setDateOfJoining(LocalDate dateOfJoining) {
-		this.dateOfJoining = dateOfJoining;
+	public void setDateJoined(LocalDate dateJoined) {
+		this.dateJoined = dateJoined;
 	}
 
-	public Role getRole() {
-		return role;
-	}
-
-	public void setRole(Role role) {
-		this.role = role;
-	}  
-    
-    
+	
 }

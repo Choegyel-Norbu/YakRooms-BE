@@ -34,11 +34,13 @@ public class FirebaseServiceImpl implements FirebaseService {
 			String uid = decoded.getUid();
 			String name = (String) decoded.getClaims().getOrDefault("name", "Guest");
 			String email = decoded.getEmail();
+			String picture = (String) decoded.getClaims().get("picture");
 
 			FirebaseUserData data = new FirebaseUserData();
 			data.setUid(uid);
 			data.setEmail(email);
 			data.setName(name);
+			data.setProfilePictureUrl(picture);
 			return handleUser(data);
 			
 		} catch (FirebaseAuthException e) {
@@ -52,23 +54,33 @@ public class FirebaseServiceImpl implements FirebaseService {
 
 	    if (optionalUser.isPresent()) {
 	        user = optionalUser.get();
+
+	        boolean updated = false;
+	        if (data.getProfilePictureUrl() != null && !data.getProfilePictureUrl().equals(user.getProfilePicUrl())) {
+	            user.setProfilePicUrl(data.getProfilePictureUrl());
+	            updated = true;
+	        }
+	        if (data.getName() != null && !data.getName().equals(user.getName())) {
+	            user.setName(data.getName());
+	            updated = true;
+	        }
+	        if (updated) {
+	            user.setUpdatedAt(LocalDateTime.now());
+	            user = userRepo.save(user);
+	        }
+
 	    } else {
 	        user = new User();
 	        user.setEmail(data.getEmail());
 	        user.setName(data.getName());
 	        user.setRole(Role.GUEST);
+	        user.setProfilePicUrl(data.getProfilePictureUrl());
 	        user.setCreatedAt(LocalDateTime.now());
 	        user.setUpdatedAt(LocalDateTime.now());
 
 	        user = userRepo.save(user);
 	    }
-		User newUser = new User();
-	    newUser.setEmail(data.getEmail());
-	    newUser.setName(data.getName());
-	    newUser.setRole(Role.GUEST); 
-	    newUser.setCreatedAt(LocalDateTime.now());
-	    newUser.setUpdatedAt(LocalDateTime.now());
-		
+
 	    String token = jwtUtil.generateToken(user);
 
 	    return new JwtLoginResponse(token, UserMapper.toUserResponse(user));

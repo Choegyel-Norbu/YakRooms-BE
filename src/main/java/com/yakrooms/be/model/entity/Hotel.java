@@ -41,6 +41,9 @@ public class Hotel {
 
 	@Enumerated(EnumType.STRING)
 	private HotelType hotelType;
+	
+	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
+    private List<Staff> staffList;
 
 	@ElementCollection
 	@CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))

@@ -1,41 +1,85 @@
 package com.yakrooms.be.service.impl;
 
-import java.util.List;
+import com.yakrooms.be.dto.StaffRequestDTO;
+import com.yakrooms.be.dto.StaffResponseDTO;
+import com.yakrooms.be.dto.mapper.StaffMapper;
+import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.model.entity.Staff;
+import com.yakrooms.be.model.entity.User;
+import com.yakrooms.be.model.enums.Role;
+import com.yakrooms.be.repository.HotelRepository;
+import com.yakrooms.be.repository.StaffRepository;
+import com.yakrooms.be.repository.UserRepository;
+import com.yakrooms.be.service.StaffService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.yakrooms.be.exception.ResourceNotFoundException;
-import com.yakrooms.be.model.entity.Staff;
-import com.yakrooms.be.repository.StaffRepository;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-public class StaffServiceImpl {
+public class StaffServiceImpl implements StaffService {
 	@Autowired
 	private StaffRepository staffRepository;
 
-	public List<Staff> getAllStaff() {
-		return staffRepository.findAll();
+	@Autowired
+	private HotelRepository hotelRepository;
+
+	@Autowired
+	private UserRepository userRepository;
+
+	@Override
+	@Transactional
+	public StaffResponseDTO addStaff(StaffRequestDTO requestDTO) {
+		if (staffRepository.findByEmail(requestDTO.getEmail()).isPresent()) {
+			throw new IllegalArgumentException("Email already exists");
+		}
+
+		Hotel hotel = hotelRepository.findById(requestDTO.getHotelId())
+				.orElseThrow(() -> new IllegalArgumentException("Hotel not found"));
+
+		User user = new User();
+		user.setEmail(requestDTO.getEmail());
+		user.setRole(Role.STAFF);
+		user.setActive(true);
+		user.setHotel(hotel);
+		user = userRepository.save(user);
+
+		Staff staff = new Staff();
+		staff.setEmail(requestDTO.getEmail());
+		staff.setPhoneNumber(requestDTO.getPhoneNumber());
+		staff.setHotel(hotel);
+		staff.setUser(user);
+		staff.setPosition(requestDTO.getPosition());
+		staff.setDateJoined(requestDTO.getDateJoined());
+		staff = staffRepository.save(staff);
+
+		return StaffMapper.toDto(staff, user);
 	}
 
-	public Staff getStaffById(Long id) throws ResourceNotFoundException {
-		return staffRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+	@Override
+	public List<StaffResponseDTO> getStaffByHotelId(Long hotelId) {
+		return staffRepository.findAllByHotelIdWithUser(hotelId).stream()
+				.map(staff -> StaffMapper.toDto(staff, staff.getUser())).collect(Collectors.toList());
 	}
 
-	public Staff createStaff(Staff staff) {
-		return staffRepository.save(staff);
-	}
+	@Override
+	@Transactional
+	public void deleteStaffById(Long id) {
+		Staff staff = staffRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Staff not found"));
 
-	public Staff updateStaff(Long id, Staff details) throws ResourceNotFoundException {
-		Staff staff = getStaffById(id);
-		// update fields
-		staff.setFirstName(details.getFirstName());
-		// ... other setters
-		return staffRepository.save(staff);
-	}
+		User user = staff.getUser();
 
-	public void deleteStaff(Long id) throws ResourceNotFoundException {
-		staffRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
+		// Break the bidirectional relationship
+		if (user != null) {
+			user.setStaff(null);
+			staff.setUser(null);
+			userRepository.save(user);
+		}
 		staffRepository.deleteById(id);
 	}
 }

@@ -22,7 +22,8 @@ public class JwtFilter implements Filter {
         "/api/upload",
         "/test/**",
         "/ws/**",
-        "/api/notifications/**"
+        "/api/notifications/**",
+        "api/staff"
     };
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();

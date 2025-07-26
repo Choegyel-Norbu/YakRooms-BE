@@ -33,6 +33,17 @@ public class User {
 	@Enumerated(EnumType.STRING)
 	private Role role;
 
+	@OneToOne(mappedBy = "user")
+	private Staff staff;
+
+	public Staff getStaff() {
+		return staff;
+	}
+
+	public void setStaff(Staff staff) {
+		this.staff = staff;
+	}
+
 	private boolean isActive = true;
 
 	private LocalDateTime lastLogin;

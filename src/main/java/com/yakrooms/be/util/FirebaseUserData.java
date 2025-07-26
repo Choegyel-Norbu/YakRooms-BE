@@ -5,6 +5,15 @@ public class FirebaseUserData {
 	private String email;
 	private String name;
 	private String uid;
+	private String profilePictureUrl;
+
+	public String getProfilePictureUrl() {
+		return profilePictureUrl;
+	}
+
+	public void setProfilePictureUrl(String profilePictureUrl) {
+		this.profilePictureUrl = profilePictureUrl;
+	}
 
 	public String getEmail() {
 		return email;
