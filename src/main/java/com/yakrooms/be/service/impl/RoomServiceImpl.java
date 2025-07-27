@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
+import com.yakrooms.be.dto.RoomStatusDTO;
 import com.yakrooms.be.dto.mapper.RoomMapper;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.dto.response.RoomResponse;
@@ -20,6 +21,7 @@ import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.model.enums.RoomType;
+import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.RoomItemRepository;
 import com.yakrooms.be.repository.RoomRepository;
@@ -212,5 +214,26 @@ public class RoomServiceImpl implements RoomService {
 
         return roomRepository.findActiveAvailableRoomsByHotelId(hotelId, pageable)
                 .map(roomMapper::toDtoResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RoomStatusProjection> getRoomStatusByHotelId(Long hotelId, Pageable pageable) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+        return roomRepository.getRoomStatusByHotelId(hotelId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<RoomStatusProjection> getRoomStatusByHotelIdAndRoomNumber(Long hotelId, String roomNumber, Pageable pageable) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+        if (roomNumber == null || roomNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Room number cannot be null or empty");
+        }
+        return roomRepository.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber.trim(), pageable);
     }
 }

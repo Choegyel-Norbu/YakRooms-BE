@@ -1,7 +1,6 @@
 package com.yakrooms.be.dto;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import com.yakrooms.be.model.enums.Role;
 
@@ -15,14 +14,6 @@ public class StaffResponseDTO {
 	private String role;
 	private String profilePictureUrl;
 	private LocalDate dateJoined;
-
-	public LocalDate getDateJoined() {
-		return dateJoined;
-	}
-
-	public void setDateJoined(LocalDate dateJoined) {
-		this.dateJoined = dateJoined;
-	}
 
 	public String getProfilePictureUrl() {
 		return profilePictureUrl;
@@ -88,4 +79,10 @@ public class StaffResponseDTO {
 		this.position = position;
 	}
 
+	public LocalDate getDateJoined() {
+		return dateJoined;
+	}
+	public void setDateJoined(LocalDate dateJoined) {
+		this.dateJoined = dateJoined;
+	}
 }

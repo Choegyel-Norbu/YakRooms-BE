@@ -18,12 +18,11 @@ public class JwtFilter implements Filter {
         "/auth/firebase",
         "/api/hotels/**",
         "/api/bookings/**",
-        "/api/rooms/**",
+        "/api/rooms/status/**",
         "/api/upload",
         "/test/**",
         "/ws/**",
         "/api/notifications/**",
-        "api/staff"
     };
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();

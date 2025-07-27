@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yakrooms.be.dto.BookingStatisticsDTO;
 import com.yakrooms.be.dto.NotificationMessage;
 import com.yakrooms.be.dto.mapper.BookingMapper;
 import com.yakrooms.be.dto.request.BookingRequest;
@@ -26,6 +27,7 @@ import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.BookingStatus;
+import com.yakrooms.be.model.enums.Role;
 import com.yakrooms.be.repository.BookingRepository;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.NotificationRepository;
@@ -82,10 +84,15 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingMapper.toEntityForCreation(request, guest, hotel, room);
         Booking savedBooking = bookingRepository.save(booking);
 
+        // Update room availability to false when booking is created
+        room.setAvailable(false);
+        roomRepository.save(room);
+
         // --- START: NOTIFICATION LOGIC ---
 
         // Assuming your Hotel entity has a relationship to its owner (User).
-        User hotelAdmin = userRepository.findByHotelId(request.getHotelId()).orElse(null);
+        User hotelAdmin = userRepository.findByHotelIdAndRole(request.getHotelId(), Role.HOTEL_ADMIN)
+        	    .orElse(null);
 
         // Get hotel admin
         System.out.println("=== NOTIFICATION DEBUG ===");
@@ -146,6 +153,13 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+
+        // Set room availability back to true when booking is cancelled
+        Room room = booking.getRoom();
+        if (room != null) {
+            room.setAvailable(true);
+            roomRepository.save(room);
+        }
     }
 
     @Override
@@ -225,6 +239,24 @@ public class BookingServiceImpl implements BookingService {
         // Update status
         booking.setStatus(BookingStatus.valueOf(normalizedStatus));
         bookingRepository.save(booking);
+
+        // Update room availability based on booking status
+        Room room = booking.getRoom();
+        if (room != null) {
+            switch (BookingStatus.valueOf(normalizedStatus)) {
+                case CHECKED_IN:
+                    room.setAvailable(false);
+                    break;
+                case CHECKED_OUT:
+                case CANCELLED:
+                    room.setAvailable(true);
+                    break;
+                default:
+                    // For PENDING, CONFIRMED - keep current availability
+                    break;
+            }
+            roomRepository.save(room);
+        }
         return true;
     }
 
@@ -234,6 +266,27 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
         
         bookingRepository.delete(booking);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingStatisticsDTO> getBookingStatisticsByMonth(String startDate) {
+        if (startDate == null || startDate.trim().isEmpty()) {
+            throw new IllegalArgumentException("Start date cannot be null or empty");
+        }
+        return bookingRepository.getBookingStatisticsByMonth(startDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(String startDate, Long hotelId) {
+        if (startDate == null || startDate.trim().isEmpty()) {
+            throw new IllegalArgumentException("Start date cannot be null or empty");
+        }
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+        return bookingRepository.getBookingStatisticsByMonthAndHotel(startDate, hotelId);
     }
 
 //    private void generatePasscodeAfterPayment(Long bookingId) {

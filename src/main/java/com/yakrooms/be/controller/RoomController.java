@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
-import com.yakrooms.be.dto.response.RoomResponse;
+import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.service.RoomService;
 
 @RestController
@@ -68,4 +68,26 @@ public class RoomController {
 			@RequestParam boolean isAvailable) {
 		return ResponseEntity.ok(roomService.toggleAvailability(roomId, isAvailable));
 	}
+
+	@GetMapping("/status/{hotelId}")
+	public ResponseEntity<Page<RoomStatusProjection>> getRoomStatus(@PathVariable Long hotelId, Pageable pageable) {
+		return ResponseEntity.ok(roomService.getRoomStatusByHotelId(hotelId, pageable));
+	}
+
+	@GetMapping("/status/{hotelId}/search")
+	public ResponseEntity<Page<RoomStatusProjection>> getRoomStatusByRoomNumber(
+			@PathVariable Long hotelId,
+			@RequestParam String roomNumber,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		return ResponseEntity.ok(roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable));
+	}
+	
+	
+	
+	
+	
+	
+	
 }

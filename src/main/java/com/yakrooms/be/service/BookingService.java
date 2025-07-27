@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.yakrooms.be.dto.BookingStatisticsDTO;
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 
@@ -35,4 +36,8 @@ public interface BookingService {
     public void deleteBookingById(Long bookingId);
 
     Page<BookingResponse> listAllBookingByHotel(Long hotelId, Pageable pageable);
+
+    List<BookingStatisticsDTO> getBookingStatisticsByMonth(String startDate);
+    
+    List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(String startDate, Long hotelId);
 }
