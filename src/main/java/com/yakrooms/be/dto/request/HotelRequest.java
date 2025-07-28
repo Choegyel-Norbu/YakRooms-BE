@@ -18,6 +18,15 @@ public class HotelRequest {
 	private String idProofUrl;
 	private List<String> amenities;
 	private HotelType hoteType;
+	private String hotelType;
+
+	public String getHotelType() {
+		return hotelType;
+	}
+
+	public void setHotelType(String hotelType) {
+		this.hotelType = hotelType;
+	}
 
 	public List<String> getAmenities() {
 		return amenities;

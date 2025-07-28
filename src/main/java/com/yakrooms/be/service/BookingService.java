@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.yakrooms.be.dto.BookingStatisticsDTO;
+import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
+import com.yakrooms.be.dto.PasscodeVerificationDTO;
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 
@@ -40,4 +42,14 @@ public interface BookingService {
     List<BookingStatisticsDTO> getBookingStatisticsByMonth(String startDate);
     
     List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(String startDate, Long hotelId);
+    
+    List<MonthlyRevenueStatsDTO> getMonthlyRevenueStats(Long hotelId, String startDate);
+    
+    /**
+     * Verify booking by passcode.
+     * 
+     * @param passcode The passcode to verify
+     * @return PasscodeVerificationDTO with verification result and booking details
+     */
+    PasscodeVerificationDTO verifyBookingByPasscode(String passcode);
 }

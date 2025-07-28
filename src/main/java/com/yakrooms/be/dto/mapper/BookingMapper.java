@@ -74,6 +74,7 @@ public class BookingMapper {
         response.setStatus(booking.getStatus());
         response.setTotalPrice(booking.getTotalPrice());
         response.setCreatedAt(booking.getCreatedAt());
+        response.setPasscode(booking.getPasscode());
         
         // These fields seem to be additional user/room details
         // You may need to populate these from the related entities

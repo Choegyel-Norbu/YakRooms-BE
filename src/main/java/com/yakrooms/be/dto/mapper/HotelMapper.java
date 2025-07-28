@@ -7,6 +7,7 @@ import java.util.List;
 import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.model.enums.HotelType;
 
 @Component
 public class HotelMapper {
@@ -60,6 +61,12 @@ public class HotelMapper {
         hotel.setLicenseUrl(dto.getLicenseUrl());
         hotel.setIdProofUrl(dto.getIdProofUrl());
         hotel.setHotelType(dto.getHoteType()); // Note: using getHoteType() as per your HotelRequest
+        
+        try {
+            hotel.setHotelType(HotelType.valueOf(dto.getHotelType().toUpperCase()));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new IllegalArgumentException("Invalid hotel type: " + dto.getHotelType());
+        }
         
         // Copy lists (create new lists to avoid reference issues)
         if (dto.getPhotoUrls() != null) {

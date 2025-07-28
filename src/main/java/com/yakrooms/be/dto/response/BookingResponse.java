@@ -22,6 +22,15 @@ public class BookingResponse {
 	private String phone;
 	private String email;
 	private String roomNumber;
+	private String passcode;
+
+	public String getPasscode() {
+		return passcode;
+	}
+
+	public void setPasscode(String passcode) {
+		this.passcode = passcode;
+	}
 
 	public Long getId() {
 		return id;

@@ -30,6 +30,9 @@ public class Booking {
 	private int guests;
 	private String checkInPasscode;
 
+	@Column(unique = true, nullable = false)
+	private String passcode;
+
 	@Enumerated(EnumType.STRING)
 	private BookingStatus status;
 
@@ -119,6 +122,14 @@ public class Booking {
 
 	public void setCheckInPasscode(String checkInPasscode) {
 		this.checkInPasscode = checkInPasscode;
+	}
+
+	public String getPasscode() {
+		return passcode;
+	}
+
+	public void setPasscode(String passcode) {
+		this.passcode = passcode;
 	}
 
 	public PaymentStatus getPaymentStatus() {

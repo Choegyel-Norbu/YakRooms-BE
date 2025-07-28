@@ -12,9 +12,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.yakrooms.be.dto.BookingStatisticsDTO;
+import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
 import com.yakrooms.be.model.entity.Booking;
-import com.yakrooms.be.model.entity.User;
-import com.yakrooms.be.model.enums.Role;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
@@ -40,72 +39,93 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 			@Param("checkOut") LocalDate checkOut);
 
 	@Query(value = """
-			SELECT 
+			SELECT
 			    DATE_FORMAT(b.created_at, '%Y-%m') AS monthYear,
 			    COUNT(b.id) AS bookingCount
-			FROM 
+			FROM
 			    booking b
-			WHERE 
+			WHERE
 			    b.created_at >= :startDate
-			GROUP BY 
+			GROUP BY
 			    DATE_FORMAT(b.created_at, '%Y-%m')
-			ORDER BY 
+			ORDER BY
 			    DATE_FORMAT(b.created_at, '%Y-%m')
 			""", nativeQuery = true)
 	List<BookingStatisticsDTO> getBookingStatisticsByMonth(@Param("startDate") String startDate);
 
-//	@Query(value = """
-//			SELECT 
-//			    DATE_FORMAT(b.created_at, '%Y-%m') AS monthYear,
-//			    COUNT(b.id) AS bookingCount
-//			FROM 
-//			    booking b
-//			WHERE 
-//			    b.created_at >= :startDate
-//			    AND b.hotel_id = :hotelId
-//			GROUP BY 
-//			    DATE_FORMAT(b.created_at, '%Y-%m')
-//			ORDER BY 
-//			    DATE_FORMAT(b.created_at, '%Y-%m')
-//			""", nativeQuery = true)
-//	List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(@Param("startDate") String startDate, @Param("hotelId") Long hotelId);
-	
-	
+	@Query(value = """
+			WITH RECURSIVE month_series AS (
+			    SELECT
+			        DATE(:startDate) AS month_start,
+			        DATE_FORMAT(:startDate, '%Y-%m') AS month_year
+			    UNION ALL
+			    SELECT
+			        DATE_ADD(month_start, INTERVAL 1 MONTH),
+			        DATE_FORMAT(DATE_ADD(month_start, INTERVAL 1 MONTH), '%Y-%m')
+			    FROM month_series
+			    WHERE month_start < DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+			)
+			SELECT
+			    ms.month_year,
+			    COALESCE(COUNT(b.id), 0) AS booking_count
+			FROM
+			    month_series ms
+			LEFT JOIN
+			    booking b
+			    ON DATE_FORMAT(b.created_at, '%Y-%m') = ms.month_year
+			    AND b.hotel_id = :hotelId
+			GROUP BY
+			    ms.month_year
+			ORDER BY
+			    ms.month_year
+			""", nativeQuery = true)
+	List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(
+			@Param("startDate") String startDate, @Param("hotelId") Long hotelId);
 
-	@Query(
-		    value = """
-		    WITH RECURSIVE month_series AS (
-		        SELECT 
-		            DATE(:startDate) AS month_start,
-		            DATE_FORMAT(:startDate, '%Y-%m') AS month_year
-		        UNION ALL
-		        SELECT 
-		            DATE_ADD(month_start, INTERVAL 1 MONTH),
-		            DATE_FORMAT(DATE_ADD(month_start, INTERVAL 1 MONTH), '%Y-%m')
-		        FROM month_series
-		        WHERE month_start < DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
-		    )
-		    SELECT 
-		        ms.month_year,
-		        COALESCE(COUNT(b.id), 0) AS booking_count
-		    FROM 
-		        month_series ms
-		    LEFT JOIN 
-		        booking b 
-		        ON DATE_FORMAT(b.created_at, '%Y-%m') = ms.month_year
-		        AND b.hotel_id = :hotelId
-		    GROUP BY 
-		        ms.month_year
-		    ORDER BY 
-		        ms.month_year
-		    """,
-		    nativeQuery = true
-		)
-		List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(
-				@Param("startDate") String startDate, @Param("hotelId") Long hotelId
-		     // Pass as "YYYY-MM-DD"
-		);
+	@Query(value = """
+			WITH RECURSIVE month_series AS (
+				SELECT
+					DATE(:startDate) AS month_start,
+					DATE_FORMAT(:startDate, '%Y-%m') AS month_year
+				UNION ALL
+				SELECT
+					DATE_ADD(month_start, INTERVAL 1 MONTH),
+					DATE_FORMAT(DATE_ADD(month_start, INTERVAL 1 MONTH), '%Y-%m')
+				FROM month_series
+				WHERE month_start < DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+			)
+			SELECT
+				ms.month_year,
+				COALESCE(SUM(b.total_price), 0) AS total_revenue,
+				COUNT(b.id) AS booking_count,
+				COALESCE(AVG(b.total_price), 0) AS average_booking_value
+			FROM
+				month_series ms
+			LEFT JOIN booking b ON DATE_FORMAT(b.created_at, '%Y-%m') = ms.month_year
+				AND b.status != 'CANCELLED'
+				AND b.hotel_id = :hotelId
+			JOIN hotels h ON h.id = :hotelId
+			GROUP BY ms.month_year, h.name
+			ORDER BY ms.month_year
+			""", nativeQuery = true)
+	List<MonthlyRevenueStatsDTO> getMonthlyRevenueStats(
+			@Param("hotelId") Long hotelId,
+			@Param("startDate") String startDate // format: "yyyy-MM-dd"
+	);
 
-	
+	/**
+	 * Check if a passcode already exists in the database.
+	 * 
+	 * @param passcode The passcode to check
+	 * @return true if passcode exists, false otherwise
+	 */
+	boolean existsByPasscode(String passcode);
 
+	/**
+	 * Find booking by passcode.
+	 * 
+	 * @param passcode The passcode to search for
+	 * @return Optional containing the booking if found
+	 */
+	Optional<Booking> findByPasscode(String passcode);
 }

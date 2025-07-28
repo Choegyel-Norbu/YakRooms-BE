@@ -16,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yakrooms.be.dto.BookingStatisticsDTO;
+import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
 import com.yakrooms.be.dto.NotificationMessage;
+import com.yakrooms.be.dto.PasscodeVerificationDTO;
+import com.yakrooms.be.util.PasscodeGenerator;
 import com.yakrooms.be.dto.mapper.BookingMapper;
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
@@ -82,6 +85,11 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new RuntimeException("Hotel not found"));
 
         Booking booking = bookingMapper.toEntityForCreation(request, guest, hotel, room);
+        
+        // Generate unique passcode for the booking
+        String passcode = generateUniquePasscode();
+        booking.setPasscode(passcode);
+        
         Booking savedBooking = bookingRepository.save(booking);
 
         // Update room availability to false when booking is created
@@ -287,6 +295,97 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
         return bookingRepository.getBookingStatisticsByMonthAndHotel(startDate, hotelId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MonthlyRevenueStatsDTO> getMonthlyRevenueStats(Long hotelId, String startDate) {
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+        if (startDate == null || startDate.trim().isEmpty()) {
+            throw new IllegalArgumentException("Start date cannot be null or empty");
+        }
+        return bookingRepository.getMonthlyRevenueStats(hotelId, startDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PasscodeVerificationDTO verifyBookingByPasscode(String passcode) {
+        if (passcode == null || passcode.trim().isEmpty()) {
+            return new PasscodeVerificationDTO(false, "Passcode cannot be empty");
+        }
+
+        // Find booking by passcode
+        Optional<Booking> bookingOpt = bookingRepository.findByPasscode(passcode.trim());
+        
+        if (bookingOpt.isEmpty()) {
+            return new PasscodeVerificationDTO(false, "Invalid passcode. No booking found.");
+        }
+
+        Booking booking = bookingOpt.get();
+        
+        // Check if booking is still valid (not cancelled)
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            return new PasscodeVerificationDTO(false, "This booking has been cancelled.");
+        }
+
+        // Check if booking is for today or future dates
+        LocalDate today = LocalDate.now();
+        if (booking.getCheckInDate().isBefore(today)) {
+            return new PasscodeVerificationDTO(false, "This booking is for a past date.");
+        }
+
+        // Create verification response with booking details
+        PasscodeVerificationDTO verification = new PasscodeVerificationDTO(true, "Booking verified successfully!");
+        verification.setBookingId(booking.getId());
+        verification.setCheckInDate(booking.getCheckInDate());
+        verification.setCheckOutDate(booking.getCheckOutDate());
+        verification.setStatus(booking.getStatus());
+        verification.setCreatedAt(booking.getCreatedAt());
+
+        // Set guest name
+        if (booking.getUser() != null) {
+            verification.setGuestName(booking.getUser().getName());
+        }
+
+        // Set hotel name
+        if (booking.getHotel() != null) {
+            verification.setHotelName(booking.getHotel().getName());
+        }
+
+        // Set room number
+        if (booking.getRoom() != null) {
+            verification.setRoomNumber(booking.getRoom().getRoomNumber());
+        }
+
+        return verification;
+    }
+
+    /**
+     * Generates a unique passcode for booking.
+     * Retries up to 3 times if a collision occurs.
+     * 
+     * @return A unique 6-character alphanumeric passcode
+     * @throws RuntimeException if uniqueness cannot be guaranteed after 3 attempts
+     */
+    private String generateUniquePasscode() {
+        final int MAX_ATTEMPTS = 3;
+        
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            String passcode = PasscodeGenerator.generatePasscode();
+            
+            if (!bookingRepository.existsByPasscode(passcode)) {
+                return passcode;
+            }
+            
+            // Log collision for debugging (optional)
+            if (attempt < MAX_ATTEMPTS) {
+                System.out.println("Passcode collision detected, retrying... Attempt: " + attempt);
+            }
+        }
+        
+        throw new RuntimeException("Unable to generate unique passcode after " + MAX_ATTEMPTS + " attempts");
     }
 
 //    private void generatePasscodeAfterPayment(Long bookingId) {
