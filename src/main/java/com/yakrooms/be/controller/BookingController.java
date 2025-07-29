@@ -95,7 +95,25 @@ public class BookingController {
 	// Get all bookings for a user
 	@GetMapping("/user/{userId}")
 	public ResponseEntity<List<BookingResponse>> getUserBookings(@PathVariable Long userId) {
-		return ResponseEntity.ok(bookingService.getUserBookings(userId));
+		return ResponseEntity.ok(bookingService.getAllBookingsByUserId(userId));
+	}
+
+	// Get all bookings for a user with pagination
+	@GetMapping("/user/{userId}/page")
+	public ResponseEntity<Page<BookingResponse>> getUserBookingsPaginated(
+			@PathVariable Long userId,
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		return ResponseEntity.ok(bookingService.getAllBookingsByUserId(userId, pageable));
+	}
+
+	// Get all bookings for a user by status
+	@GetMapping("/user/{userId}/status/{status}")
+	public ResponseEntity<List<BookingResponse>> getUserBookingsByStatus(
+			@PathVariable Long userId,
+			@PathVariable String status) {
+		return ResponseEntity.ok(bookingService.getAllBookingsByUserIdAndStatus(userId, status));
 	}
 
 	// Get all bookings for a hotel (Owner/Admin)

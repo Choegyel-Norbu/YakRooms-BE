@@ -72,6 +72,7 @@ public class BookingMapper {
         response.setCheckOutDate(booking.getCheckOutDate());
         response.setGuests(booking.getGuests());
         response.setStatus(booking.getStatus());
+        response.setPhone(booking.getPhone());
         response.setTotalPrice(booking.getTotalPrice());
         response.setCreatedAt(booking.getCreatedAt());
         response.setPasscode(booking.getPasscode());
@@ -80,12 +81,17 @@ public class BookingMapper {
         // You may need to populate these from the related entities
         if (booking.getUser() != null) {
             response.setName(booking.getUser().getName()); // Assuming User has getName()
-            response.setPhone(booking.getUser().getPhone()); // Assuming User has getPhone()
             response.setEmail(booking.getUser().getEmail()); // Assuming User has getEmail()
         }
         
         if (booking.getRoom() != null) {
             response.setRoomNumber(booking.getRoom().getRoomNumber()); // Assuming Room has getRoomNumber()
+        }
+        
+        // Add hotel information
+        if (booking.getHotel() != null) {
+            response.setHotelName(booking.getHotel().getName());
+            response.setHotelDistrict(booking.getHotel().getDistrict());
         }
         
         return response;
@@ -121,6 +127,7 @@ public class BookingMapper {
         booking.setUser(user);
         booking.setHotel(hotel);
         booking.setRoom(room);
+        booking.setPhone(request.getPhone());
         booking.setCheckInDate(request.getCheckInDate());
         booking.setCheckOutDate(request.getCheckOutDate());
         booking.setGuests(request.getGuests());

@@ -113,19 +113,31 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 			@Param("startDate") String startDate // format: "yyyy-MM-dd"
 	);
 
-	/**
-	 * Check if a passcode already exists in the database.
-	 * 
-	 * @param passcode The passcode to check
-	 * @return true if passcode exists, false otherwise
-	 */
+	
 	boolean existsByPasscode(String passcode);
 
-	/**
-	 * Find booking by passcode.
-	 * 
-	 * @param passcode The passcode to search for
-	 * @return Optional containing the booking if found
-	 */
+	
 	Optional<Booking> findByPasscode(String passcode);
+
+
+	@Query("SELECT b FROM Booking b " +
+		   "LEFT JOIN FETCH b.hotel h " +
+		   "LEFT JOIN FETCH b.room r " +
+		   "WHERE b.user.id = :userId " +
+		   "ORDER BY b.createdAt DESC")
+	List<Booking> findAllBookingsByUserIdWithDetails(@Param("userId") Long userId);
+
+	@Query("SELECT b FROM Booking b " +
+		   "LEFT JOIN FETCH b.hotel h " +
+		   "LEFT JOIN FETCH b.room r " +
+		   "WHERE b.user.id = :userId " +
+		   "ORDER BY b.createdAt DESC")
+	Page<Booking> findAllBookingsByUserIdWithDetails(@Param("userId") Long userId, Pageable pageable);
+
+	@Query("SELECT b FROM Booking b " +
+		   "LEFT JOIN FETCH b.hotel h " +
+		   "LEFT JOIN FETCH b.room r " +
+		   "WHERE b.user.id = :userId AND b.status = :status " +
+		   "ORDER BY b.createdAt DESC")
+	List<Booking> findAllBookingsByUserIdAndStatus(@Param("userId") Long userId, @Param("status") String status);
 }

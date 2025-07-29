@@ -22,6 +22,8 @@ public class Booking {
 	@ManyToOne
 	private Hotel hotel;
 
+	private String phone;
+
 	@ManyToOne
 	private Room room;
 
@@ -58,6 +60,14 @@ public class Booking {
 
 	public User getUser() {
 		return user;
+	}
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
 	}
 
 	public void setUser(User user) {

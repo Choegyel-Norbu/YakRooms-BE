@@ -60,6 +60,9 @@ public class HotelMapper {
         hotel.setWebsiteUrl(dto.getWebsiteUrl());
         hotel.setLicenseUrl(dto.getLicenseUrl());
         hotel.setIdProofUrl(dto.getIdProofUrl());
+        hotel.setLatitude(dto.getLatitude());
+        hotel.setLongitude(dto.getLongitude());
+        
         hotel.setHotelType(dto.getHoteType()); // Note: using getHoteType() as per your HotelRequest
         
         try {
@@ -122,11 +125,14 @@ public class HotelMapper {
             entity.setIdProofUrl(dto.getIdProofUrl());
         }
         
-        if (dto.getHoteType() != null) {
-            entity.setHotelType(dto.getHoteType());
+        if (dto.getHotelType() != null) {
+            try {
+                entity.setHotelType(com.yakrooms.be.model.enums.HotelType.valueOf(dto.getHotelType()));
+            } catch (IllegalArgumentException e) {
+                // Optionally log or handle invalid hotelType string
+            }
         }
         
-        // Update lists only if they are not null
         if (dto.getPhotoUrls() != null) {
             entity.setPhotoUrls(new ArrayList<>(dto.getPhotoUrls()));
         }

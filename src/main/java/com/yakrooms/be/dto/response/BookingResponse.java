@@ -23,6 +23,24 @@ public class BookingResponse {
 	private String email;
 	private String roomNumber;
 	private String passcode;
+	private String hotelName;
+	private String hotelDistrict;
+
+	public String getHotelName() {
+		return hotelName;
+	}
+
+	public void setHotelName(String hotelName) {
+		this.hotelName = hotelName;
+	}
+
+	public String getHotelDistrict() {
+		return hotelDistrict;
+	}
+
+	public void setHotelDistrict(String hotelDistrict) {
+		this.hotelDistrict = hotelDistrict;
+	}
 
 	public String getPasscode() {
 		return passcode;

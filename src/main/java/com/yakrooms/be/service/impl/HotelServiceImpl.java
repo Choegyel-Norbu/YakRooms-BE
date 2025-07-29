@@ -135,7 +135,7 @@ public class HotelServiceImpl implements HotelService {
 
         // Use mapper to update - it handles null checking
         hotelMapper.updateHotelFromRequest(request, hotel);
-
+        
         Hotel savedHotel = hotelRepository.save(hotel);
         logger.info("Updated hotel with ID: {}", id);
 

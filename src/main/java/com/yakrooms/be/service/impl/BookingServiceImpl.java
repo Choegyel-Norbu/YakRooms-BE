@@ -362,6 +362,46 @@ public class BookingServiceImpl implements BookingService {
         return verification;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookingsByUserId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        
+        List<Booking> bookings = bookingRepository.findAllBookingsByUserIdWithDetails(userId);
+        return bookings.stream()
+                .map(bookingMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookingResponse> getAllBookingsByUserId(Long userId, Pageable pageable) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        
+        Page<Booking> bookings = bookingRepository.findAllBookingsByUserIdWithDetails(userId, pageable);
+        return bookings.map(bookingMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookingsByUserIdAndStatus(Long userId, String status) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        if (status == null || status.trim().isEmpty()) {
+            throw new IllegalArgumentException("Status cannot be null or empty");
+        }
+        
+        List<Booking> bookings = bookingRepository.findAllBookingsByUserIdAndStatus(userId, status.trim());
+        return bookings.stream()
+                .map(bookingMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Generates a unique passcode for booking.
      * Retries up to 3 times if a collision occurs.

@@ -52,4 +52,30 @@ public interface BookingService {
      * @return PasscodeVerificationDTO with verification result and booking details
      */
     PasscodeVerificationDTO verifyBookingByPasscode(String passcode);
+
+    /**
+     * Get all bookings for a specific user.
+     * 
+     * @param userId The user ID
+     * @return List of booking responses
+     */
+    List<BookingResponse> getAllBookingsByUserId(Long userId);
+
+    /**
+     * Get all bookings for a specific user with pagination.
+     * 
+     * @param userId The user ID
+     * @param pageable Pagination parameters
+     * @return Page of booking responses
+     */
+    Page<BookingResponse> getAllBookingsByUserId(Long userId, Pageable pageable);
+
+    /**
+     * Get all bookings for a specific user by status.
+     * 
+     * @param userId The user ID
+     * @param status The booking status to filter by
+     * @return List of booking responses
+     */
+    List<BookingResponse> getAllBookingsByUserIdAndStatus(Long userId, String status);
 }

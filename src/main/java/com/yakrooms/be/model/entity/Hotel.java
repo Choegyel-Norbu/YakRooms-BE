@@ -32,6 +32,8 @@ public class Hotel {
 	private String websiteUrl;
 	private String licenseUrl;
 	private String idProofUrl;
+	private String latitude;
+	private String longitude;
 
 	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<User> users = new ArrayList<>();
@@ -41,9 +43,33 @@ public class Hotel {
 
 	@Enumerated(EnumType.STRING)
 	private HotelType hotelType;
-	
+
 	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
-    private List<Staff> staffList;
+	private List<Staff> staffList;
+
+	public String getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(String latitude) {
+		this.latitude = latitude;
+	}
+
+	public String getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(String longitude) {
+		this.longitude = longitude;
+	}
+
+	public List<Staff> getStaffList() {
+		return staffList;
+	}
+
+	public void setStaffList(List<Staff> staffList) {
+		this.staffList = staffList;
+	}
 
 	@ElementCollection
 	@CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))

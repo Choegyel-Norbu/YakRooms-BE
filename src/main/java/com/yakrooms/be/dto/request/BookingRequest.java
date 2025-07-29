@@ -11,6 +11,7 @@ public class BookingRequest {
 	private int guests;
 	private int numberOfbookingRooms;
 	private Double totalPrice;
+	private String phone;
 
 	public Double getTotalPrice() {
 		return totalPrice;
@@ -34,6 +35,15 @@ public class BookingRequest {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+	
+
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
 	}
 
 	public Long getHotelId() {
