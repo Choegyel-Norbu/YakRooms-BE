@@ -25,6 +25,8 @@ public class BookingResponse {
 	private String passcode;
 	private String hotelName;
 	private String hotelDistrict;
+	private String hotelLatitude;
+	private String hotelLongitude;
 
 	public String getHotelName() {
 		return hotelName;
@@ -40,6 +42,22 @@ public class BookingResponse {
 
 	public void setHotelDistrict(String hotelDistrict) {
 		this.hotelDistrict = hotelDistrict;
+	}
+
+	public String getHotelLatitude() {
+		return hotelLatitude;
+	}
+
+	public void setHotelLatitude(String hotelLatitude) {
+		this.hotelLatitude = hotelLatitude;
+	}
+
+	public String getHotelLongitude() {
+		return hotelLongitude;
+	}
+
+	public void setHotelLongitude(String hotelLongitude) {
+		this.hotelLongitude = hotelLongitude;
 	}
 
 	public String getPasscode() {

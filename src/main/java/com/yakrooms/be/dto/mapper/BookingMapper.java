@@ -92,6 +92,8 @@ public class BookingMapper {
         if (booking.getHotel() != null) {
             response.setHotelName(booking.getHotel().getName());
             response.setHotelDistrict(booking.getHotel().getDistrict());
+            response.setHotelLatitude(booking.getHotel().getLatitude());
+            response.setHotelLongitude(booking.getHotel().getLongitude());
         }
         
         return response;
