@@ -73,7 +73,7 @@ public class FirebaseServiceImpl implements FirebaseService {
 	        user = new User();
 	        user.setEmail(data.getEmail());
 	        user.setName(data.getName());
-	        user.setRole(Role.GUEST);
+	        user.addRole(Role.GUEST);
 	        user.setProfilePicUrl(data.getProfilePictureUrl());
 	        user.setCreatedAt(LocalDateTime.now());
 	        user.setUpdatedAt(LocalDateTime.now());

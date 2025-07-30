@@ -18,7 +18,7 @@ public class JwtFilter implements Filter {
         "/auth/firebase",
         "/api/hotels/**",
         "/api/bookings/**",
-        "/api/rooms/status/**",
+        "/api/rooms/**",
         "/api/upload",
         "/test/**",
         "/ws/**",

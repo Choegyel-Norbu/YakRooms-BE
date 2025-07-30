@@ -74,7 +74,7 @@ public class HotelServiceImpl implements HotelService {
         
         // Update user relationship
         user.setHotel(hotel);
-        user.setRole(Role.HOTEL_ADMIN);
+        user.addRole(Role.HOTEL_ADMIN);
 
         Hotel savedHotel = hotelRepository.save(hotel);
         logger.info("Created new hotel with ID: {} for user: {}", savedHotel.getId(), userId);

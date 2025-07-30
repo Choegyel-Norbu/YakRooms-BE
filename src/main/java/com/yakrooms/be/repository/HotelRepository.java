@@ -27,8 +27,8 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 	@Query("SELECT h FROM Hotel h WHERE h.isVerified = true")
 	Page<Hotel> findAllVerified(Pageable pageable);
 
-	@Query("SELECT u.email FROM User u WHERE u.hotel.id = :hotelId AND u.role = 'HOTEL_ADMIN'")
-	String findOwnerEmailByHotelId(@Param("hotelId") Long hotelId);
+	@Query("SELECT u.email FROM User u WHERE u.hotel.id = :hotelId AND :role MEMBER OF u.roles")
+	String findOwnerEmailByHotelId(@Param("hotelId") Long hotelId, @Param("role") com.yakrooms.be.model.enums.Role role);
 
 	@Query(value = "SELECT \n" + "    h.id,\n" + "    h.name,\n" + "    h.address,\n" + "    h.district,\n"
 			+ "    h.description,\n" + "    h.phone,\n" + "    h.is_verified,\n" + "    h.created_at,\n"

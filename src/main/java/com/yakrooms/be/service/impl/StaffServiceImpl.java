@@ -44,7 +44,7 @@ public class StaffServiceImpl implements StaffService {
 
 		User user = new User();
 		user.setEmail(requestDTO.getEmail());
-		user.setRole(Role.STAFF);
+		user.addRole(Role.STAFF);
 		user.setActive(true);
 		user.setHotel(hotel);
 		user = userRepository.save(user);

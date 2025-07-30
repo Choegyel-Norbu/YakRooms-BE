@@ -3,6 +3,8 @@ package com.yakrooms.be.model.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.yakrooms.be.model.enums.Role;
 
@@ -30,8 +32,11 @@ public class User {
 
 	private String profilePicUrl;
 
+	@ElementCollection(fetch = FetchType.EAGER)
 	@Enumerated(EnumType.STRING)
-	private Role role;
+	@CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+	@Column(name = "role")
+	private List<Role> roles = new ArrayList<>();
 
 	@OneToOne(mappedBy = "user")
 	private Staff staff;
@@ -112,12 +117,27 @@ public class User {
 		this.profilePicUrl = profilePicUrl;
 	}
 
-	public Role getRole() {
-		return role;
+	public List<Role> getRoles() {
+		return roles;
 	}
 
-	public void setRole(Role role) {
-		this.role = role;
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
+	}
+
+	// Helper methods for role management
+	public void addRole(Role role) {
+		if (!this.roles.contains(role)) {
+			this.roles.add(role);
+		}
+	}
+
+	public void removeRole(Role role) {
+		this.roles.remove(role);
+	}
+
+	public boolean hasRole(Role role) {
+		return this.roles.contains(role);
 	}
 
 	public boolean isActive() {

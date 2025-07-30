@@ -16,7 +16,11 @@ public class StaffMapper {
         dto.setStaffEmail(staff.getEmail());
         dto.setNumber(staff.getPhoneNumber());
         dto.setDateJoined(staff.getDateJoined());
-        dto.setRole(user.getRole().name());
+        // For staff, we'll use the first role or combine all roles
+        String rolesString = user.getRoles().stream()
+                .map(role -> role.name())
+                .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
+        dto.setRole(rolesString);
         dto.setProfilePictureUrl(user.getProfilePicUrl());
         
         return dto;

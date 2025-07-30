@@ -99,8 +99,8 @@ public class BookingServiceImpl implements BookingService {
         // --- START: NOTIFICATION LOGIC ---
 
         // Assuming your Hotel entity has a relationship to its owner (User).
-        User hotelAdmin = userRepository.findByHotelIdAndRole(request.getHotelId(), Role.HOTEL_ADMIN)
-        	    .orElse(null);
+        Optional<User> hotelAdminOpt = userRepository.findByHotelIdAndRole(request.getHotelId(), Role.HOTEL_ADMIN);
+        User hotelAdmin = hotelAdminOpt.orElseThrow(() -> new RuntimeException("Hotel admin not found for hotelId: " + request.getHotelId()));
 
         // Get hotel admin
         System.out.println("=== NOTIFICATION DEBUG ===");

@@ -6,6 +6,7 @@ import com.yakrooms.be.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 
 @Builder
@@ -15,7 +16,7 @@ public class UserResponse {
 	private String email;
 	private String phone;
 	private String profilePicUrl;
-	private Role role;
+	private List<Role> roles;
 	private Long hotelId;
 
 	
@@ -62,12 +63,12 @@ public class UserResponse {
 		this.profilePicUrl = profilePicUrl;
 	}
 
-	public Role getRole() {
-		return role;
+	public List<Role> getRoles() {
+		return roles;
 	}
 
-	public void setRole(Role role) {
-		this.role = role;
+	public void setRoles(List<Role> roles) {
+		this.roles = roles;
 	}
 
 	public Long getHotelId() {

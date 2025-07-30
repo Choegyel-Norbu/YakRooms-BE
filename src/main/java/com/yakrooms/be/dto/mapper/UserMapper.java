@@ -12,7 +12,7 @@ public class UserMapper {
 		response.setEmail(user.getEmail());
 		response.setPhone(user.getPhone());
 		response.setProfilePicUrl(user.getProfilePicUrl());
-		response.setRole(user.getRole());
+		response.setRoles(user.getRoles());
 		response.setHotelId(user.getHotel() != null ? user.getHotel().getId() : null);
 
 		return response;

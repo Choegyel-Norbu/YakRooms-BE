@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.yakrooms.be.model.entity.User;
+import com.yakrooms.be.model.enums.Role;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -21,7 +22,11 @@ public class JwtUtil {
 	public static String generateToken(User user) {
 		Map<String, Object> claims = new HashMap<>();
 	    claims.put("email", user.getEmail());
-	    claims.put("role", user.getRole().name());
+	    // Store roles as comma-separated string
+	    String rolesString = user.getRoles().stream()
+	            .map(Role::name)
+	            .reduce("", (a, b) -> a.isEmpty() ? b : a + "," + b);
+	    claims.put("roles", rolesString);
 	    claims.put("userId", user.getId());
 	    claims.put("hotelId", user.getHotel() != null ? user.getHotel().getId() : null);
 
@@ -41,8 +46,17 @@ public class JwtUtil {
 		return parseToken(token).get("userId", Long.class);
 	}
 
+	public static String extractRoles(String token) {
+		return parseToken(token).get("roles", String.class);
+	}
+
 	public static String extractRole(String token) {
-		return parseToken(token).get("role", String.class);
+		// For backward compatibility, return the first role
+		String roles = extractRoles(token);
+		if (roles != null && !roles.isEmpty()) {
+			return roles.split(",")[0];
+		}
+		return null;
 	}
 
 	public static Long extractHotelId(String token) {
