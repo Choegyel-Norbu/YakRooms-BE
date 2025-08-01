@@ -17,6 +17,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +32,9 @@ public class StaffServiceImpl implements StaffService {
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	@Override
 	@Transactional
@@ -74,12 +78,23 @@ public class StaffServiceImpl implements StaffService {
 
 		User user = staff.getUser();
 
-		// Break the bidirectional relationship
 		if (user != null) {
+			// Delete user roles directly using native SQL to avoid foreign key constraint
+			jdbcTemplate.update("DELETE FROM user_roles WHERE user_id = ?", user.getId());
+			
+			// Delete bookings associated with this user to avoid room constraint
+			jdbcTemplate.update("DELETE FROM booking WHERE user_id = ?", user.getId());
+			
+			// Break the bidirectional relationship
 			user.setStaff(null);
-			staff.setUser(null);
 			userRepository.save(user);
 		}
+
+		// Delete the staff first, then the user
 		staffRepository.deleteById(id);
+		
+		if (user != null) {
+			userRepository.deleteById(user.getId());
+		}
 	}
 }

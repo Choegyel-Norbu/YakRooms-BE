@@ -42,6 +42,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 	List<Object[]> findRawHotelListingByUserId(@Param("userId") Long userId);
 
 	@Query("SELECT h FROM Hotel h WHERE "
+			+ "h.isVerified = true AND "
 			+ "(:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%'))) AND "
 			+ "(:hotelType IS NULL OR LOWER(h.hotelType) = LOWER(:hotelType))")
 	Page<Hotel> findByDistrictAndHotelType(@Param("district") String district, @Param("hotelType") String hotelType,

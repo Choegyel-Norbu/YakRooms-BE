@@ -27,7 +27,7 @@ public class Staff {
 	private Hotel hotel;
 
 	
-	@OneToOne(optional = false)
+	@OneToOne(optional = true)
 	@JoinColumn(name = "user_id")
 	private User user;
 

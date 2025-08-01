@@ -8,9 +8,12 @@ import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.yakrooms.be.model.enums.HotelType;
+import com.yakrooms.be.model.entity.Room;
 
 @Entity
 @Table(name = "hotels")
@@ -47,6 +50,9 @@ public class Hotel {
 	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
 	private List<Staff> staffList;
 
+	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Room> rooms = new ArrayList<>();
+
 	public String getLatitude() {
 		return latitude;
 	}
@@ -71,13 +77,23 @@ public class Hotel {
 		this.staffList = staffList;
 	}
 
+	public List<Room> getRooms() {
+		return rooms;
+	}
+
+	public void setRooms(List<Room> rooms) {
+		this.rooms = rooms;
+	}
+
 	@ElementCollection
 	@CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "amenity")
 	private List<String> amenities = new ArrayList<>();
 
 	@ElementCollection
 	@CollectionTable(name = "hotel_photo_urls", joinColumns = @JoinColumn(name = "hotel_id"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "url")
 	private List<String> photoUrls = new ArrayList<>();
 

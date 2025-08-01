@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.yakrooms.be.model.enums.Role;
 
 @Entity
@@ -35,6 +38,7 @@ public class User {
 	@ElementCollection(fetch = FetchType.EAGER)
 	@Enumerated(EnumType.STRING)
 	@CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "role")
 	private List<Role> roles = new ArrayList<>();
 

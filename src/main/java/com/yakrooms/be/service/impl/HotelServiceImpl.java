@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -41,16 +42,19 @@ public class HotelServiceImpl implements HotelService {
     private final UserRepository userRepository;
     private final HotelMapper hotelMapper;
     private final MailService mailService;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
     public HotelServiceImpl(HotelRepository hotelRepository, 
                            UserRepository userRepository,
                            HotelMapper hotelMapper, 
-                           MailService mailService) {
+                           MailService mailService,
+                           JdbcTemplate jdbcTemplate) {
         this.hotelRepository = hotelRepository;
         this.userRepository = userRepository;
         this.hotelMapper = hotelMapper;
         this.mailService = mailService;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -152,6 +156,22 @@ public class HotelServiceImpl implements HotelService {
             throw new ResourceNotFoundException("Hotel not found with id: " + id);
         }
 
+        // Delete all bookings associated with this hotel to avoid room constraint
+        jdbcTemplate.update("DELETE FROM booking WHERE hotel_id = ?", id);
+        logger.info("Deleted all bookings for hotel with ID: {}", id);
+
+        // Find all users associated with this hotel and set their hotel to null
+        List<User> usersWithHotel = userRepository.findByHotelId(id);
+        for (User user : usersWithHotel) {
+            user.setHotel(null);
+            // Remove HOTEL_ADMIN role if user has it
+            user.removeRole(Role.HOTEL_ADMIN);
+        }
+        userRepository.saveAll(usersWithHotel);
+        
+        logger.info("Disassociated {} users from hotel with ID: {}", usersWithHotel.size(), id);
+
+        // Now delete the hotel
         hotelRepository.deleteById(id);
         logger.info("Deleted hotel with ID: {}", id);
     }

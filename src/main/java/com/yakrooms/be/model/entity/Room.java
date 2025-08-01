@@ -12,6 +12,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import com.yakrooms.be.model.enums.RoomType;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 public class Room {
@@ -34,11 +36,13 @@ public class Room {
 
 	@ElementCollection
 	@CollectionTable(name = "room_amenities", joinColumns = @JoinColumn(name = "room_id"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "amenity")
 	private List<String> amenities = new ArrayList<>();
 
 	@ElementCollection
 	@CollectionTable(name = "room_image_urls", joinColumns = @JoinColumn(name = "room_id"))
+	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "url")
 	private List<String> imageUrl = new ArrayList<>();
 
