@@ -1,0 +1,998 @@
+{
+  "tech_stack": [
+    "Java 17",
+    "Spring Boot 3.5.3",
+    "MySQL 8.0",
+    "Hibernate/JPA",
+    "Firebase Authentication",
+    "JWT",
+    "WebSocket",
+    "SMTP Email",
+    "Maven",
+    "MapStruct",
+    "Lombok"
+  ],
+  "features": [
+    {
+      "name": "Authentication API",
+      "description": "Firebase-based authentication system with JWT token management",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/AuthController.java",
+        "src/main/java/com/yakrooms/be/service/FirebaseService.java",
+        "src/main/java/com/yakrooms/be/service/impl/FirebaseServiceImpl.java",
+        "src/main/java/com/yakrooms/be/security/JwtUtil.java",
+        "src/main/java/com/yakrooms/be/security/JwtFilter.java",
+        "src/main/java/com/yakrooms/be/security/FilterConfig.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Authentication API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/auth/firebase": {
+            "post": {
+              "summary": "Firebase authentication",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "idToken": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Authentication successful",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/JwtLoginResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Hotel Management API",
+      "description": "Complete hotel registration, management, and search functionality",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/HotelController.java",
+        "src/main/java/com/yakrooms/be/service/HotelService.java",
+        "src/main/java/com/yakrooms/be/service/impl/HotelServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/Hotel.java",
+        "src/main/java/com/yakrooms/be/repository/HotelRepository.java",
+        "src/main/java/com/yakrooms/be/dto/mapper/HotelMapper.java",
+        "src/main/java/com/yakrooms/be/dto/request/HotelRequest.java",
+        "src/main/java/com/yakrooms/be/dto/response/HotelResponse.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Hotel Management API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/hotels/{userId}": {
+            "post": {
+              "summary": "Create new hotel",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/HotelRequest"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Hotel created successfully"
+                }
+              }
+            },
+            "get": {
+              "summary": "Get hotel by user ID",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Hotel details retrieved"
+                }
+              }
+            }
+          },
+          "/api/hotels": {
+            "get": {
+              "summary": "Get all hotels with pagination",
+              "parameters": [
+                {
+                  "name": "page",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer",
+                    "default": 0
+                  }
+                },
+                {
+                  "name": "size",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer",
+                    "default": 10
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "List of hotels"
+                }
+              }
+            }
+          },
+          "/api/hotels/search": {
+            "get": {
+              "summary": "Search hotels by district and type",
+              "parameters": [
+                {
+                  "name": "district",
+                  "in": "query",
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "hotelType",
+                  "in": "query",
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "page",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer",
+                    "default": 0
+                  }
+                },
+                {
+                  "name": "size",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer",
+                    "default": 10
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Search results"
+                }
+              }
+            }
+          },
+          "/api/hotels/{id}/verify": {
+            "post": {
+              "summary": "Verify hotel by admin",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Hotel verified successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Room Management API",
+      "description": "Room creation, management, and availability tracking",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/RoomController.java",
+        "src/main/java/com/yakrooms/be/service/RoomService.java",
+        "src/main/java/com/yakrooms/be/service/impl/RoomServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/Room.java",
+        "src/main/java/com/yakrooms/be/repository/RoomRepository.java",
+        "src/main/java/com/yakrooms/be/dto/mapper/RoomMapper.java",
+        "src/main/java/com/yakrooms/be/dto/request/RoomRequest.java",
+        "src/main/java/com/yakrooms/be/dto/response/RoomResponse.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Room Management API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/rooms": {
+            "post": {
+              "summary": "Create new room",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/RoomRequest"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Room created successfully"
+                }
+              }
+            },
+            "get": {
+              "summary": "Get all rooms",
+              "responses": {
+                "200": {
+                  "description": "List of rooms"
+                }
+              }
+            }
+          },
+          "/api/rooms/{id}": {
+            "get": {
+              "summary": "Get room by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Room details"
+                }
+              }
+            },
+            "put": {
+              "summary": "Update room",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/RoomRequest"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Room updated successfully"
+                }
+              }
+            },
+            "delete": {
+              "summary": "Delete room",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Room deleted successfully"
+                }
+              }
+            }
+          },
+          "/api/rooms/hotel/{hotelId}": {
+            "get": {
+              "summary": "Get rooms by hotel ID",
+              "parameters": [
+                {
+                  "name": "hotelId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "List of hotel rooms"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Booking Management API",
+      "description": "Complete booking lifecycle management with status tracking",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/BookingController.java",
+        "src/main/java/com/yakrooms/be/service/BookingService.java",
+        "src/main/java/com/yakrooms/be/service/impl/BookingServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/Booking.java",
+        "src/main/java/com/yakrooms/be/repository/BookingRepository.java",
+        "src/main/java/com/yakrooms/be/dto/mapper/BookingMapper.java",
+        "src/main/java/com/yakrooms/be/dto/request/BookingRequest.java",
+        "src/main/java/com/yakrooms/be/dto/response/BookingResponse.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Booking Management API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/bookings": {
+            "post": {
+              "summary": "Create new booking",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/BookingRequest"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Booking created successfully"
+                }
+              }
+            },
+            "get": {
+              "summary": "Get all bookings with pagination",
+              "parameters": [
+                {
+                  "name": "hotelId",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer"
+                  }
+                },
+                {
+                  "name": "page",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer",
+                    "default": 0
+                  }
+                },
+                {
+                  "name": "size",
+                  "in": "query",
+                  "schema": {
+                    "type": "integer",
+                    "default": 10
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "List of bookings"
+                }
+              }
+            }
+          },
+          "/api/bookings/{id}": {
+            "get": {
+              "summary": "Get booking by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Booking details"
+                }
+              }
+            }
+          },
+          "/api/bookings/{id}/cancel": {
+            "post": {
+              "summary": "Cancel booking",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                },
+                {
+                  "name": "userId",
+                  "in": "query",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Booking cancelled successfully"
+                }
+              }
+            }
+          },
+          "/api/bookings/{id}/confirm": {
+            "post": {
+              "summary": "Confirm booking",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Booking confirmed successfully"
+                }
+              }
+            }
+          },
+          "/api/bookings/availability": {
+            "get": {
+              "summary": "Check room availability",
+              "parameters": [
+                {
+                  "name": "roomId",
+                  "in": "query",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                },
+                {
+                  "name": "checkIn",
+                  "in": "query",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                {
+                  "name": "checkOut",
+                  "in": "query",
+                  "required": true,
+                  "schema": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Availability status",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/api/bookings/user/{userId}": {
+            "get": {
+              "summary": "Get user bookings",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "User's booking history"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Staff Management API",
+      "description": "Staff registration, management, and role assignment",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/StaffController.java",
+        "src/main/java/com/yakrooms/be/service/StaffService.java",
+        "src/main/java/com/yakrooms/be/service/impl/StaffServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/Staff.java",
+        "src/main/java/com/yakrooms/be/repository/StaffRepository.java",
+        "src/main/java/com/yakrooms/be/dto/StaffRequestDTO.java",
+        "src/main/java/com/yakrooms/be/dto/StaffResponseDTO.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Staff Management API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/staff": {
+            "post": {
+              "summary": "Create new staff member",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/StaffRequestDTO"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Staff created successfully"
+                }
+              }
+            },
+            "get": {
+              "summary": "Get all staff",
+              "responses": {
+                "200": {
+                  "description": "List of staff members"
+                }
+              }
+            }
+          },
+          "/api/staff/{id}": {
+            "get": {
+              "summary": "Get staff by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Staff details"
+                }
+              }
+            },
+            "put": {
+              "summary": "Update staff",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/StaffRequestDTO"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Staff updated successfully"
+                }
+              }
+            },
+            "delete": {
+              "summary": "Delete staff",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Staff deleted successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Review Management API",
+      "description": "Guest review and rating system for hotels and rooms",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/ReviewController.java",
+        "src/main/java/com/yakrooms/be/service/ReviewService.java",
+        "src/main/java/com/yakrooms/be/service/impl/ReviewServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/Review.java",
+        "src/main/java/com/yakrooms/be/repository/ReviewRepository.java",
+        "src/main/java/com/yakrooms/be/dto/request/ReviewRequest.java",
+        "src/main/java/com/yakrooms/be/dto/response/ReviewResponse.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Review Management API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/reviews": {
+            "post": {
+              "summary": "Create new review",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/ReviewRequest"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Review created successfully"
+                }
+              }
+            },
+            "get": {
+              "summary": "Get all reviews",
+              "responses": {
+                "200": {
+                  "description": "List of reviews"
+                }
+              }
+            }
+          },
+          "/api/reviews/{id}": {
+            "get": {
+              "summary": "Get review by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Review details"
+                }
+              }
+            },
+            "put": {
+              "summary": "Update review",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/ReviewRequest"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Review updated successfully"
+                }
+              }
+            },
+            "delete": {
+              "summary": "Delete review",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Review deleted successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Notification API",
+      "description": "Real-time WebSocket notifications and email notifications",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/NotificationController.java",
+        "src/main/java/com/yakrooms/be/service/NotificationService.java",
+        "src/main/java/com/yakrooms/be/service/impl/NotificationServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/Notification.java",
+        "src/main/java/com/yakrooms/be/repository/NotificationRepository.java",
+        "src/main/java/com/yakrooms/be/config/WebSocketConfig.java",
+        "src/main/java/com/yakrooms/be/service/MailService.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Notification API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/notifications": {
+            "get": {
+              "summary": "Get user notifications",
+              "responses": {
+                "200": {
+                  "description": "List of notifications"
+                }
+              }
+            }
+          },
+          "/api/notifications/{id}": {
+            "get": {
+              "summary": "Get notification by ID",
+              "parameters": [
+                {
+                  "name": "id",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "Notification details"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Booking Statistics API",
+      "description": "Analytics and reporting for booking data",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/BookingStatisticsController.java",
+        "src/main/java/com/yakrooms/be/dto/BookingStatisticsDTO.java",
+        "src/main/java/com/yakrooms/be/dto/MonthlyRevenueStatsDTO.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Booking Statistics API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/statistics/bookings": {
+            "get": {
+              "summary": "Get booking statistics",
+              "responses": {
+                "200": {
+                  "description": "Booking statistics data"
+                }
+              }
+            }
+          },
+          "/api/statistics/revenue": {
+            "get": {
+              "summary": "Get revenue statistics",
+              "responses": {
+                "200": {
+                  "description": "Revenue statistics data"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Passcode Verification API",
+      "description": "Check-in passcode verification system",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/PasscodeVerificationController.java",
+        "src/main/java/com/yakrooms/be/dto/PasscodeVerificationDTO.java",
+        "src/main/java/com/yakrooms/be/util/PasscodeGenerator.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "Passcode Verification API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/passcode/verify": {
+            "post": {
+              "summary": "Verify check-in passcode",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/PasscodeVerificationDTO"
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "Passcode verification result"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "User Role Management API",
+      "description": "User role assignment and management",
+      "files": [
+        "src/main/java/com/yakrooms/be/controller/UserRoleController.java",
+        "src/main/java/com/yakrooms/be/service/UserRoleService.java",
+        "src/main/java/com/yakrooms/be/service/impl/UserRoleServiceImpl.java",
+        "src/main/java/com/yakrooms/be/model/entity/User.java",
+        "src/main/java/com/yakrooms/be/model/enums/Role.java"
+      ],
+      "api_doc": {
+        "openapi": "3.0.0",
+        "info": {
+          "title": "User Role Management API",
+          "version": "1.0.0"
+        },
+        "paths": {
+          "/api/users/{userId}/roles": {
+            "get": {
+              "summary": "Get user roles",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "description": "User roles"
+                }
+              }
+            },
+            "put": {
+              "summary": "Update user roles",
+              "parameters": [
+                {
+                  "name": "userId",
+                  "in": "path",
+                  "required": true,
+                  "schema": {
+                    "type": "integer"
+                  }
+                }
+              ],
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": ["SUPER_ADMIN", "HOTEL_ADMIN", "MANAGER", "STAFF", "GUEST"]
+                      }
+                    }
+                  }
+                }
+              },
+              "responses": {
+                "200": {
+                  "description": "User roles updated successfully"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+} 

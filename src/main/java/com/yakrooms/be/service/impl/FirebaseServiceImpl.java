@@ -24,8 +24,6 @@ public class FirebaseServiceImpl implements FirebaseService {
 	
 	@Autowired
 	UserRepository userRepo;
-	
-	private JwtUtil jwtUtil;
 
 	@Override
 	public JwtLoginResponse verifyTokenAndGetUser(String idToken) {
@@ -81,7 +79,7 @@ public class FirebaseServiceImpl implements FirebaseService {
 	        user = userRepo.save(user);
 	    }
 
-	    String token = jwtUtil.generateToken(user);
+	    String token = JwtUtil.generateToken(user);
 
 	    return new JwtLoginResponse(token, UserMapper.toUserResponse(user));
 	}

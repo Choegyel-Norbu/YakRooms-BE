@@ -1,0 +1,380 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Markdown Preview</title>
+      <style>
+        body {
+          font-family: sans-serif;
+          padding: 40px;
+          line-height: 1.6;
+          background: #fdfdfd;
+          color: #333;
+        }
+        pre {
+          background: #f4f4f4;
+          padding: 10px;
+          border-radius: 5px;
+          overflow-x: auto;
+        }
+        code {
+          font-family: monospace;
+          background: #eee;
+          padding: 2px 4px;
+        }
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 20px;
+        }
+        th, td {
+          border: 1px solid #ccc;
+          padding: 8px 12px;
+          text-align: left;
+        }
+        th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>TestSprite AI Testing Report(MCP)</h1>
+<hr>
+<h2>1️⃣ Document Metadata</h2>
+<ul>
+<li><strong>Project Name:</strong> yakrooms</li>
+<li><strong>Version:</strong> 0.0.1-SNAPSHOT</li>
+<li><strong>Date:</strong> 2025-08-02</li>
+<li><strong>Prepared by:</strong> TestSprite AI Team</li>
+</ul>
+<hr>
+<h2>2️⃣ Requirement Validation Summary</h2>
+<h3>Requirement: Authentication System</h3>
+<ul>
+<li><strong>Description:</strong> Firebase-based authentication with JWT token management for secure user access.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC001</li>
+<li><strong>Test Name:</strong> test_firebase_authentication_with_valid_idtoken</li>
+<li><strong>Test Code:</strong> <a href="./TC001_test_firebase_authentication_with_valid_idtoken.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/2a3bb754-39cc-49be-970c-a01ee944292e</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> The Firebase authentication service is experiencing internal server errors, preventing successful user authentication and JWT token issuance. This is a critical blocker for all other API functionality.</li>
+</ul>
+<hr>
+<h3>Requirement: Hotel Management System</h3>
+<ul>
+<li><strong>Description:</strong> Complete hotel registration, management, and search functionality with verification workflow.</li>
+</ul>
+<h4>Test 2</h4>
+<ul>
+<li><strong>Test ID:</strong> TC002</li>
+<li><strong>Test Name:</strong> test_create_new_hotel_with_valid_data</li>
+<li><strong>Test Code:</strong> <a href="./TC002_test_create_new_hotel_with_valid_data.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/98215e4d-4081-40fa-8ce8-0f11caf0a86e</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Hotel creation functionality cannot be tested due to authentication failures. The endpoint requires valid user authentication to proceed.</li>
+</ul>
+<hr>
+<h4>Test 3</h4>
+<ul>
+<li><strong>Test ID:</strong> TC003</li>
+<li><strong>Test Name:</strong> test_get_hotel_by_user_id</li>
+<li><strong>Test Code:</strong> <a href="./TC003_test_get_hotel_by_user_id.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/4cda02ac-6873-43ff-a4a6-55e045d19ee5</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Hotel retrieval by user ID requires authentication, which is currently failing due to Firebase service issues.</li>
+</ul>
+<hr>
+<h4>Test 4</h4>
+<ul>
+<li><strong>Test ID:</strong> TC004</li>
+<li><strong>Test Name:</strong> test_get_all_hotels_with_pagination</li>
+<li><strong>Test Code:</strong> <a href="./TC004_test_get_all_hotels_with_pagination.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/7f2c85cb-3c68-4b7d-98b5-124db5529e22</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Pagination functionality for hotel listings cannot be verified due to authentication service failures.</li>
+</ul>
+<hr>
+<h4>Test 5</h4>
+<ul>
+<li><strong>Test ID:</strong> TC005</li>
+<li><strong>Test Name:</strong> test_search_hotels_by_district_and_type</li>
+<li><strong>Test Code:</strong> <a href="./TC005_test_search_hotels_by_district_and_type.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/b37ad9cc-cf98-4b00-948d-f892a691a09b</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Hotel search and filtering capabilities cannot be tested due to authentication service failures.</li>
+</ul>
+<hr>
+<h4>Test 6</h4>
+<ul>
+<li><strong>Test ID:</strong> TC006</li>
+<li><strong>Test Name:</strong> test_verify_hotel_by_admin</li>
+<li><strong>Test Code:</strong> <a href="./TC006_test_verify_hotel_by_admin.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/e5486566-4491-45c9-803d-9c181564666a</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Admin hotel verification workflow cannot be tested due to authentication service failures.</li>
+</ul>
+<hr>
+<h3>Requirement: Room Management System</h3>
+<ul>
+<li><strong>Description:</strong> Room creation, management, and availability tracking with pricing and amenities.</li>
+</ul>
+<h4>Test 7</h4>
+<ul>
+<li><strong>Test ID:</strong> TC007</li>
+<li><strong>Test Name:</strong> test_create_new_room</li>
+<li><strong>Test Code:</strong> <a href="./TC007_test_create_new_room.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/27b529be-b860-4fbe-9293-45b377d35904</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Room creation functionality cannot be tested due to authentication service failures.</li>
+</ul>
+<hr>
+<h3>Requirement: Booking Management System</h3>
+<ul>
+<li><strong>Description:</strong> Complete booking lifecycle management with status tracking and cancellation capabilities.</li>
+</ul>
+<h4>Test 8</h4>
+<ul>
+<li><strong>Test ID:</strong> TC008</li>
+<li><strong>Test Name:</strong> test_create_new_booking</li>
+<li><strong>Test Code:</strong> <a href="./TC008_test_create_new_booking.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/462329b4-add5-4db6-8257-99f769d54486</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Booking creation functionality cannot be tested due to authentication service failures.</li>
+</ul>
+<hr>
+<h4>Test 9</h4>
+<ul>
+<li><strong>Test ID:</strong> TC009</li>
+<li><strong>Test Name:</strong> test_cancel_booking</li>
+<li><strong>Test Code:</strong> <a href="./TC009_test_cancel_booking.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/4eff67ee-ceb2-4e5d-9773-84a9c0832abf</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Booking cancellation functionality cannot be tested due to authentication service failures.</li>
+</ul>
+<hr>
+<h3>Requirement: Passcode Verification System</h3>
+<ul>
+<li><strong>Description:</strong> Check-in passcode verification for secure guest access to rooms.</li>
+</ul>
+<h4>Test 10</h4>
+<ul>
+<li><strong>Test ID:</strong> TC010</li>
+<li><strong>Test Name:</strong> test_verify_checkin_passcode</li>
+<li><strong>Test Code:</strong> <a href="./TC010_test_verify_checkin_passcode.py">code_file</a></li>
+<li><strong>Test Error:</strong> 500 Internal Server Error from /auth/firebase endpoint</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/bb684fc5-daf7-4c90-9144-fa9fa0450711/ff18d427-8d95-4859-9a2b-7959ea4132a1</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> HIGH</li>
+<li><strong>Analysis / Findings:</strong> Passcode verification functionality cannot be tested due to authentication service failures.</li>
+</ul>
+<hr>
+<h2>3️⃣ Coverage &amp; Matching Metrics</h2>
+<ul>
+<li><strong>0% of product requirements tested successfully</strong></li>
+<li><strong>0% of tests passed</strong></li>
+<li><strong>Key gaps / risks:</strong></li>
+</ul>
+<blockquote>
+<p>All tests failed due to a critical authentication service failure. The Firebase authentication endpoint (/auth/firebase) is returning 500 Internal Server Error, which blocks all subsequent API functionality. This represents a complete system failure that prevents testing of any authenticated endpoints.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Total Tests</th>
+<th>✅ Passed</th>
+<th>⚠️ Partial</th>
+<th>❌ Failed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authentication System</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Hotel Management System</td>
+<td>5</td>
+<td>0</td>
+<td>0</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Room Management System</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Booking Management System</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Passcode Verification System</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td><strong>10</strong></td>
+<td><strong>0</strong></td>
+<td><strong>0</strong></td>
+<td><strong>10</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4️⃣ Critical Issues Identified</h2>
+<h3>🔴 Critical Issue #1: Firebase Authentication Service Failure</h3>
+<ul>
+<li><strong>Impact:</strong> Complete system failure - all authenticated endpoints are inaccessible</li>
+<li><strong>Root Cause:</strong> 500 Internal Server Error from <code>/auth/firebase</code> endpoint</li>
+<li><strong>Affected Components:</strong> All API endpoints requiring authentication</li>
+<li><strong>Recommended Actions:</strong>
+<ol>
+<li>Check Firebase configuration and credentials</li>
+<li>Verify Firebase SDK initialization</li>
+<li>Review server logs for detailed error information</li>
+<li>Test Firebase connectivity and token validation logic</li>
+<li>Implement proper error handling and fallback mechanisms</li>
+</ol>
+</li>
+</ul>
+<h3>🔴 Critical Issue #2: Authentication Dependency Chain</h3>
+<ul>
+<li><strong>Impact:</strong> Single point of failure affecting entire application</li>
+<li><strong>Root Cause:</strong> All business logic depends on successful authentication</li>
+<li><strong>Affected Components:</strong> Hotel, Room, Booking, and Passcode verification systems</li>
+<li><strong>Recommended Actions:</strong>
+<ol>
+<li>Implement authentication service health checks</li>
+<li>Add circuit breaker patterns for authentication failures</li>
+<li>Consider implementing alternative authentication methods</li>
+<li>Add proper error responses for authentication failures</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2>5️⃣ Recommendations for Resolution</h2>
+<h3>Immediate Actions Required:</h3>
+<ol>
+<li>
+<p><strong>Investigate Firebase Configuration:</strong></p>
+<ul>
+<li>Verify Firebase project settings</li>
+<li>Check service account credentials</li>
+<li>Validate Firebase SDK initialization</li>
+<li>Review Firebase Admin SDK configuration</li>
+</ul>
+</li>
+<li>
+<p><strong>Server Log Analysis:</strong></p>
+<ul>
+<li>Check application logs for detailed error messages</li>
+<li>Monitor Firebase service connectivity</li>
+<li>Verify database connection status</li>
+<li>Review JWT token generation logic</li>
+</ul>
+</li>
+<li>
+<p><strong>Authentication Service Debugging:</strong></p>
+<ul>
+<li>Test Firebase token validation independently</li>
+<li>Verify JWT token generation and validation</li>
+<li>Check CORS and security configurations</li>
+<li>Validate request/response handling</li>
+</ul>
+</li>
+</ol>
+<h3>Long-term Improvements:</h3>
+<ol>
+<li>
+<p><strong>Implement Robust Error Handling:</strong></p>
+<ul>
+<li>Add comprehensive error logging</li>
+<li>Implement graceful degradation</li>
+<li>Add health check endpoints</li>
+<li>Create monitoring and alerting</li>
+</ul>
+</li>
+<li>
+<p><strong>Authentication Service Resilience:</strong></p>
+<ul>
+<li>Implement retry mechanisms</li>
+<li>Add authentication service health checks</li>
+<li>Consider multiple authentication providers</li>
+<li>Implement proper fallback strategies</li>
+</ul>
+</li>
+<li>
+<p><strong>Testing Infrastructure:</strong></p>
+<ul>
+<li>Add unit tests for authentication logic</li>
+<li>Implement integration tests with mocked Firebase</li>
+<li>Add end-to-end testing capabilities</li>
+<li>Create automated testing pipelines</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>6️⃣ Test Execution Summary</h2>
+<ul>
+<li><strong>Total Tests Executed:</strong> 10</li>
+<li><strong>Tests Passed:</strong> 0 (0%)</li>
+<li><strong>Tests Failed:</strong> 10 (100%)</li>
+<li><strong>Tests Partially Passed:</strong> 0 (0%)</li>
+<li><strong>Execution Time:</strong> ~1 minute 56 seconds</li>
+<li><strong>Test Coverage:</strong> All major API endpoints attempted</li>
+<li><strong>Critical Blockers:</strong> 1 (Firebase Authentication Service)</li>
+</ul>
+<hr>
+<h2>7️⃣ Next Steps</h2>
+<ol>
+<li><strong>Priority 1:</strong> Resolve Firebase authentication service issues</li>
+<li><strong>Priority 2:</strong> Re-run all tests after authentication is fixed</li>
+<li><strong>Priority 3:</strong> Implement comprehensive error handling</li>
+<li><strong>Priority 4:</strong> Add monitoring and alerting for critical services</li>
+<li><strong>Priority 5:</strong> Establish automated testing pipeline</li>
+</ol>
+<hr>
+<p><strong>Report Generated:</strong> 2025-08-02<br>
+<strong>Test Environment:</strong> Local development (Port 8080)<br>
+<strong>Test Framework:</strong> TestSprite AI<br>
+<strong>Status:</strong> Critical Issues Identified - Immediate Action Required</p>
+
+    </body>
+    </html>
+  
