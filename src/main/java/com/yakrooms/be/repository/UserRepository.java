@@ -22,5 +22,22 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("DELETE FROM User u WHERE u.id = :userId")
     void deleteUserById(@Param("userId") Long userId);
 
+    @Query("SELECT DISTINCT u FROM User u " +
+           "LEFT JOIN FETCH u.roles " +
+           "LEFT JOIN FETCH u.hotel " +
+           "WHERE u.id = :userId")
+    Optional<User> findByIdWithCollections(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT u FROM User u " +
+           "LEFT JOIN FETCH u.roles " +
+           "LEFT JOIN FETCH u.hotel " +
+           "WHERE u.email = :email")
+    Optional<User> findByEmailWithCollections(@Param("email") String email);
+
+    @Query("SELECT DISTINCT u FROM User u " +
+           "LEFT JOIN FETCH u.roles " +
+           "LEFT JOIN FETCH u.hotel " +
+           "WHERE u.hotel.id = :hotelId")
+    List<User> findByHotelIdWithCollections(@Param("hotelId") Long hotelId);
 
 }

@@ -80,7 +80,7 @@ public class RoomServiceImpl implements RoomService {
             throw new IllegalArgumentException("Room ID cannot be null");
         }
 
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCollections(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
         
         return roomMapper.toDto(room);
@@ -93,7 +93,7 @@ public class RoomServiceImpl implements RoomService {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
-        List<Room> rooms = roomRepository.findByHotelId(hotelId);
+        List<Room> rooms = roomRepository.findByHotelIdWithCollections(hotelId);
         return rooms.stream()
                 .map(roomMapper::toDto)
                 .collect(Collectors.toList());
@@ -107,7 +107,7 @@ public class RoomServiceImpl implements RoomService {
         }
 
         // Find and update room
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCollections(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
 
         // Update room using mapper
@@ -160,7 +160,7 @@ public class RoomServiceImpl implements RoomService {
             throw new IllegalArgumentException("Room ID cannot be null");
         }
 
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCollections(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
 
         room.setAvailable(isAvailable);
@@ -188,7 +188,7 @@ public class RoomServiceImpl implements RoomService {
             throw new IllegalArgumentException("Room ID cannot be null");
         }
 
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findByIdWithCollections(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
         
         return roomMapper.toDtoResponse(room);
@@ -200,7 +200,7 @@ public class RoomServiceImpl implements RoomService {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
-        List<Room> rooms = roomRepository.findByHotelId(hotelId);
+        List<Room> rooms = roomRepository.findByHotelIdWithCollections(hotelId);
         return rooms.stream()
                 .map(roomMapper::toDtoResponse)
                 .collect(Collectors.toList());

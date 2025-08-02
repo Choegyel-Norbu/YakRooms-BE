@@ -36,7 +36,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(() -> new IllegalArgumentException("Hotel not found"));
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Review review = new Review();
         review.setHotel(hotel);

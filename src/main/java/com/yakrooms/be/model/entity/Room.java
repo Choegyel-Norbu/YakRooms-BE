@@ -34,13 +34,13 @@ public class Room {
 
 	private int maxGuests;
 
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "room_amenities", joinColumns = @JoinColumn(name = "room_id"))
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "amenity")
 	private List<String> amenities = new ArrayList<>();
 
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "room_image_urls", joinColumns = @JoinColumn(name = "room_id"))
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "url")

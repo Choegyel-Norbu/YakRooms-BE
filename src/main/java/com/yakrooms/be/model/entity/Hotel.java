@@ -85,13 +85,13 @@ public class Hotel {
 		this.rooms = rooms;
 	}
 
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "amenity")
 	private List<String> amenities = new ArrayList<>();
 
-	@ElementCollection
+	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "hotel_photo_urls", joinColumns = @JoinColumn(name = "hotel_id"))
 	@OnDelete(action = OnDeleteAction.CASCADE)
 	@Column(name = "url")

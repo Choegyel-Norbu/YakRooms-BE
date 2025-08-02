@@ -23,7 +23,7 @@ public class NotificationController {
     // Fetch all notifications for a user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<NotificationDTO>> getAllNotifications(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByIdWithCollections(userId).orElseThrow(() -> new RuntimeException("User not found"));
         List<Notification> notifications = notificationService.getAllNotifications(user);
         List<NotificationDTO> dtos = notifications.stream().map(NotificationMapper::toDto).toList();
         return ResponseEntity.ok(dtos);
@@ -32,7 +32,7 @@ public class NotificationController {
     // Mark all unread notifications as read for a user
     @PutMapping("/user/{userId}/markAllRead")
     public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByIdWithCollections(userId).orElseThrow(() -> new RuntimeException("User not found"));
         notificationService.markAllAsRead(user);
         return ResponseEntity.ok().build();
     }
@@ -40,7 +40,7 @@ public class NotificationController {
     // Delete all notifications for a user
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<Void> deleteAllNotifications(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByIdWithCollections(userId).orElseThrow(() -> new RuntimeException("User not found"));
         notificationService.deleteAllNotifications(user);
         return ResponseEntity.noContent().build();
     }

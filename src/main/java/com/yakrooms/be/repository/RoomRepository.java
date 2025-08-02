@@ -19,6 +19,20 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
 	List<Room> findByHotelId(Long hotelId);
 
+	@Query("SELECT DISTINCT r FROM Room r " +
+		   "LEFT JOIN FETCH r.amenities " +
+		   "LEFT JOIN FETCH r.imageUrl " +
+		   "LEFT JOIN FETCH r.items " +
+		   "WHERE r.hotel.id = :hotelId")
+	List<Room> findByHotelIdWithCollections(@Param("hotelId") Long hotelId);
+
+	@Query("SELECT DISTINCT r FROM Room r " +
+		   "LEFT JOIN FETCH r.amenities " +
+		   "LEFT JOIN FETCH r.imageUrl " +
+		   "LEFT JOIN FETCH r.items " +
+		   "WHERE r.id = :roomId")
+	java.util.Optional<Room> findByIdWithCollections(@Param("roomId") Long roomId);
+
 	@Query(value = "SELECT * FROM room WHERE hotel_id = :hotelId AND is_available = true", countQuery = "SELECT count(*) FROM room WHERE hotel_id = :hotelId AND is_available = true", nativeQuery = true)
 	Page<Room> findActiveAvailableRoomsByHotelId(@Param("hotelId") Long hotelId, Pageable pageable);
 

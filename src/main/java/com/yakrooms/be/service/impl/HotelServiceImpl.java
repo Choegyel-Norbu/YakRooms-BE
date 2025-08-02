@@ -69,7 +69,7 @@ public class HotelServiceImpl implements HotelService {
         }
 
         // Find user first to fail fast if not found
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         // Create and save hotel
@@ -161,7 +161,7 @@ public class HotelServiceImpl implements HotelService {
         logger.info("Deleted all bookings for hotel with ID: {}", id);
 
         // Find all users associated with this hotel and set their hotel to null
-        List<User> usersWithHotel = userRepository.findByHotelId(id);
+        List<User> usersWithHotel = userRepository.findByHotelIdWithCollections(id);
         for (User user : usersWithHotel) {
             user.setHotel(null);
             // Remove HOTEL_ADMIN role if user has it

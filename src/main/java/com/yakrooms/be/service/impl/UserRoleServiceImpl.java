@@ -19,7 +19,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional
     public void addRoleToUser(Long userId, Role role) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         user.addRole(role);
         userRepository.save(user);
@@ -28,7 +28,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional
     public void removeRoleFromUser(Long userId, Role role) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         user.removeRole(role);
         userRepository.save(user);
@@ -37,7 +37,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional(readOnly = true)
     public List<Role> getUserRoles(Long userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return user.getRoles();
     }
@@ -45,7 +45,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional(readOnly = true)
     public boolean userHasRole(Long userId, Role role) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         return user.hasRole(role);
     }
@@ -53,7 +53,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     @Override
     @Transactional
     public void setUserRoles(Long userId, List<Role> roles) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
         user.setRoles(roles);
         userRepository.save(user);
