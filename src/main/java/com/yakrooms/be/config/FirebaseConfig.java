@@ -21,37 +21,33 @@ public class FirebaseConfig {
     }
 
     @PostConstruct
-    public void init() {
-        // TODO: Re-enable Firebase initialization when configuration is fixed
-        // try {
-        //     FirebaseOptions options;
-            
-        //     if (env.matchesProfiles("prod")) {
-        //         // Production - use environment variable
-        //         String encodedCredentials = env.getRequiredProperty("FIREBASE_CONFIG_BASE64");
-        //         byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials);
-        //         InputStream credentialsStream = new ByteArrayInputStream(decodedBytes);
-        //         options = FirebaseOptions.builder()
-        //             .setCredentials(GoogleCredentials.fromStream(credentialsStream))
-        //             .build();
-        //     } else {
-        //         // Local development - use file
-        //         InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
-        //         options = FirebaseOptions.builder()
-        //             .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-        //             .build();
-        //     }
+public void init() {
+    try {
+        FirebaseOptions options;
 
-        //     if (FirebaseApp.getApps().isEmpty()) {
-        //         FirebaseApp.initializeApp(options);
-        //         System.out.println("✅ Firebase Initialized");
-        //     }
+        if (env.matchesProfiles("prod")) {
+            String encodedCredentials = env.getRequiredProperty("FIREBASE_CONFIG_BASE64");
+            byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials);
+            InputStream credentialsStream = new ByteArrayInputStream(decodedBytes);
+            options = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(credentialsStream))
+                .build();
+        } else {
+            InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
+            options = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                .build();
+        }
 
-        // } catch (Exception e) {
-        //     System.err.println("❌ Firebase init failed: " + e.getMessage());
-        //     e.printStackTrace();
-        // }
-        
-        System.out.println("⚠️ Firebase initialization disabled for testing");
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp.initializeApp(options);
+            System.out.println("✅ Firebase Initialized");
+        }
+
+    } catch (Exception e) {
+        System.err.println("❌ Firebase init failed: " + e.getMessage());
+        e.printStackTrace();
     }
+}
+
 }
