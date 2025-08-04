@@ -3,9 +3,6 @@ package com.yakrooms.be.dto.response;
 import com.google.auto.value.AutoValue.Builder;
 import com.yakrooms.be.model.enums.Role;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.util.List;
 
 

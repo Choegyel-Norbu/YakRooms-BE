@@ -4,6 +4,7 @@ import com.yakrooms.be.dto.StaffRequestDTO;
 import com.yakrooms.be.dto.StaffResponseDTO;
 import com.yakrooms.be.model.entity.Staff;
 import com.yakrooms.be.model.entity.User;
+import com.yakrooms.be.projection.StaffProjection;
 
 public class StaffMapper {
   
@@ -22,6 +23,21 @@ public class StaffMapper {
                 .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
         dto.setRole(rolesString);
         dto.setProfilePictureUrl(user.getProfilePicUrl());
+        
+        return dto;
+    }
+    
+    public static StaffResponseDTO toDto(StaffProjection projection) {
+        StaffResponseDTO dto = new StaffResponseDTO();
+        dto.setStaffId(projection.getStaffId());
+        dto.setHotelId(projection.getHotelId());
+        dto.setPosition(projection.getPosition());
+        dto.setFullName(projection.getFullName());
+        dto.setStaffEmail(projection.getStaffEmail());
+        dto.setNumber(projection.getPhoneNumber());
+        dto.setDateJoined(projection.getDateJoined());
+        dto.setRole(projection.getRoles());
+        dto.setProfilePictureUrl(projection.getProfilePictureUrl());
         
         return dto;
     }

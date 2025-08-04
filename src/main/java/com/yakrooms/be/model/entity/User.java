@@ -1,179 +1,289 @@
 package com.yakrooms.be.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Objects;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.BatchSize;
 
 import com.yakrooms.be.model.enums.Role;
 
 @Entity
-@Table(name = "users")
-
+@Table(name = "users", indexes = {
+    @Index(name = "idx_user_email", columnList = "email"),
+    @Index(name = "idx_user_hotel_id", columnList = "hotel_id"),
+    @Index(name = "idx_user_active", columnList = "is_active"),
+    @Index(name = "idx_user_email_active", columnList = "email,is_active")
+})
 public class User {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "hotel_id")
-	private Hotel hotel;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "hotel_id")
+    private Hotel hotel;
 
-	private String name;
+    @Column(length = 100)
+    private String name;
 
-	@Column(unique = true, nullable = false)
-	private String email;
+    @Column(unique = true, nullable = false, length = 255)
+    private String email;
 
-	private String password;
+    private String password;
 
-	private String phone;
+    @Column(length = 20)
+    private String phone;
 
-	private String profilePicUrl;
+    @Column(name = "profile_pic_url", length = 500)
+    private String profilePicUrl;
 
-	@ElementCollection(fetch = FetchType.EAGER)
-	@Enumerated(EnumType.STRING)
-	@CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	@Column(name = "role")
-	private List<Role> roles = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.LAZY)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(
+        name = "user_roles", 
+        joinColumns = @JoinColumn(name = "user_id"),
+        indexes = @Index(name = "idx_user_role_user_id", columnList = "user_id")
+    )
+    @Column(name = "role", length = 50)
+    @BatchSize(size = 20)
+    private Set<Role> roles = new HashSet<>();
 
-	@OneToOne(mappedBy = "user")
-	private Staff staff;
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private Staff staff;
 
-	public Staff getStaff() {
-		return staff;
-	}
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
-	public void setStaff(Staff staff) {
-		this.staff = staff;
-	}
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
-	private boolean isActive = true;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-	private LocalDateTime lastLogin;
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
-	private LocalDateTime createdAt = LocalDateTime.now();
+    // Constructors
+    public User() {
+        this.roles = new HashSet<>();
+        this.isActive = true;
+    }
 
-	private LocalDateTime updatedAt = LocalDateTime.now();
+    public User(String name, String email, String password) {
+        this();
+        this.name = name;
+        this.email = email;
+        this.password = password;
+    }
 
-	public User() {
-		super();
-	}
+    // Lifecycle callbacks
+    @PrePersist
+    private void prePersist() {
+        if (email != null) {
+            email = email.toLowerCase().trim();
+        }
+    }
 
-	public Long getId() {
-		return id;
-	}
+    @PreUpdate
+    private void preUpdate() {
+        if (email != null) {
+            email = email.toLowerCase().trim();
+        }
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    // Helper methods for role management
+    public void addRole(Role role) {
+        if (role != null) {
+            this.roles.add(role);
+        }
+    }
 
-	public Hotel getHotel() {
-		return hotel;
-	}
+    public void removeRole(Role role) {
+        this.roles.remove(role);
+    }
 
-	public void setHotel(Hotel hotel) {
-		this.hotel = hotel;
-	}
+    public boolean hasRole(Role role) {
+        return role != null && this.roles.contains(role);
+    }
 
-	public String getName() {
-		return name;
-	}
+    public boolean hasAnyRole(Role... roles) {
+        if (roles == null || roles.length == 0) {
+            return false;
+        }
+        for (Role role : roles) {
+            if (hasRole(role)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public boolean hasAllRoles(Role... roles) {
+        if (roles == null || roles.length == 0) {
+            return true;
+        }
+        for (Role role : roles) {
+            if (!hasRole(role)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    // Business methods
+    public void updateLastLogin() {
+        this.lastLogin = LocalDateTime.now();
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public boolean isHotelUser() {
+        return this.hotel != null;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getPhone() {
-		return phone;
-	}
+    public Hotel getHotel() {
+        return hotel;
+    }
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
+    public void setHotel(Hotel hotel) {
+        this.hotel = hotel;
+    }
 
-	public String getProfilePicUrl() {
-		return profilePicUrl;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setProfilePicUrl(String profilePicUrl) {
-		this.profilePicUrl = profilePicUrl;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public List<Role> getRoles() {
-		return roles;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public void setRoles(List<Role> roles) {
-		this.roles = roles;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	// Helper methods for role management
-	public void addRole(Role role) {
-		if (!this.roles.contains(role)) {
-			this.roles.add(role);
-		}
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public void removeRole(Role role) {
-		this.roles.remove(role);
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public boolean hasRole(Role role) {
-		return this.roles.contains(role);
-	}
+    public String getPhone() {
+        return phone;
+    }
 
-	public boolean isActive() {
-		return isActive;
-	}
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
-	public void setActive(boolean isActive) {
-		this.isActive = isActive;
-	}
+    public String getProfilePicUrl() {
+        return profilePicUrl;
+    }
 
-	public LocalDateTime getLastLogin() {
-		return lastLogin;
-	}
+    public void setProfilePicUrl(String profilePicUrl) {
+        this.profilePicUrl = profilePicUrl;
+    }
 
-	public void setLastLogin(LocalDateTime lastLogin) {
-		this.lastLogin = lastLogin;
-	}
+    public Set<Role> getRoles() {
+        return new HashSet<>(roles); // Return defensive copy
+    }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public void setRoles(Set<Role> roles) {
+        this.roles.clear();
+        if (roles != null) {
+            this.roles.addAll(roles);
+        }
+    }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public Staff getStaff() {
+        return staff;
+    }
 
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
+    public void setStaff(Staff staff) {
+        this.staff = staff;
+        if (staff != null && staff.getUser() != this) {
+            staff.setUser(this);
+        }
+    }
 
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
-	}
+    public boolean isActive() {
+        return isActive;
+    }
 
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+
+
+    // equals and hashCode
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    // toString
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", isActive=" + isActive +
+                ", lastLogin=" + lastLogin +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

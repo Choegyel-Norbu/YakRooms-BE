@@ -17,10 +17,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.service.BookingService;
+import com.yakrooms.be.model.entity.Room;
+import com.yakrooms.be.repository.RoomRepository;
+import com.yakrooms.be.exception.ResourceNotFoundException;
+import java.util.Map;
+import java.util.HashMap;
 
 
 @RestController
@@ -29,10 +35,13 @@ public class BookingController {
 
 	@Autowired
 	private BookingService bookingService;
+	
+	@Autowired
+	private RoomRepository roomRepository;
 
 	// Create a booking (User)
 	@PostMapping
-	public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request) {
+	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
 		BookingResponse response = bookingService.createBooking(request);
 		return ResponseEntity.ok(response);
 	}
@@ -126,6 +135,29 @@ public class BookingController {
 	@GetMapping("/{id}")
 	public ResponseEntity<BookingResponse> getBookingDetails(@PathVariable("id") Long bookingId) {
 		return ResponseEntity.ok(bookingService.getBookingDetails(bookingId));
+	}
+
+	// Debug endpoint to check room capacity (for development/testing)
+	@GetMapping("/debug/room/{roomId}/capacity")
+	public ResponseEntity<Map<String, Object>> getRoomCapacityInfo(@PathVariable Long roomId) {
+		try {
+			Room room = roomRepository.findById(roomId)
+				.orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+			
+			Map<String, Object> response = new HashMap<>();
+			response.put("roomId", room.getId());
+			response.put("roomNumber", room.getRoomNumber());
+			response.put("maxGuests", room.getMaxGuests());
+			response.put("roomType", room.getRoomType());
+			response.put("isAvailable", room.isAvailable());
+			response.put("hotelName", room.getHotel().getName());
+			
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			Map<String, Object> error = new HashMap<>();
+			error.put("error", e.getMessage());
+			return ResponseEntity.badRequest().body(error);
+		}
 	}
 }
 

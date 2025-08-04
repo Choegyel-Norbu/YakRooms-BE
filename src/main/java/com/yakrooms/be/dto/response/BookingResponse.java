@@ -1,5 +1,6 @@
 package com.yakrooms.be.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -16,7 +17,7 @@ public class BookingResponse {
 	private LocalDate checkOutDate;
 	private int guests;
 	private BookingStatus status;
-	private Double totalPrice;
+	private BigDecimal totalPrice;
 	private LocalDateTime createdAt;
 	private String name;
 	private String phone;
@@ -148,14 +149,6 @@ public class BookingResponse {
 		this.guests = guests;
 	}
 
-//	public String getStatus() {
-//		return status;
-//	}
-//
-//	public void setStatus(String status) {
-//		this.status = status;
-//	}
-
 	public BookingStatus getStatus() {
 		return status;
 	}
@@ -164,11 +157,11 @@ public class BookingResponse {
 		this.status = status;
 	}
 
-	public Double getTotalPrice() {
+	public BigDecimal getTotalPrice() {
 		return totalPrice;
 	}
 
-	public void setTotalPrice(Double totalPrice) {
+	public void setTotalPrice(BigDecimal totalPrice) {
 		this.totalPrice = totalPrice;
 	}
 

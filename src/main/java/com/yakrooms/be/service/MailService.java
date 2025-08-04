@@ -1,5 +1,7 @@
 package com.yakrooms.be.service;
 
+import java.time.LocalDate;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -61,6 +63,31 @@ public class MailService {
 			mailSender.send(mimeMessage);
 		} catch (MessagingException e) {
 			throw new IllegalStateException("Failed to send booking notification email", e);
+		}
+	}
+
+	public void sendPasscodeEmailToGuest(String toEmail, String guestName, String passcode, String hotelName, String roomNumber, LocalDate checkInDate, LocalDate checkOutDate) {
+		Context context = new Context();
+		context.setVariable("guestName", guestName);
+		context.setVariable("passcode", passcode);
+		context.setVariable("hotelName", hotelName);
+		context.setVariable("roomNumber", roomNumber);
+		context.setVariable("checkInDate", checkInDate);
+		context.setVariable("checkOutDate", checkOutDate);
+
+		String htmlContent = templateEngine.process("booking-passcode.html", context);
+
+		MimeMessage mimeMessage = mailSender.createMimeMessage();
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+			helper.setTo(toEmail);
+			helper.setSubject("YakRooms: Your Booking Passcode 🔐");
+			helper.setText(htmlContent, true); // true = isHtml
+
+			mailSender.send(mimeMessage);
+		} catch (MessagingException e) {
+			throw new IllegalStateException("Failed to send passcode email", e);
 		}
 	}
 }

@@ -10,7 +10,8 @@ public interface HotelListingProjection {
     String getDescription();
     String getPhone();
     Boolean getIsVerified();
-    String getPhotoUrl();      // from hotel_photo_urls
-    String getAmenity();       // from hotel_amenities
     LocalDateTime getCreatedAt();
+    String getHotelType();
+    String getPhotoUrls();
+    String getAmenities();
 }

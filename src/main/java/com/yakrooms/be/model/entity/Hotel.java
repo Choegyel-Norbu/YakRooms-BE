@@ -1,262 +1,430 @@
 package com.yakrooms.be.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-import org.springframework.web.multipart.MultipartFile;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.yakrooms.be.model.enums.HotelType;
-import com.yakrooms.be.model.entity.Room;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Objects;
 
 @Entity
-@Table(name = "hotels")
-
+@Table(name = "hotels", indexes = {
+    @Index(name = "idx_hotel_email", columnList = "email"),
+    @Index(name = "idx_hotel_district", columnList = "district"),
+    @Index(name = "idx_hotel_verified", columnList = "is_verified"),
+    @Index(name = "idx_hotel_type", columnList = "hotel_type"),
+    @Index(name = "idx_hotel_district_type_verified", columnList = "district,hotel_type,is_verified")
+})
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Hotel {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private String name;
-	private String email;
-	private String phone;
-	private String address;
-	private String district;
-	private String logoUrl;
-	private String description;
-	private boolean isVerified;
-	private String websiteUrl;
-	private String licenseUrl;
-	private String idProofUrl;
-	private String latitude;
-	private String longitude;
+    @Column(nullable = false, length = 255)
+    private String name;
 
-	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<User> users = new ArrayList<>();
+    @Column(unique = true, nullable = false, length = 255)
+    private String email;
 
-	@OneToOne(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Restaurant restaurant;
+    @Column(nullable = false, length = 20)
+    private String phone;
 
-	@Enumerated(EnumType.STRING)
-	private HotelType hotelType;
+    @Column(nullable = false, length = 500)
+    private String address;
 
-	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL)
-	private List<Staff> staffList;
+    @Column(nullable = false, length = 100)
+    private String district;
 
-	@OneToMany(mappedBy = "hotel", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Room> rooms = new ArrayList<>();
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
 
-	public String getLatitude() {
-		return latitude;
-	}
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-	public void setLatitude(String latitude) {
-		this.latitude = latitude;
-	}
+    @Column(name = "is_verified", nullable = false)
+    private boolean isVerified = false;
 
-	public String getLongitude() {
-		return longitude;
-	}
+    @Column(name = "website_url", length = 500)
+    private String websiteUrl;
 
-	public void setLongitude(String longitude) {
-		this.longitude = longitude;
-	}
+    @Column(name = "license_url", length = 500)
+    private String licenseUrl;
 
-	public List<Staff> getStaffList() {
-		return staffList;
-	}
+    @Column(name = "id_proof_url", length = 500)
+    private String idProofUrl;
 
-	public void setStaffList(List<Staff> staffList) {
-		this.staffList = staffList;
-	}
+    @Column(length = 50)
+    private String latitude;
 
-	public List<Room> getRooms() {
-		return rooms;
-	}
+    @Column(length = 50)
+    private String longitude;
 
-	public void setRooms(List<Room> rooms) {
-		this.rooms = rooms;
-	}
+    @Enumerated(EnumType.STRING)
+    @Column(name = "hotel_type", length = 50)
+    private HotelType hotelType;
 
-	@ElementCollection(fetch = FetchType.EAGER)
-	@CollectionTable(name = "hotel_amenities", joinColumns = @JoinColumn(name = "hotel_id"))
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	@Column(name = "amenity")
-	private List<String> amenities = new ArrayList<>();
+    @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
+    private Set<User> users = new HashSet<>();
 
-	@ElementCollection(fetch = FetchType.EAGER)
-	@CollectionTable(name = "hotel_photo_urls", joinColumns = @JoinColumn(name = "hotel_id"))
-	@OnDelete(action = OnDeleteAction.CASCADE)
-	@Column(name = "url")
-	private List<String> photoUrls = new ArrayList<>();
+    @OneToOne(mappedBy = "hotel", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Restaurant restaurant;
 
-	@CreationTimestamp
-	private LocalDateTime createdAt;
+    @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @BatchSize(size = 20)
+    private Set<Staff> staffList = new HashSet<>();
 
-	@UpdateTimestamp
-	private LocalDateTime updatedAt;
+    @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
+    private Set<Room> rooms = new HashSet<>();
 
-	public Hotel() {
-		super();
-	}
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+        name = "hotel_amenities", 
+        joinColumns = @JoinColumn(name = "hotel_id"),
+        indexes = @Index(name = "idx_amenity_hotel_id", columnList = "hotel_id")
+    )
+    @Column(name = "amenity", length = 100)
+    @BatchSize(size = 20)
+    private Set<String> amenities = new HashSet<>();
 
-	public List<String> getPhotoUrls() {
-		return photoUrls;
-	}
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+        name = "hotel_photo_urls", 
+        joinColumns = @JoinColumn(name = "hotel_id"),
+        indexes = @Index(name = "idx_photo_hotel_id", columnList = "hotel_id")
+    )
+    @Column(name = "url", length = 500)
+    @BatchSize(size = 20)
+    private Set<String> photoUrls = new HashSet<>();
 
-	public HotelType getHotelType() {
-		return hotelType;
-	}
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-	public void setHotelType(HotelType hotelType) {
-		this.hotelType = hotelType;
-	}
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
-	public void setPhotoUrls(List<String> photoUrls) {
-		this.photoUrls = photoUrls;
-	}
 
-	public String getLicenseUrl() {
-		return licenseUrl;
-	}
 
-	public void setLicenseUrl(String licenseUrl) {
-		this.licenseUrl = licenseUrl;
-	}
+    // Constructors
+    public Hotel() {
+        this.users = new HashSet<>();
+        this.staffList = new HashSet<>();
+        this.rooms = new HashSet<>();
+        this.amenities = new HashSet<>();
+        this.photoUrls = new HashSet<>();
+        this.isVerified = false;
+    }
 
-	public String getIdProofUrl() {
-		return idProofUrl;
-	}
+    public Hotel(String name, String email, String phone, String address, String district) {
+        this();
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+        this.district = district;
+    }
 
-	public void setIdProofUrl(String idProofUrl) {
-		this.idProofUrl = idProofUrl;
-	}
+    // Lifecycle callbacks
+    @PrePersist
+    private void prePersist() {
+        if (email != null) {
+            email = email.toLowerCase().trim();
+        }
+        if (district != null) {
+            district = district.trim();
+        }
+    }
 
-	public Long getId() {
-		return id;
-	}
+    @PreUpdate
+    private void preUpdate() {
+        if (email != null) {
+            email = email.toLowerCase().trim();
+        }
+        if (district != null) {
+            district = district.trim();
+        }
+    }
 
-	public Restaurant getRestaurant() {
-		return restaurant;
-	}
+    // Utility methods for relationship management
+    public void addUser(User user) {
+        users.add(user);
+        user.setHotel(this);
+    }
 
-	public List<String> getAmenities() {
-		return amenities;
-	}
+    public void removeUser(User user) {
+        users.remove(user);
+        user.setHotel(null);
+    }
 
-	public void setAmenities(List<String> amenities) {
-		this.amenities = amenities;
-	}
+    public void addRoom(Room room) {
+        rooms.add(room);
+        room.setHotel(this);
+    }
 
-	public void setRestaurant(Restaurant restaurant) {
-		this.restaurant = restaurant;
-	}
+    public void removeRoom(Room room) {
+        rooms.remove(room);
+        room.setHotel(null);
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void addStaff(Staff staff) {
+        staffList.add(staff);
+        staff.setHotel(this);
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void removeStaff(Staff staff) {
+        staffList.remove(staff);
+        staff.setHotel(null);
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void addAmenity(String amenity) {
+        if (amenity != null && !amenity.trim().isEmpty()) {
+            amenities.add(amenity.trim());
+        }
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void removeAmenity(String amenity) {
+        amenities.remove(amenity);
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public void addPhotoUrl(String url) {
+        if (url != null && !url.trim().isEmpty()) {
+            photoUrls.add(url.trim());
+        }
+    }
 
-	public String getPhone() {
-		return phone;
-	}
+    public void removePhotoUrl(String url) {
+        photoUrls.remove(url);
+    }
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
 
-	public String getAddress() {
-		return address;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setAddress(String address) {
-		this.address = address;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getDistrict() {
-		return district;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setDistrict(String district) {
-		this.district = district;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public String getLogoUrl() {
-		return logoUrl;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setLogoUrl(String logoUrl) {
-		this.logoUrl = logoUrl;
-	}
+    public String getPhone() {
+        return phone;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public String getAddress() {
+        return address;
+    }
 
-	public boolean isVerified() {
-		return isVerified;
-	}
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-	public void setVerified(boolean isVerified) {
-		this.isVerified = isVerified;
-	}
+    public String getDistrict() {
+        return district;
+    }
 
-	public String getWebsiteUrl() {
-		return websiteUrl;
-	}
+    public void setDistrict(String district) {
+        this.district = district;
+    }
 
-	public void setWebsiteUrl(String websiteUrl) {
-		this.websiteUrl = websiteUrl;
-	}
+    public String getLogoUrl() {
+        return logoUrl;
+    }
 
-	public List<User> getUsers() {
-		return users;
-	}
+    public void setLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
+    }
 
-	public void setUsers(List<User> users) {
-		this.users = users;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public boolean isVerified() {
+        return isVerified;
+    }
 
-	public LocalDateTime getUpdatedAt() {
-		return updatedAt;
-	}
+    public void setVerified(boolean isVerified) {
+        this.isVerified = isVerified;
+    }
 
-	public void setUpdatedAt(LocalDateTime updatedAt) {
-		this.updatedAt = updatedAt;
-	}
+    public String getWebsiteUrl() {
+        return websiteUrl;
+    }
 
+    public void setWebsiteUrl(String websiteUrl) {
+        this.websiteUrl = websiteUrl;
+    }
+
+    public String getLicenseUrl() {
+        return licenseUrl;
+    }
+
+    public void setLicenseUrl(String licenseUrl) {
+        this.licenseUrl = licenseUrl;
+    }
+
+    public String getIdProofUrl() {
+        return idProofUrl;
+    }
+
+    public void setIdProofUrl(String idProofUrl) {
+        this.idProofUrl = idProofUrl;
+    }
+
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
+    }
+
+    public HotelType getHotelType() {
+        return hotelType;
+    }
+
+    public void setHotelType(HotelType hotelType) {
+        this.hotelType = hotelType;
+    }
+
+    public Set<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(Set<User> users) {
+        this.users = users;
+    }
+
+    public Restaurant getRestaurant() {
+        return restaurant;
+    }
+
+    public void setRestaurant(Restaurant restaurant) {
+        this.restaurant = restaurant;
+        if (restaurant != null) {
+            restaurant.setHotel(this);
+        }
+    }
+
+    public Set<Staff> getStaffList() {
+        return staffList;
+    }
+
+    public void setStaffList(Set<Staff> staffList) {
+        this.staffList = staffList;
+    }
+
+    public Set<Room> getRooms() {
+        return rooms;
+    }
+
+    public void setRooms(Set<Room> rooms) {
+        this.rooms = rooms;
+    }
+
+    public Set<String> getAmenities() {
+        return amenities;
+    }
+
+    public void setAmenities(Set<String> amenities) {
+        this.amenities = amenities;
+    }
+
+    public Set<String> getPhotoUrls() {
+        return photoUrls;
+    }
+
+    public void setPhotoUrls(Set<String> photoUrls) {
+        this.photoUrls = photoUrls;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+
+
+    // equals and hashCode
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Hotel hotel = (Hotel) o;
+        return Objects.equals(id, hotel.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    // toString
+    @Override
+    public String toString() {
+        return "Hotel{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", phone='" + phone + '\'' +
+                ", address='" + address + '\'' +
+                ", district='" + district + '\'' +
+                ", hotelType=" + hotelType +
+                ", isVerified=" + isVerified +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
+                '}';
+    }
 }

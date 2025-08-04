@@ -4,6 +4,7 @@ import com.yakrooms.be.model.entity.Review;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.entity.Booking;
+import com.yakrooms.be.model.enums.BookingStatus;
 import com.yakrooms.be.repository.ReviewRepository;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.UserRepository;
@@ -90,7 +91,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public boolean canUserReviewHotel(Long hotelId, Long userId) {
         // User can review if they have a completed booking for the hotel and haven't already reviewed
-        List<Booking> bookings = bookingRepository.findByHotelIdAndUserIdAndStatus(hotelId, userId, "CHEC");
+        List<Booking> bookings = bookingRepository.findByHotelIdAndUserIdAndStatus(hotelId, userId, BookingStatus.CHECKED_OUT);
         if (bookings.isEmpty()) return false;
         List<Review> existingReviews = reviewRepository.findByHotelId(hotelId);
         return existingReviews.stream().noneMatch(r -> r.getUser().getId().equals(userId));

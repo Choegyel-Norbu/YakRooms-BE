@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -39,7 +41,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     public List<Role> getUserRoles(Long userId) {
         User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return user.getRoles();
+        return new ArrayList<>(user.getRoles());
     }
 
     @Override
@@ -55,7 +57,7 @@ public class UserRoleServiceImpl implements UserRoleService {
     public void setUserRoles(Long userId, List<Role> roles) {
         User user = userRepository.findByIdWithCollections(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        user.setRoles(roles);
+        user.setRoles(new HashSet<>(roles));
         userRepository.save(user);
     }
 } 

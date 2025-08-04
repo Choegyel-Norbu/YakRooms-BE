@@ -2,6 +2,7 @@ package com.yakrooms.be.dto.mapper;
 
 import org.springframework.stereotype.Component;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import com.yakrooms.be.dto.request.HotelRequest;
@@ -71,13 +72,13 @@ public class HotelMapper {
             throw new IllegalArgumentException("Invalid hotel type: " + dto.getHotelType());
         }
         
-        // Copy lists (create new lists to avoid reference issues)
+        // Copy lists (create new sets to avoid reference issues)
         if (dto.getPhotoUrls() != null) {
-            hotel.setPhotoUrls(new ArrayList<>(dto.getPhotoUrls()));
+            hotel.setPhotoUrls(new HashSet<>(dto.getPhotoUrls()));
         }
         
         if (dto.getAmenities() != null) {
-            hotel.setAmenities(new ArrayList<>(dto.getAmenities()));
+            hotel.setAmenities(new HashSet<>(dto.getAmenities()));
         }
 
         return hotel;
@@ -134,11 +135,11 @@ public class HotelMapper {
         }
         
         if (dto.getPhotoUrls() != null) {
-            entity.setPhotoUrls(new ArrayList<>(dto.getPhotoUrls()));
+            entity.setPhotoUrls(new HashSet<>(dto.getPhotoUrls()));
         }
         
         if (dto.getAmenities() != null) {
-            entity.setAmenities(new ArrayList<>(dto.getAmenities()));
+            entity.setAmenities(new HashSet<>(dto.getAmenities()));
         }
     }
 }

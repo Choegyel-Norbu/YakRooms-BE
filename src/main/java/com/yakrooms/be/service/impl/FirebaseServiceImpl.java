@@ -64,6 +64,7 @@ public class FirebaseServiceImpl implements FirebaseService {
 	        }
 	        if (updated) {
 	            user.setUpdatedAt(LocalDateTime.now());
+	            user.addRole(Role.GUEST);
 	            user = userRepo.save(user);
 	        }
 

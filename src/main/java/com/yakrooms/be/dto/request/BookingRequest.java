@@ -1,32 +1,42 @@
 package com.yakrooms.be.dto.request;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import jakarta.validation.constraints.*;
 
 public class BookingRequest {
 	private Long userId;
+
 	private Long hotelId;
+
 	private Long roomId;
+
 	private LocalDate checkInDate;
+
 	private LocalDate checkOutDate;
+
 	private int guests;
-	private int numberOfbookingRooms;
-	private Double totalPrice;
+
+	private int numberOfRooms;
+
+	private BigDecimal totalPrice;
+
 	private String phone;
 
-	public Double getTotalPrice() {
+	public BigDecimal getTotalPrice() {
 		return totalPrice;
 	}
 
-	public void setTotalPrice(Double totalPrice) {
+	public void setTotalPrice(BigDecimal totalPrice) {
 		this.totalPrice = totalPrice;
 	}
 
-	public int getNumberOfbookingRooms() {
-		return numberOfbookingRooms;
+	public int getNumberOfRooms() {
+		return numberOfRooms;
 	}
 
-	public void setNumberOfbookingRooms(int numberOfbookingRooms) {
-		this.numberOfbookingRooms = numberOfbookingRooms;
+	public void setNumberOfRooms(int numberOfRooms) {
+		this.numberOfRooms = numberOfRooms;
 	}
 
 	public Long getUserId() {
@@ -36,7 +46,6 @@ public class BookingRequest {
 	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
-	
 
 	public String getPhone() {
 		return phone;
