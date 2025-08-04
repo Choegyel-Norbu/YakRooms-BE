@@ -70,8 +70,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.max_guests,
                 r.description,
                 r.created_at,
-                r.updated_at,
-                r.version
+                r.updated_at
             FROM room r 
             WHERE r.hotel_id = :hotelId AND r.is_available = true 
             ORDER BY r.room_number
