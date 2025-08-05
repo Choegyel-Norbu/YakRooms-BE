@@ -16,8 +16,15 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationRepository notificationRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<Notification> getAllNotifications(User user) {
-        return notificationRepository.findByUser(user);
+        return notificationRepository.findByUserWithAssociations(user);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Notification> getAllNotificationsByUserId(Long userId) {
+        return notificationRepository.findByUserAndIsReadFalseWithAssociations(userId);
     }
 
     @Override

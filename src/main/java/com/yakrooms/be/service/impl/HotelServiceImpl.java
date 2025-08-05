@@ -122,7 +122,6 @@ public class HotelServiceImpl implements HotelService {
     @Caching(evict = {
         @CacheEvict(value = HOTEL_CACHE, key = "#id"),
         @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true),
-        @CacheEvict(value = TOP_HOTELS_CACHE, allEntries = true)
     })
     public HotelResponse updateHotel(Long id, HotelRequest request) {
         validateUpdateHotelRequest(id, request);
@@ -151,7 +150,6 @@ public class HotelServiceImpl implements HotelService {
     @Caching(evict = {
         @CacheEvict(value = HOTEL_CACHE, key = "#id"),
         @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true),
-        @CacheEvict(value = TOP_HOTELS_CACHE, allEntries = true)
     })
     public void deleteHotel(Long id) {
         if (id == null) {
@@ -184,7 +182,6 @@ public class HotelServiceImpl implements HotelService {
     @Caching(evict = {
         @CacheEvict(value = HOTEL_CACHE, key = "#id"),
         @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true),
-        @CacheEvict(value = TOP_HOTELS_CACHE, allEntries = true)
     })
     public void verifyHotel(Long id) {
         if (id == null) {

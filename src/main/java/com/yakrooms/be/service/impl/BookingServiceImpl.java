@@ -436,6 +436,7 @@ public class BookingServiceImpl implements BookingService {
         dbNotification.setType("BOOKING");
         dbNotification.setRead(false);
         dbNotification.setCreatedAt(LocalDateTime.now());
+        dbNotification.setRoom(room); // Set the room association
         notificationRepository.save(dbNotification);
     }
 

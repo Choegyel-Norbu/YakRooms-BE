@@ -23,8 +23,7 @@ public class NotificationController {
     // Fetch all notifications for a user
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<NotificationDTO>> getAllNotifications(@PathVariable Long userId) {
-        User user = userRepository.findByIdWithCollections(userId).orElseThrow(() -> new RuntimeException("User not found"));
-        List<Notification> notifications = notificationService.getAllNotifications(user);
+        List<Notification> notifications = notificationService.getAllNotificationsByUserId(userId);
         List<NotificationDTO> dtos = notifications.stream().map(NotificationMapper::toDto).toList();
         return ResponseEntity.ok(dtos);
     }
