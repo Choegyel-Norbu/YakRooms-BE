@@ -28,6 +28,7 @@ import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.HotelType;
 import com.yakrooms.be.model.enums.Role;
 import com.yakrooms.be.projection.HotelListingProjection;
+import com.yakrooms.be.projection.HotelWithCollectionsAndRatingProjection;
 import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.repository.BookingRepository;
@@ -224,10 +225,10 @@ public class HotelServiceImpl implements HotelService {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
-        Hotel hotel = hotelRepository.findByIdWithCollections(hotelId)
+        HotelWithCollectionsAndRatingProjection hotelProjection = hotelRepository.findByIdWithCollections(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " + hotelId));
 
-        return hotelMapper.toDto(hotel);
+        return hotelMapper.toDto(hotelProjection);
     }
 
     @Override

@@ -2,9 +2,10 @@ package com.yakrooms.be.projection;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import com.yakrooms.be.model.enums.HotelType;
 
-public interface HotelWithLowestPriceProjection {
+public interface HotelWithCollectionsAndRatingProjection {
     Long getId();
     String getName();
     String getEmail();
@@ -16,12 +17,13 @@ public interface HotelWithLowestPriceProjection {
     boolean getIsVerified();
     String getWebsiteUrl();
     LocalDateTime getCreatedAt();
-    List<String> getPhotoUrls();
+    LocalDateTime getUpdatedAt();
     String getLicenseUrl();
     String getIdProofUrl();
-    List<String> getAmenities();
+    String getLatitude();
+    String getLongitude();
     HotelType getHotelType();
-    Double getLowestPrice();
-    String getPhotoUrl();
+    Set<String> getAmenities();
+    Set<String> getPhotoUrls();
     Double getAverageRating();
 } 

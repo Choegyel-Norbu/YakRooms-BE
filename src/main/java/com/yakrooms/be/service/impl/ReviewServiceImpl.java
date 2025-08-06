@@ -1,111 +1,135 @@
 package com.yakrooms.be.service.impl;
 
-import com.yakrooms.be.model.entity.Review;
+import com.yakrooms.be.dto.request.ReviewRequest;
+import com.yakrooms.be.dto.response.ReviewResponse;
+import com.yakrooms.be.exception.ResourceConflictException;
+import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.model.entity.Review;
 import com.yakrooms.be.model.entity.User;
-import com.yakrooms.be.model.entity.Booking;
-import com.yakrooms.be.model.enums.BookingStatus;
-import com.yakrooms.be.repository.ReviewRepository;
 import com.yakrooms.be.repository.HotelRepository;
+import com.yakrooms.be.repository.ReviewRepository;
 import com.yakrooms.be.repository.UserRepository;
-import com.yakrooms.be.repository.BookingRepository;
 import com.yakrooms.be.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
+
     @Autowired
     private ReviewRepository reviewRepository;
+
     @Autowired
     private HotelRepository hotelRepository;
+
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private BookingRepository bookingRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public double getAverageRatingForHotel(Long hotelId) {
+        return reviewRepository.findAverageRatingByHotel(hotelId)
+                .orElse(0.0);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getReviewCountForHotel(Long hotelId) {
+        return reviewRepository.countReviewsByHotel(hotelId);
+    }
 
     @Override
     @Transactional
-    public Review createReview(Long hotelId, Long userId, int rating, String comment) {
-        if (!canUserReviewHotel(hotelId, userId)) {
-            throw new IllegalArgumentException("User is not eligible to review this hotel.");
+    public ReviewResponse createReview(ReviewRequest reviewRequest) {
+        // Validate input
+        if (reviewRequest.rating < 1 || reviewRequest.rating > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
-        Hotel hotel = hotelRepository.findById(hotelId)
-                .orElseThrow(() -> new IllegalArgumentException("Hotel not found"));
-        User user = userRepository.findByIdWithCollections(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (reviewRequest.hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID is required");
+        }
+
+        // Find hotel
+        Hotel hotel = hotelRepository.findById(reviewRequest.hotelId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + reviewRequest.hotelId));
+
+        // Find user
+        User user = userRepository.findById(reviewRequest.userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + reviewRequest.userId));
+
+        // Check if user has already reviewed this hotel
+        boolean existingReview = reviewRepository.existsByHotelAndUser(hotel, user);
+        if (existingReview) {
+            throw new ResourceConflictException("You have already reviewed this hotel");
+        }
+
+        // Create new review
         Review review = new Review();
+        review.setRating(reviewRequest.rating);
+        review.setComment(reviewRequest.comment);
         review.setHotel(hotel);
         review.setUser(user);
-        review.setRating(rating);
-        review.setComment(comment);
-        review.setCreatedAt(LocalDateTime.now());
-        return reviewRepository.save(review);
+
+        // Save review
+        Review savedReview = reviewRepository.save(review);
+
+        // Create response using helper method
+        return convertToReviewResponse(savedReview);
     }
 
     @Override
-    @Transactional
-    public Review updateReview(Long reviewId, Long userId, int rating, String comment) {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
-        if (!review.getUser().getId().equals(userId)) {
-            throw new SecurityException("User is not authorized to update this review.");
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getAllReviewsForHotel(Long hotelId) {
+        // Validate hotel exists
+        if (!hotelRepository.existsById(hotelId)) {
+            throw new ResourceNotFoundException("Hotel not found with id: " + hotelId);
         }
-        review.setRating(rating);
-        review.setComment(comment);
-        return reviewRepository.save(review);
+
+        // Get all reviews for the hotel
+        List<Review> reviews = reviewRepository.findAllByHotelIdOrderByCreatedAtDesc(hotelId);
+
+        // Convert to DTOs
+        return reviews.stream()
+                .map(this::convertToReviewResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional
-    public void deleteReview(Long reviewId, Long userId) {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
-        if (!review.getUser().getId().equals(userId)) {
-            throw new SecurityException("User is not authorized to delete this review.");
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsForHotelPaginated(Long hotelId, Pageable pageable) {
+        // Validate hotel exists
+        if (!hotelRepository.existsById(hotelId)) {
+            throw new ResourceNotFoundException("Hotel not found with id: " + hotelId);
         }
-        reviewRepository.delete(review);
+
+        // Get paginated reviews for the hotel
+        Page<Review> reviewsPage = reviewRepository.findAllByHotelIdOrderByCreatedAtDesc(hotelId, pageable);
+
+        // Convert to DTOs
+        return reviewsPage.map(this::convertToReviewResponse);
     }
 
-    @Override
-    public Review getReviewById(Long reviewId) {
-        return reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
-    }
-
-    @Override
-    public List<Review> getReviewsByHotel(Long hotelId) {
-        return reviewRepository.findByHotelId(hotelId);
-    }
-
-    @Override
-    public List<Review> getReviewsByUser(Long userId) {
-        return reviewRepository.findByUserId(userId);
-    }
-
-    @Override
-    public boolean canUserReviewHotel(Long hotelId, Long userId) {
-        // User can review if they have a completed booking for the hotel and haven't already reviewed
-        List<Booking> bookings = bookingRepository.findByHotelIdAndUserIdAndStatus(hotelId, userId, BookingStatus.CHECKED_OUT);
-        if (bookings.isEmpty()) return false;
-        List<Review> existingReviews = reviewRepository.findByHotelId(hotelId);
-        return existingReviews.stream().noneMatch(r -> r.getUser().getId().equals(userId));
-    }
-
-    @Override
-    public double getAverageRatingForHotel(Long hotelId) {
-        List<Review> reviews = reviewRepository.findByHotelId(hotelId);
-        if (reviews.isEmpty()) return 0.0;
-        return reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
-    }
-
-    @Override
-    public long getReviewCountForHotel(Long hotelId) {
-        return reviewRepository.countByHotelId(hotelId);
+    /**
+     * Helper method to convert Review entity to ReviewResponse DTO
+     */
+    private ReviewResponse convertToReviewResponse(Review review) {
+        ReviewResponse response = new ReviewResponse();
+        response.id = review.getId();
+        response.rating = review.getRating();
+        response.comment = review.getComment();
+        response.userId = review.getUser().getId();
+        response.userName = review.getUser().getName();
+        response.userEmail = review.getUser().getEmail();
+        response.userProfilePicUrl = review.getUser().getProfilePicUrl();
+        response.createdAt = review.getCreatedAt();
+        return response;
     }
 } 

@@ -23,6 +23,7 @@ public class JwtFilter implements Filter {
         "/test/**",
         "/ws/**",
         "/api/notifications/**",
+        "/api/reviews/hotel/*/testimonials/paginated",
     };
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();

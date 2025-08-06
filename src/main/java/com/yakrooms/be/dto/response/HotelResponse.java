@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.yakrooms.be.model.enums.HotelType;
 
-// NOTE: This DTO is no longer used for the getAllHotels endpoint. Remove if not used elsewhere.
 public class HotelResponse {
 
 	private Long id;
@@ -24,24 +23,7 @@ public class HotelResponse {
 	private String idProofUrl;
 	private List<String> amenities;
 	private HotelType hotelType;
-	private String latitude;
-	private String longitude;
-
-	public String getLatitude() {
-		return latitude;
-	}
-
-	public void setLatitude(String latitude) {
-		this.latitude = latitude;
-	}
-
-	public String getLongitude() {
-		return longitude;
-	}
-
-	public void setLongitude(String longitude) {
-		this.longitude = longitude;
-	}
+	private Double averageRating;
 
 	public Long getId() {
 		return id;
@@ -169,6 +151,14 @@ public class HotelResponse {
 
 	public void setAmenities(List<String> amenities) {
 		this.amenities = amenities;
+	}
+
+	public Double getAverageRating() {
+		return averageRating;
+	}
+
+	public void setAverageRating(Double averageRating) {
+		this.averageRating = averageRating;
 	}
 
 }

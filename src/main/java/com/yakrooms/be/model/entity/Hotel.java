@@ -8,6 +8,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.yakrooms.be.model.enums.HotelType;
+import com.yakrooms.be.model.entity.Review;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -85,6 +86,10 @@ public class Hotel {
     @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @BatchSize(size = 20)
     private Set<Room> rooms = new HashSet<>();
+
+    @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
+    private Set<Review> reviews = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
@@ -361,6 +366,14 @@ public class Hotel {
 
     public void setRooms(Set<Room> rooms) {
         this.rooms = rooms;
+    }
+
+    public Set<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(Set<Review> reviews) {
+        this.reviews = reviews;
     }
 
     public Set<String> getAmenities() {

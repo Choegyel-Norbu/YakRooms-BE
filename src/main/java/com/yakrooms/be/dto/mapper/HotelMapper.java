@@ -9,6 +9,7 @@ import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.enums.HotelType;
+import com.yakrooms.be.projection.HotelWithCollectionsAndRatingProjection;
 
 @Component
 public class HotelMapper {
@@ -41,6 +42,40 @@ public class HotelMapper {
         
         if (hotel.getAmenities() != null) {
             response.setAmenities(new ArrayList<>(hotel.getAmenities()));
+        }
+
+        return response;
+    }
+
+    public HotelResponse toDto(HotelWithCollectionsAndRatingProjection projection) {
+        if (projection == null) {
+            return null;
+        }
+
+        HotelResponse response = new HotelResponse();
+        response.setId(projection.getId());
+        response.setName(projection.getName());
+        response.setEmail(projection.getEmail());
+        response.setPhone(projection.getPhone());
+        response.setAddress(projection.getAddress());
+        response.setDistrict(projection.getDistrict());
+        response.setLogoUrl(projection.getLogoUrl());
+        response.setDescription(projection.getDescription());
+        response.setVerified(projection.getIsVerified());
+        response.setWebsiteUrl(projection.getWebsiteUrl());
+        response.setCreatedAt(projection.getCreatedAt());
+        response.setLicenseUrl(projection.getLicenseUrl());
+        response.setIdProofUrl(projection.getIdProofUrl());
+        response.setHotelType(projection.getHotelType());
+        response.setAverageRating(projection.getAverageRating());
+        
+        // Copy lists (create new lists to avoid reference issues)
+        if (projection.getPhotoUrls() != null) {
+            response.setPhotoUrls(new ArrayList<>(projection.getPhotoUrls()));
+        }
+        
+        if (projection.getAmenities() != null) {
+            response.setAmenities(new ArrayList<>(projection.getAmenities()));
         }
 
         return response;

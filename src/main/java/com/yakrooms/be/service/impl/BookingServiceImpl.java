@@ -23,6 +23,7 @@ import com.yakrooms.be.dto.BookingStatisticsDTO;
 import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
 import com.yakrooms.be.dto.NotificationMessage;
 import com.yakrooms.be.dto.PasscodeVerificationDTO;
+import com.yakrooms.be.dto.BookingChangeEvent;
 import com.yakrooms.be.dto.mapper.BookingMapper;
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
@@ -43,6 +44,7 @@ import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.BookingService;
 import com.yakrooms.be.service.MailService;
 import com.yakrooms.be.service.NotificationService;
+import com.yakrooms.be.service.BookingWebSocketService;
 import com.yakrooms.be.util.PasscodeGenerator;
 
 import jakarta.validation.ConstraintViolation;
@@ -62,6 +64,7 @@ public class BookingServiceImpl implements BookingService {
     private final MailService mailService;
     private final BookingMapper bookingMapper;
     private final NotificationService notificationService;
+    private final BookingWebSocketService bookingWebSocketService;
     private final Validator validator;
 
     @Autowired
@@ -73,6 +76,7 @@ public class BookingServiceImpl implements BookingService {
                              MailService mailService,
                              BookingMapper bookingMapper,
                              NotificationService notificationService,
+                             BookingWebSocketService bookingWebSocketService,
                              Validator validator) {
         this.bookingRepository = bookingRepository;
         this.roomRepository = roomRepository;
@@ -82,6 +86,7 @@ public class BookingServiceImpl implements BookingService {
         this.mailService = mailService;
         this.bookingMapper = bookingMapper;
         this.notificationService = notificationService;
+        this.bookingWebSocketService = bookingWebSocketService;
         this.validator = validator;
     }
 
@@ -329,6 +334,9 @@ public class BookingServiceImpl implements BookingService {
         // Handle room availability based on status change
         handleRoomAvailabilityForStatusChange(booking, oldStatus, status);
         
+        // Broadcast WebSocket event for booking status change
+        broadcastBookingStatusChange(booking, oldStatus, status);
+        
         logger.info("Successfully updated booking status: {} to: {}", bookingId, status);
         return true;
     }
@@ -387,6 +395,30 @@ public class BookingServiceImpl implements BookingService {
             default:
                 // No room availability change needed for other statuses
                 break;
+        }
+    }
+
+    private void broadcastBookingStatusChange(Booking booking, BookingStatus oldStatus, BookingStatus newStatus) {
+        try {
+            // Create booking change event
+            BookingChangeEvent event = new BookingChangeEvent(
+                booking.getId(),
+                booking.getHotel().getId(),
+                booking.getUser().getId(),
+                oldStatus,
+                newStatus,
+                "BOOKING_STATUS_CHANGE",
+                String.format("Booking status changed from %s to %s", oldStatus, newStatus)
+            );
+            
+            // Broadcast the event via WebSocket
+            bookingWebSocketService.broadcastBookingStatusChange(event);
+            
+            logger.info("Broadcasted booking status change event: {} -> {} for booking {}", 
+                       oldStatus, newStatus, booking.getId());
+        } catch (Exception e) {
+            logger.error("Failed to broadcast booking status change event for booking {}: {}", 
+                        booking.getId(), e.getMessage());
         }
     }
 

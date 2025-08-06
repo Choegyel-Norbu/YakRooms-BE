@@ -2,7 +2,7 @@ package com.yakrooms.be.projection;
 
 import java.time.LocalDateTime;
 
-public interface HotelWithPriceProjection {
+public interface HotelWithRatingProjection {
     Long getId();
     String getName();
     String getEmail();
@@ -16,9 +16,6 @@ public interface HotelWithPriceProjection {
     LocalDateTime getCreatedAt();
     String getLicenseUrl();
     String getIdProofUrl();
-    Double getLowestPrice();
-    String getPhotoUrls();
-    String getPhotoUrl();
     Double getAvgRating();
-
-}
+    Long getReviewCount();
+} 

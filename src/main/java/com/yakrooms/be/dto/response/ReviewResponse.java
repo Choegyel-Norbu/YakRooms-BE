@@ -7,5 +7,8 @@ public class ReviewResponse {
     public int rating;
     public String comment;
     public Long userId;
+    public String userName;
+    public String userEmail;
+    public String userProfilePicUrl;
     public LocalDateTime createdAt;
 }
