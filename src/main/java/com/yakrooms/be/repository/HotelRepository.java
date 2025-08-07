@@ -102,13 +102,20 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 	Optional<HotelListingProjection> findHotelListingByUserId(@Param("userId") Long userId);
 
 	// Optimized search with proper index usage
-	@Query(value = "SELECT * FROM hotels h WHERE " +
-			"h.is_verified = TRUE AND " +
-			"(:district IS NULL OR h.district LIKE CONCAT('%', :district, '%')) AND " +
-			"(:hotelType IS NULL OR h.hotel_type = :hotelType)", nativeQuery = true)
-	Page<Hotel> findByDistrictAndHotelType(@Param("district") String district,
-			@Param("hotelType") HotelType hotelType,
-			Pageable pageable);
+//	@Query(value = "SELECT * FROM hotels h WHERE " +
+//			"h.is_verified = TRUE AND " +
+//			"(:district IS NULL OR h.district LIKE CONCAT('%', :district, '%')) AND " +
+//			"(:hotelType IS NULL OR h.hotel_type = :hotelType)", nativeQuery = true)
+//	Page<Hotel> findByDistrictAndHotelType(@Param("district") String district,
+//			@Param("hotelType") HotelType hotelType,
+//			Pageable pageable);
+	
+	@Query("SELECT h FROM Hotel h WHERE h.isVerified = true AND " +
+		       "(:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%'))) AND " +
+		       "(:hotelType IS NULL OR h.hotelType = :hotelType)")
+		Page<Hotel> findVerifiedHotelsByFilters(@Param("district") String district,
+		                                       @Param("hotelType") HotelType hotelType,
+		                                       Pageable pageable);
 
 	// Optimized top 3 hotels query
 	@Query(value = """

@@ -108,6 +108,8 @@ public class HotelController {
 		return ResponseEntity.ok().build();
 	}
 
+
+
 	// Search hotels by criteria
 //	@PostMapping("/search")
 //	public ResponseEntity<List<HotelResponse>> searchHotels(@RequestBody HotelSearchCriteria criteria) {

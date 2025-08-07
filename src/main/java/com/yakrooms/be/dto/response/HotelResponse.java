@@ -23,7 +23,6 @@ public class HotelResponse {
 	private String idProofUrl;
 	private List<String> amenities;
 	private HotelType hotelType;
-	private Double averageRating;
 
 	public Long getId() {
 		return id;
@@ -151,14 +150,6 @@ public class HotelResponse {
 
 	public void setAmenities(List<String> amenities) {
 		this.amenities = amenities;
-	}
-
-	public Double getAverageRating() {
-		return averageRating;
-	}
-
-	public void setAverageRating(Double averageRating) {
-		this.averageRating = averageRating;
 	}
 
 }

@@ -42,11 +42,25 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	List<Review> findAllByHotelIdOrderByCreatedAtDesc(Long hotelId);
 
 	/**
-	 * Get paginated reviews for a specific hotel, ordered by creation date
-	 * descending
+	 * Get all reviews for a specific hotel with user and hotel data eagerly loaded
+	 */
+	@EntityGraph(value = "Review.withUserAndHotel")
+	@Query("SELECT r FROM Review r WHERE r.hotel.id = :hotelId ORDER BY r.createdAt DESC")
+	List<Review> findAllByHotelIdOrderByCreatedAtDescWithFull(@Param("hotelId") Long hotelId);
+
+	/**
+	 * Get paginated reviews for a specific hotel, ordered by creation date descending
+	 * Uses EntityGraph for optimal loading
 	 */
 	@EntityGraph(value = "Review.withUser")
-	Page<Review> findAllByHotelIdOrderByCreatedAtDesc(Long hotelId, Pageable pageable);
+	Page<Review> findByHotelIdOrderByCreatedAtDesc(Long hotelId, Pageable pageable);
+
+	/**
+	 * Alternative optimized query for paginated reviews with explicit JOIN FETCH
+	 */
+	@Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.hotel.id = :hotelId ORDER BY r.createdAt DESC")
+	Page<Review> findAllByHotelIdWithUser(@Param("hotelId") Long hotelId, Pageable pageable);
+
 
 
 }

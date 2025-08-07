@@ -6,9 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,9 +40,6 @@ import jakarta.persistence.EntityNotFoundException;
 public class HotelServiceImpl implements HotelService {
 
     private static final Logger log = LoggerFactory.getLogger(HotelServiceImpl.class);
-    private static final String HOTEL_CACHE = "hotels";
-    private static final String HOTEL_LIST_CACHE = "hotel-list";
-    private static final String TOP_HOTELS_CACHE = "top-hotels";
 
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
@@ -68,7 +62,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true)
     public HotelResponse createHotel(HotelRequest request, Long userId) {
         validateCreateHotelRequest(request, userId);
 
@@ -107,23 +100,17 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = HOTEL_LIST_CACHE, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-verified'")
     public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
     }
     
     @Override
-    @Cacheable(value = HOTEL_LIST_CACHE, key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-admin'")
     public Page<HotelResponse> getAllHotelsForSuperAdmin(Pageable pageable) {
         return hotelRepository.findAll(pageable).map(hotelMapper::toDto);
     }
 
     @Override
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = HOTEL_CACHE, key = "#id"),
-        @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true),
-    })
     public HotelResponse updateHotel(Long id, HotelRequest request) {
         validateUpdateHotelRequest(id, request);
 
@@ -148,10 +135,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = HOTEL_CACHE, key = "#id"),
-        @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true),
-    })
     public void deleteHotel(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
@@ -180,10 +163,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = HOTEL_CACHE, key = "#id"),
-        @CacheEvict(value = HOTEL_LIST_CACHE, allEntries = true),
-    })
     public void verifyHotel(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
@@ -219,7 +198,6 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = HOTEL_CACHE, key = "#hotelId")
     public HotelResponse getHotelById(Long hotelId) {
         if (hotelId == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
@@ -232,8 +210,6 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = HOTEL_LIST_CACHE, 
-               key = "T(java.lang.String).format('%s-%s-%d-%d', #district, #hotelType, #page, #size)")
     public Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size) {
         validatePagination(page, size);
 
@@ -242,26 +218,21 @@ public class HotelServiceImpl implements HotelService {
         String normalizedDistrict = normalizeSearchParam(district);
         HotelType type = parseHotelType(hotelType);
 
-        Page<Hotel> hotelPage = hotelRepository.findByDistrictAndHotelType(normalizedDistrict, type, pageable);
+        Page<Hotel> hotelPage = hotelRepository.findVerifiedHotelsByFilters(normalizedDistrict, type, pageable);
         return hotelPage.map(hotelMapper::toDto);
     }
 
     @Override
-    @Cacheable(value = TOP_HOTELS_CACHE)
     public List<HotelWithPriceProjection> getTopThreeHotels() {
         return hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
     }
 
     @Override
-    @Cacheable(value = HOTEL_LIST_CACHE, 
-               key = "'sorted-asc-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
     }
 
     @Override
-    @Cacheable(value = HOTEL_LIST_CACHE, 
-               key = "'sorted-desc-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
     }

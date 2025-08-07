@@ -2,8 +2,10 @@ package com.yakrooms.be.dto.mapper;
 
 import org.springframework.stereotype.Component;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
@@ -67,15 +69,18 @@ public class HotelMapper {
         response.setLicenseUrl(projection.getLicenseUrl());
         response.setIdProofUrl(projection.getIdProofUrl());
         response.setHotelType(projection.getHotelType());
-        response.setAverageRating(projection.getAverageRating());
         
-        // Copy lists (create new lists to avoid reference issues)
-        if (projection.getPhotoUrls() != null) {
-            response.setPhotoUrls(new ArrayList<>(projection.getPhotoUrls()));
+        // Handle comma-separated strings from database
+        if (projection.getAmenities() != null) {
+            // Convert Set<String> to comma-separated string, then split
+            String amenitiesString = String.join(",", projection.getAmenities());
+            response.setAmenities(splitAndCleanList(amenitiesString));
         }
         
-        if (projection.getAmenities() != null) {
-            response.setAmenities(new ArrayList<>(projection.getAmenities()));
+        if (projection.getPhotoUrls() != null) {
+            // Convert Set<String> to comma-separated string, then split
+            String photoUrlsString = String.join(",", projection.getPhotoUrls());
+            response.setPhotoUrls(splitAndCleanList(photoUrlsString));
         }
 
         return response;
@@ -176,5 +181,17 @@ public class HotelMapper {
         if (dto.getAmenities() != null) {
             entity.setAmenities(new HashSet<>(dto.getAmenities()));
         }
+    }
+
+    private List<String> splitAndCleanList(String commaSeparatedString) {
+        if (commaSeparatedString == null || commaSeparatedString.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        return Arrays.stream(commaSeparatedString.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .distinct() // Remove any duplicates
+                .collect(Collectors.toList());
     }
 }

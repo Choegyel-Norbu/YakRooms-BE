@@ -110,8 +110,8 @@ public class ReviewServiceImpl implements ReviewService {
             throw new ResourceNotFoundException("Hotel not found with id: " + hotelId);
         }
 
-        // Get paginated reviews for the hotel
-        Page<Review> reviewsPage = reviewRepository.findAllByHotelIdOrderByCreatedAtDesc(hotelId, pageable);
+        // Get paginated reviews for the hotel using EntityGraph for optimal performance
+        Page<Review> reviewsPage = reviewRepository.findByHotelIdOrderByCreatedAtDesc(hotelId, pageable);
 
         // Convert to DTOs
         return reviewsPage.map(this::convertToReviewResponse);
