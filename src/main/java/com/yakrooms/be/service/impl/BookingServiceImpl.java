@@ -96,9 +96,11 @@ public class BookingServiceImpl implements BookingService {
         logger.info("Creating booking for user: {}, room: {}, guests: {}", 
                    request.getUserId(), request.getRoomId(), request.getGuests());
 
-        
         // Fetch entities with optimized queries
-        User guest = fetchUserById(request.getUserId());
+        User guest = null;
+        if (request.getUserId() != null) {
+            guest = fetchUserById(request.getUserId());
+        }
         Room room = fetchRoomById(request.getRoomId());
         Hotel hotel = fetchHotelById(request.getHotelId());
         
@@ -401,10 +403,11 @@ public class BookingServiceImpl implements BookingService {
     private void broadcastBookingStatusChange(Booking booking, BookingStatus oldStatus, BookingStatus newStatus) {
         try {
             // Create booking change event
+            Long userId = booking.getUser() != null ? booking.getUser().getId() : null;
             BookingChangeEvent event = new BookingChangeEvent(
                 booking.getId(),
                 booking.getHotel().getId(),
-                booking.getUser().getId(),
+                userId,
                 oldStatus,
                 newStatus,
                 "BOOKING_STATUS_CHANGE",
@@ -426,7 +429,12 @@ public class BookingServiceImpl implements BookingService {
         CompletableFuture.runAsync(() -> {
             try {
                 sendHotelAdminNotification(booking, guest, hotel, room);
-                sendGuestPasscodeEmail(booking, guest, hotel, room);
+                // Only send guest email if guest is not null
+                if (guest != null) {
+                    sendGuestPasscodeEmail(booking, guest, hotel, room);
+                } else {
+                    logger.info("Skipping guest email notification for booking {} as guest is null", booking.getId());
+                }
             } catch (Exception e) {
                 logger.error("Failed to send booking notifications for booking: {}", booking.getId(), e);
             }
@@ -444,11 +452,12 @@ public class BookingServiceImpl implements BookingService {
                 saveNotificationToDatabase(hotelAdmin, booking, guest, room);
                 
                 // Send email notification
+                String guestName = guest != null ? guest.getName() : "Anonymous Guest";
                 mailService.sendBookingNotificationEmail(
                     hotelAdmin.getEmail(), 
                     hotel.getName(), 
                     room.getRoomNumber(), 
-                    guest.getName()
+                    guestName
                 );
                 
                 logger.info("Sent booking notification to hotel admin: {}", hotelAdmin.getId());
@@ -464,7 +473,8 @@ public class BookingServiceImpl implements BookingService {
         Notification dbNotification = new Notification();
         dbNotification.setUser(hotelAdmin);
         dbNotification.setTitle("New Booking!");
-        dbNotification.setMessage(String.format("Booking for Room %s by %s", room.getRoomNumber(), guest.getName()));
+        String guestName = guest != null ? guest.getName() : "Anonymous Guest";
+        dbNotification.setMessage(String.format("Booking for Room %s by %s", room.getRoomNumber(), guestName));
         dbNotification.setType("BOOKING");
         dbNotification.setRead(false);
         dbNotification.setCreatedAt(LocalDateTime.now());
