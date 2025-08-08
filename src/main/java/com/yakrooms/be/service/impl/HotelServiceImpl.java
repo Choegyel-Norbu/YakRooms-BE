@@ -30,6 +30,11 @@ import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.repository.BookingRepository;
 import com.yakrooms.be.repository.HotelRepository;
+import com.yakrooms.be.repository.NotificationRepository;
+import com.yakrooms.be.repository.RestaurantRepository;
+import com.yakrooms.be.repository.ReviewRepository;
+import com.yakrooms.be.repository.RoomRepository;
+import com.yakrooms.be.repository.StaffRepository;
 import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.service.MailService;
@@ -44,6 +49,11 @@ public class HotelServiceImpl implements HotelService {
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final RoomRepository roomRepository;
+    private final NotificationRepository notificationRepository;
+    private final StaffRepository staffRepository;
+    private final ReviewRepository reviewRepository;
+    private final RestaurantRepository restaurantRepository;
     private final HotelMapper hotelMapper;
     private final MailService mailService;
 
@@ -51,11 +61,21 @@ public class HotelServiceImpl implements HotelService {
     public HotelServiceImpl(HotelRepository hotelRepository,
                            UserRepository userRepository,
                            BookingRepository bookingRepository,
+                           RoomRepository roomRepository,
+                           NotificationRepository notificationRepository,
+                           StaffRepository staffRepository,
+                           ReviewRepository reviewRepository,
+                           RestaurantRepository restaurantRepository,
                            HotelMapper hotelMapper,
                            MailService mailService) {
         this.hotelRepository = hotelRepository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
+        this.roomRepository = roomRepository;
+        this.notificationRepository = notificationRepository;
+        this.staffRepository = staffRepository;
+        this.reviewRepository = reviewRepository;
+        this.restaurantRepository = restaurantRepository;
         this.hotelMapper = hotelMapper;
         this.mailService = mailService;
     }
@@ -143,9 +163,29 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
+        // Delete notifications first (they reference room_id)
+        notificationRepository.deleteByHotelIdInBatch(id);
+        log.info("Deleted notifications for hotel ID: {}", id);
+
         // Delete bookings in batch
         bookingRepository.deleteByHotelIdInBatch(id);
         log.info("Deleted bookings for hotel ID: {}", id);
+
+        // Delete rooms in batch (this will cascade to room items and other room-related entities)
+        roomRepository.deleteByHotelIdInBatch(id);
+        log.info("Deleted rooms for hotel ID: {}", id);
+
+        // Delete staff in batch
+        staffRepository.deleteByHotelIdInBatch(id);
+        log.info("Deleted staff for hotel ID: {}", id);
+
+        // Delete reviews in batch
+        reviewRepository.deleteByHotelIdInBatch(id);
+        log.info("Deleted reviews for hotel ID: {}", id);
+
+        // Delete restaurant in batch
+        restaurantRepository.deleteByHotelIdInBatch(id);
+        log.info("Deleted restaurant for hotel ID: {}", id);
 
         // Update users in batch
         List<User> users = userRepository.findByHotelIdWithRoles(id);

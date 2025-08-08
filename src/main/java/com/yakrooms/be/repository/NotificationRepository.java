@@ -3,11 +3,17 @@ package com.yakrooms.be.repository;
 import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
+
+    // Batch delete operations
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.room.hotel.id = :hotelId")
+    void deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
     List<Notification> findByUser(User user);
     List<Notification> findByUserAndIsReadFalse(User user);
     

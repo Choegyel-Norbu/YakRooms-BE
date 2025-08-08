@@ -5,6 +5,7 @@ import com.yakrooms.be.projection.StaffProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,6 +15,11 @@ import java.util.Optional;
 public interface StaffRepository extends JpaRepository<Staff, Long> {
     
     Optional<Staff> findByEmail(String email);
+    
+    // Batch delete operations
+    @Modifying
+    @Query("DELETE FROM Staff s WHERE s.hotel.id = :hotelId")
+    void deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
     
     // Optimized query using projection to avoid N+1 and LazyInitializationException
     @Query("SELECT " +

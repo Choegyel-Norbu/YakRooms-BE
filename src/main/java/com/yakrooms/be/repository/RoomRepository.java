@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,11 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     // Basic find methods - kept for simple use cases
     List<Room> findByHotelId(Long hotelId);
+
+    // Batch delete operations
+    @Modifying
+    @Query("DELETE FROM Room r WHERE r.hotel.id = :hotelId")
+    void deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
 
     // Optimized single room fetch (basic data only)
     @Query("SELECT r FROM Room r " +

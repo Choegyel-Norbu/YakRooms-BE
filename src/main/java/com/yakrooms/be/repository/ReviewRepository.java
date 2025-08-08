@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -16,6 +17,11 @@ import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    // Batch delete operations
+    @Modifying
+    @Query("DELETE FROM Review r WHERE r.hotel.id = :hotelId")
+    void deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
 
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.hotel.id = :hotelId")
     Optional<Double> findAverageRatingByHotel(@Param("hotelId") Long hotelId);
