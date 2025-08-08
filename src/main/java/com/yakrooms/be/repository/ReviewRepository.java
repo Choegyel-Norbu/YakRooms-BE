@@ -17,50 +17,17 @@ import java.util.Optional;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-	/**
-	 * Get average rating for a specific hotel
-	 */
-	@Query("SELECT AVG(r.rating) FROM Review r WHERE r.hotel.id = :hotelId")
-	Optional<Double> findAverageRatingByHotel(@Param("hotelId") Long hotelId);
+    @Query("SELECT AVG(r.rating) FROM Review r WHERE r.hotel.id = :hotelId")
+    Optional<Double> findAverageRatingByHotel(@Param("hotelId") Long hotelId);
 
-	/**
-	 * Count reviews for a hotel
-	 */
-	@Query("SELECT COUNT(r) FROM Review r WHERE r.hotel.id = :hotelId")
-	long countReviewsByHotel(@Param("hotelId") Long hotelId);
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.hotel.id = :hotelId")
+    long countReviewsByHotel(@Param("hotelId") Long hotelId);
 
-	/**
-	 * Check if user has already reviewed a hotel
-	 */
-	@Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM Review r WHERE r.hotel = :hotel AND r.user = :user")
-	boolean existsByHotelAndUser(@Param("hotel") Hotel hotel, @Param("user") User user);
+    @EntityGraph(value = "Review.withUser")
+    List<Review> findAllByHotelIdOrderByCreatedAtDesc(Long hotelId);
 
-	/**
-	 * Get all reviews for a specific hotel with user data, ordered by creation date descending
-	 */
-	@EntityGraph(value = "Review.withUser")
-	List<Review> findAllByHotelIdOrderByCreatedAtDesc(Long hotelId);
+    @EntityGraph(value = "Review.withUser")
+    Page<Review> findByHotelIdOrderByCreatedAtDesc(Long hotelId, Pageable pageable);
 
-	/**
-	 * Get all reviews for a specific hotel with user and hotel data eagerly loaded
-	 */
-	@EntityGraph(value = "Review.withUserAndHotel")
-	@Query("SELECT r FROM Review r WHERE r.hotel.id = :hotelId ORDER BY r.createdAt DESC")
-	List<Review> findAllByHotelIdOrderByCreatedAtDescWithFull(@Param("hotelId") Long hotelId);
-
-	/**
-	 * Get paginated reviews for a specific hotel, ordered by creation date descending
-	 * Uses EntityGraph for optimal loading
-	 */
-	@EntityGraph(value = "Review.withUser")
-	Page<Review> findByHotelIdOrderByCreatedAtDesc(Long hotelId, Pageable pageable);
-
-	/**
-	 * Alternative optimized query for paginated reviews with explicit JOIN FETCH
-	 */
-	@Query("SELECT r FROM Review r JOIN FETCH r.user WHERE r.hotel.id = :hotelId ORDER BY r.createdAt DESC")
-	Page<Review> findAllByHotelIdWithUser(@Param("hotelId") Long hotelId, Pageable pageable);
-
-
-
+    boolean existsByHotelAndUser(Hotel hotel, User user);
 }

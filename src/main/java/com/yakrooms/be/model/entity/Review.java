@@ -132,10 +132,10 @@ public class Review {
         return true; // All reviews are active since we removed soft delete
     }
 
+    // equals and hashCode
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
+        if (this == o) return true;
         if (!(o instanceof Review))
             return false;
         Review review = (Review) o;
@@ -147,11 +147,13 @@ public class Review {
         return getClass().hashCode();
     }
 
+    // toString
     @Override
     public String toString() {
         return "Review{" +
                 "id=" + id +
                 ", rating=" + rating +
+                ", comment='" + comment + '\'' +
                 ", hotel=" + (hotel != null ? hotel.getId() : null) +
                 ", user=" + (user != null ? user.getId() : null) +
                 ", createdAt=" + createdAt +
