@@ -35,7 +35,7 @@ public class MailService {
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
 			helper.setTo(toEmail);
-			helper.setSubject("YakRooms: Your Hotel Listing is Verified ✅");
+			helper.setSubject("YakRooms: Your Hotel Listing is Verified");
 			helper.setText(htmlContent, true); // true = isHtml
 
 			mailSender.send(mimeMessage);
@@ -57,7 +57,7 @@ public class MailService {
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
 			helper.setTo(toEmail);
-			helper.setSubject("YakRooms: New Booking Alert! 🎉");
+			helper.setSubject("YakRooms: New Booking Alert!");
 			helper.setText(htmlContent, true); // true = isHtml
 
 			mailSender.send(mimeMessage);
@@ -82,7 +82,7 @@ public class MailService {
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
 			helper.setTo(toEmail);
-			helper.setSubject("YakRooms: Your Booking Passcode 🔐");
+			helper.setSubject("YakRooms: Your Booking Passcode");
 			helper.setText(htmlContent, true); // true = isHtml
 
 			mailSender.send(mimeMessage);

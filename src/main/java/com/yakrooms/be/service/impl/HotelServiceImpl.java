@@ -249,17 +249,27 @@ public class HotelServiceImpl implements HotelService {
         return hotelMapper.toDto(hotelProjection);
     }
 
+//    @Override
+//    public Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size) {
+//        validatePagination(page, size);
+//
+//        Pageable pageable = PageRequest.of(page, size);
+//        
+//        String normalizedDistrict = normalizeSearchParam(district);
+//        HotelType type = parseHotelType(hotelType);
+//
+//        Page<Hotel> hotelPage = hotelRepository.findVerifiedHotelsByFilters(normalizedDistrict, type, pageable);
+//        return hotelPage.map(hotelMapper::toDto);
+//    }
+    
     @Override
-    public Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size) {
+    public Page<HotelWithLowestPriceProjection> searchHotels(String district, String hotelType, int page, int size) {
         validatePagination(page, size);
 
         Pageable pageable = PageRequest.of(page, size);
-        
-        String normalizedDistrict = normalizeSearchParam(district);
-        HotelType type = parseHotelType(hotelType);
 
-        Page<Hotel> hotelPage = hotelRepository.findVerifiedHotelsByFilters(normalizedDistrict, type, pageable);
-        return hotelPage.map(hotelMapper::toDto);
+        Page<HotelWithLowestPriceProjection> hotelPage = hotelRepository.findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(district, hotelType, pageable);
+        return hotelPage;
     }
 
     @Override

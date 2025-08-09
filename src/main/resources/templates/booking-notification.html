@@ -1,29 +1,263 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>YakRooms: New Booking Alert!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Booking Alert - YakRooms</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; color: #222; }
-        .container { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #eee; max-width: 500px; margin: 40px auto; padding: 32px; }
-        .header { color: #2b7a78; font-size: 1.5em; margin-bottom: 16px; }
-        .details { margin: 24px 0; }
-        .label { font-weight: bold; }
-        .footer { margin-top: 32px; font-size: 0.95em; color: #888; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #ffffff;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #ffffff;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .logo-yak {
+            color: #667eea;
+        }
+        
+        .logo-rooms {
+            color: #EAB308;
+        }
+        
+        .header {
+            font-size: 28px;
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 30px;
+        }
+        
+        .content {
+            font-size: 14px;
+            color: #333333;
+            line-height: 1.8;
+        }
+        
+        .alert-badge {
+            display: inline-block;
+            background-color: #EAB308;
+            color: #111111;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        
+        .booking-details {
+            background-color: #fef3c7;
+            border: 1px solid #EAB308;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(234, 179, 8, 0.2);
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            color: #666666;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            color: #111111;
+            font-weight: 600;
+        }
+        
+        .action-section {
+            margin: 30px 0;
+            padding: 20px 0;
+            border-top: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .action-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 12px;
+        }
+        
+        .action-text {
+            font-size: 14px;
+            color: #333333;
+            line-height: 1.8;
+        }
+        
+        .dashboard-link {
+            display: inline-block;
+            color: #EAB308;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+        
+        .dashboard-link:hover {
+            text-decoration: underline;
+        }
+        
+        .notice-box {
+            background-color: #f9f9f9;
+            padding: 16px;
+            margin: 30px 0;
+            border-left: 3px solid #666666;
+            font-size: 13px;
+            color: #666666;
+            line-height: 1.6;
+        }
+        
+        .automated-notice {
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e5e5;
+        }
+        
+        .reference-number {
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        /* Mobile Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                padding: 30px 16px;
+            }
+            
+            .header {
+                font-size: 24px;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+            }
+            
+            .detail-label {
+                margin-bottom: 4px;
+            }
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">New Booking Received!</div>
-    <div class="details">
-        <p><span class="label">Hotel:</span> <span th:text="${hotelName}">${hotelName}</span></p>
-        <p><span class="label">Room Number:</span> <span th:text="${roomNumber}">${roomNumber}</span></p>
-        <p><span class="label">Guest Name:</span> <span th:text="${guestName}">${guestName}</span></p>
+    <div class="email-container">
+        <!-- Logo -->
+        <div class="logo">
+            <span class="logo-yak">Yak</span><span class="logo-rooms">Rooms</span>
+        </div>
+
+        <!-- Alert Badge -->
+        <div class="alert-badge">New Booking</div>
+
+        <!-- Header -->
+        <h1 class="header">Booking Received</h1>
+        <p class="subtitle" th:text="${hotelName}">Hotel Name</p>
+
+        <!-- Content -->
+        <p class="content">
+            You have received a new booking through YakRooms. Please review the details below and prepare for your guest's arrival.
+        </p>
+
+        <!-- Booking Details -->
+        <div class="booking-details">
+            <div class="detail-row">
+                <span class="detail-label">Guest Name</span>
+                <span class="detail-value" th:text="${guestName}">Guest Name</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Room Number</span>
+                <span class="detail-value" th:text="${roomNumber}">101</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Check-in Date</span>
+                <span class="detail-value" th:text="${#temporals.format(checkInDate, 'dd MMMM yyyy')}">01 January 2024</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Check-out Date</span>
+                <span class="detail-value" th:text="${#temporals.format(checkOutDate, 'dd MMMM yyyy')}">03 January 2024</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Booking Status</span>
+                <span class="detail-value">Confirmed</span>
+            </div>
+        </div>
+
+        <!-- Action Required -->
+        <div class="action-section">
+            <h2 class="action-title">Action Required</h2>
+            <p class="action-text">
+                Please log in to your dashboard to view complete booking information, guest contact details, and any special requests. Ensure the room is prepared according to your standard procedures.
+            </p>
+            <a href="#" class="dashboard-link">View Full Details in Dashboard →</a>
+        </div>
+
+        <!-- Notice -->
+        <div class="notice-box">
+            <strong>Reminder:</strong> The guest will present a unique passcode at check-in. Please verify this code through your dashboard to complete the check-in process.
+        </div>
+
+        <!-- Automated Notice -->
+        <p class="automated-notice">
+            This is an automated notification from YakRooms. Please do not reply to this email.
+        </p>
+        
+        <!-- Reference Number -->
+        <p class="reference-number">
+            Booking Reference: #<span th:text="${bookingId}">BK123456</span>
+        </p>
     </div>
-    <p>You have received a new booking on YakRooms. Please check your dashboard for more details.</p>
-    <div class="footer">
-        &copy; YakRooms | This is an automated notification. Please do not reply to this email.
-    </div>
-</div>
 </body>
-</html> 
+</html>

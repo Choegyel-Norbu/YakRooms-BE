@@ -3,162 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Booking Passcode - YakRooms</title>
+    <title>Booking Confirmation - YakRooms</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
+            color: #333333;
             background-color: #ffffff;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            color: #7f8c8d;
-            font-size: 16px;
-        }
-        .passcode-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 25px 0;
-        }
-        .passcode {
-            font-size: 32px;
-            font-weight: bold;
-            letter-spacing: 3px;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-        }
-        .booking-details {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .detail-row:last-child {
-            border-bottom: none;
-        }
-        .detail-label {
-            font-weight: 600;
-            color: #495057;
-        }
-        .detail-value {
-            color: #6c757d;
-        }
-        .important-note {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 20px 0;
-        }
-        .important-note h4 {
-            color: #856404;
-            margin: 0 0 10px 0;
-        }
-        .important-note p {
-            color: #856404;
+            padding: 0;
             margin: 0;
         }
-        .footer {
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #ffffff;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px;
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            color: #6c757d;
+        }
+        
+        .logo-yak {
+            color: #667eea;
+        }
+        
+        .logo-rooms {
+            color: #EAB308;
+        }
+        
+        .header {
+            font-size: 28px;
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 30px;
+        }
+        
+        .content {
+            font-size: 14px;
+            color: #333333;
+            line-height: 1.8;
+        }
+        
+        .greeting {
+            font-size: 14px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+        
+        .greeting-name {
+            font-weight: 600;
+            color: #111111;
+        }
+        
+        .passcode-container {
+            background-color: #fef3c7;
+            border: 1px solid #EAB308;
+            border-radius: 4px;
+            padding: 24px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .passcode-label {
+            font-size: 12px;
+            color: #666666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        
+        .passcode-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111111;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .booking-info {
+            margin: 30px 0;
+            padding: 20px 0;
+            border-top: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .info-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 16px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
             font-size: 14px;
         }
-        .contact-info {
-            margin-top: 15px;
+        
+        .info-label {
+            color: #666666;
         }
-        .contact-info a {
-            color: #667eea;
+        
+        .info-value {
+            color: #111111;
+            font-weight: 500;
+        }
+        
+        .notice {
+            background-color: #f9f9f9;
+            padding: 16px;
+            margin: 30px 0;
+            border-left: 3px solid #EAB308;
+            font-size: 14px;
+            color: #333333;
+            line-height: 1.8;
+        }
+        
+        .notice-title {
+            font-weight: 600;
+            color: #111111;
+            margin-bottom: 8px;
+        }
+        
+        .support-text {
+            font-size: 14px;
+            color: #666666;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e5e5;
+            text-align: center;
+        }
+        
+        .support-link {
+            color: #EAB308;
             text-decoration: none;
+            font-weight: 500;
         }
-        .contact-info a:hover {
+        
+        .support-link:hover {
             text-decoration: underline;
+        }
+        
+        .reference-number {
+            font-size: 12px;
+            color: #999999;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        /* Mobile Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                padding: 30px 16px;
+            }
+            
+            .header {
+                font-size: 24px;
+            }
+            
+            .passcode-value {
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🏨 YakRooms</div>
-            <div class="subtitle">Your Booking Confirmation</div>
+    <div class="email-container">
+        <!-- Logo -->
+        <div class="logo">
+            <span class="logo-yak">Yak</span><span class="logo-rooms">Rooms</span>
         </div>
 
-        <h2>Hello <span th:text="${guestName}">Guest</span>! 👋</h2>
-        
-        <p>Your booking has been confirmed! Here's your unique passcode for check-in:</p>
+        <!-- Header -->
+        <h1 class="header">Booking Confirmed</h1>
+        <p class="subtitle" th:text="${hotelName}">Grand Hotel</p>
 
-        <div class="passcode-section">
-            <h3>Your Check-in Passcode</h3>
-            <div class="passcode" th:text="${passcode}">ABC123</div>
-            <p><strong>Keep this passcode safe!</strong> You'll need it to check in at the hotel.</p>
+        <!-- Greeting -->
+        <p class="greeting">
+            Hello <span class="greeting-name" th:text="${guestName}">Guest</span>,
+        </p>
+
+        <!-- Content -->
+        <p class="content">
+            Your booking has been successfully confirmed. Please save your check-in passcode below - you'll need to present it at the hotel reception upon arrival.
+        </p>
+
+        <!-- Passcode -->
+        <div class="passcode-container">
+            <div class="passcode-label">Check-in Passcode</div>
+            <div class="passcode-value" th:text="${passcode}">ABC123</div>
         </div>
 
-        <div class="booking-details">
-            <h3>📋 Booking Details</h3>
-            <div class="detail-row">
-                <span class="detail-label">Hotel:</span>
-                <span class="detail-value" th:text="${hotelName}">Hotel Name</span>
+        <!-- Booking Information -->
+        <div class="booking-info">
+            <h2 class="info-title">Booking Details</h2>
+            <div class="info-row">
+                <span class="info-label">Room Number</span>
+                <span class="info-value" th:text="${roomNumber}">101</span>
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Room Number:</span>
-                <span class="detail-value" th:text="${roomNumber}">Room 101</span>
+            <div class="info-row">
+                <span class="info-label">Check-in</span>
+                <span class="info-value" th:text="${#temporals.format(checkInDate, 'EEEE, dd MMMM yyyy')}">Monday, 01 January 2024</span>
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Check-in Date:</span>
-                <span class="detail-value" th:text="${#temporals.format(checkInDate, 'dd MMM yyyy')}">01 Jan 2024</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Check-out Date:</span>
-                <span class="detail-value" th:text="${#temporals.format(checkOutDate, 'dd MMM yyyy')}">03 Jan 2024</span>
+            <div class="info-row">
+                <span class="info-label">Check-out</span>
+                <span class="info-value" th:text="${#temporals.format(checkOutDate, 'EEEE, dd MMMM yyyy')}">Wednesday, 03 January 2024</span>
             </div>
         </div>
 
-        <div class="important-note">
-            <h4>⚠️ Important Information</h4>
-            <p><strong>Check-in Process:</strong> Present this passcode at the hotel reception to complete your check-in. The passcode is unique to your booking and cannot be shared.</p>
-            <p><strong>Security:</strong> Do not share this passcode with anyone. Keep it confidential for your own security.</p>
-        </div>
-
-        <p>We hope you have a wonderful stay! If you have any questions, please don't hesitate to contact us.</p>
-
-        <div class="footer">
-            <p>Thank you for choosing YakRooms!</p>
-            <div class="contact-info">
-                <p>Need help? Contact us at <a href="mailto:support@yakrooms.com">support@yakrooms.com</a></p>
-                <p>© 2024 YakRooms. All rights reserved.</p>
+        <!-- Important Notice -->
+        <div class="notice">
+            <div class="notice-title">Important Information</div>
+            <div>
+                Your passcode is unique and serves as your booking verification. Please keep it confidential and present it at check-in. 
+                Free cancellation is available up to 24 hours before your check-in date.
             </div>
         </div>
+
+        <!-- Support -->
+        <p class="support-text">
+            Need help? Contact us at <a href="mailto:support@yakrooms.com" class="support-link">support@yakrooms.com</a>
+        </p>
+
+        <!-- Reference Number -->
+        <p class="reference-number">
+            Reference: #<span th:text="${bookingId}">BK123456</span>
+        </p>
     </div>
 </body>
-</html> 
+</html>

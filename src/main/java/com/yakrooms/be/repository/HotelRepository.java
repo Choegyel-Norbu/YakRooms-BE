@@ -54,6 +54,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.hotel_type as hotelType,
 			    GROUP_CONCAT(DISTINCT ha.amenity) as amenities,
 			    GROUP_CONCAT(DISTINCT hp.url) as photoUrls,
+			    SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT hp.url), ',', 1) as photoUrl,
 			    COALESCE(AVG(r.rating), 0) as averageRating
 			FROM hotels h
 			LEFT JOIN hotel_amenities ha ON ha.hotel_id = h.id
@@ -92,6 +93,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.created_at as createdAt,
 			    h.hotel_type as hotelType,
 			    GROUP_CONCAT(DISTINCT hp.url) as photoUrls,
+			    SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT hp.url), ',', 1) as photoUrl,
 			    GROUP_CONCAT(DISTINCT ha.amenity) as amenities
 			FROM hotels h
 			JOIN users u ON h.id = u.hotel_id AND u.id = :userId
@@ -100,51 +102,98 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			GROUP BY h.id
 			""", nativeQuery = true)
 	Optional<HotelListingProjection> findHotelListingByUserId(@Param("userId") Long userId);
-
-	// Optimized search with proper index usage
-//	@Query(value = "SELECT * FROM hotels h WHERE " +
-//			"h.is_verified = TRUE AND " +
-//			"(:district IS NULL OR h.district LIKE CONCAT('%', :district, '%')) AND " +
-//			"(:hotelType IS NULL OR h.hotel_type = :hotelType)", nativeQuery = true)
-//	Page<Hotel> findByDistrictAndHotelType(@Param("district") String district,
-//			@Param("hotelType") HotelType hotelType,
-//			Pageable pageable);
 	
-	@Query("SELECT h FROM Hotel h WHERE h.isVerified = true AND " +
-		       "(:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%'))) AND " +
-		       "(:hotelType IS NULL OR h.hotelType = :hotelType)")
-		Page<Hotel> findVerifiedHotelsByFilters(@Param("district") String district,
-		                                       @Param("hotelType") HotelType hotelType,
-		                                       Pageable pageable);
+	@Query(value = """
+			SELECT
+			h.id as id,
+			h.name as name,
+			h.email as email,
+			h.phone as phone,
+			h.address as address,
+			h.district as district,
+			h.logo_url as logoUrl,
+			h.description as description,
+			h.is_verified as isVerified,
+			h.website_url as websiteUrl,
+			h.created_at as createdAt,
+			h.license_url as licenseUrl,
+			h.id_proof_url as idProofUrl,
+			h.hotel_type as hotelType,
+			COALESCE(rm.min_price, 0) as lowestPrice,
+			hp.urls as photoUrls,
+			SUBSTRING_INDEX(hp.urls, ',', 1) as photoUrl,
+			COALESCE(rv.avg_rating, 0) as averageRating
+			FROM hotels h
+			LEFT JOIN (
+			SELECT hotel_id, MIN(price) as min_price
+			FROM room
+			GROUP BY hotel_id
+			) rm ON rm.hotel_id = h.id
+			LEFT JOIN (
+			SELECT hotel_id, GROUP_CONCAT(url) as urls
+			FROM hotel_photo_urls
+			GROUP BY hotel_id
+			) hp ON hp.hotel_id = h.id
+			LEFT JOIN (
+			SELECT hotel_id, AVG(rating) as avg_rating
+			FROM reviews
+			GROUP BY hotel_id
+			) rv ON rv.hotel_id = h.id
+			WHERE h.is_verified = 1
+			AND (:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%')))
+			AND (:hotelType IS NULL OR h.hotel_type = :hotelType)
+			ORDER BY COALESCE(rm.min_price, 999999) ASC
+			""", 
+			countQuery = """
+			SELECT COUNT(*) 
+			FROM hotels h 
+			WHERE h.is_verified = 1
+			AND (:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%')))
+			AND (:hotelType IS NULL OR h.hotel_type = :hotelType)
+			""", 
+			nativeQuery = true)
+			Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(
+			    @Param("district") String district,
+			    @Param("hotelType") String hotelType,
+			    Pageable pageable
+			);
+
+//	@Query("SELECT h FROM Hotel h WHERE h.isVerified = true AND " +
+//		       "(:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%'))) AND " +
+//		       "(:hotelType IS NULL OR h.hotelType = :hotelType)")
+//		Page<Hotel> findVerifiedHotelsByFilters(@Param("district") String district,
+//		                                       @Param("hotelType") HotelType hotelType,
+//		                                       Pageable pageable);
 
 	// Optimized top 3 hotels query
-	@Query(value = """
-						SELECT
-			    h.id,
-			    h.name,
-			    h.email,
-			    h.phone,
-			    h.address,
-			    h.district,
-			    h.logo_url,
-			    h.description,
-			    h.is_verified,
-			    h.website_url,
-			    h.created_at,
-			    h.license_url,
-			    h.id_proof_url,
-			    AVG(r2.rating) AS avg_rating,
-			    MIN(r.price) AS lowest_price,
-			    GROUP_CONCAT(hp.url) AS photo_urls
-			FROM hotels h
-			LEFT JOIN room r ON r.hotel_id = h.id
-			LEFT JOIN hotel_photo_urls hp ON h.id = hp.hotel_id
-			LEFT JOIN reviews r2 ON r2.hotel_id = h.id
-			WHERE h.is_verified = 1
-			GROUP BY h.id
-			ORDER BY avg_rating DESC
-			LIMIT 3;
-						""", nativeQuery = true)
+		@Query(value = """
+					SELECT
+		    h.id,
+		    h.name,
+		    h.email,
+		    h.phone,
+		    h.address,
+		    h.district,
+		    h.logo_url,
+		    h.description,
+		    h.is_verified,
+		    h.website_url,
+		    h.created_at,
+		    h.license_url,
+		    h.id_proof_url,
+		    AVG(r2.rating) AS avg_rating,
+		    MIN(r.price) AS lowest_price,
+		    GROUP_CONCAT(hp.url) AS photo_urls,
+		    SUBSTRING_INDEX(GROUP_CONCAT(hp.url), ',', 1) AS photo_url
+		FROM hotels h
+		LEFT JOIN room r ON r.hotel_id = h.id
+		LEFT JOIN hotel_photo_urls hp ON h.id = hp.hotel_id
+		LEFT JOIN reviews r2 ON r2.hotel_id = h.id
+		WHERE h.is_verified = 1
+		GROUP BY h.id
+		ORDER BY avg_rating DESC
+		LIMIT 3;
+					""", nativeQuery = true)
 	List<HotelWithPriceProjection> findTop3VerifiedHotelsWithPhotosAndPrice();
 
 	// Optimized paginated query with lowest price
@@ -166,6 +215,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.hotel_type as hotelType,
 			    COALESCE(rm.min_price, 0) as lowestPrice,
 			    hp.urls as photoUrls,
+			    SUBSTRING_INDEX(hp.urls, ',', 1) as photoUrl,
 			    COALESCE(rv.avg_rating, 0) as averageRating
 			FROM hotels h
 			LEFT JOIN (
@@ -207,6 +257,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.hotel_type as hotelType,
 			    COALESCE(rm.min_price, 0) as lowestPrice,
 			    hp.urls as photoUrls,
+			    SUBSTRING_INDEX(hp.urls, ',', 1) as photoUrl,
 			    COALESCE(rv.avg_rating, 0) as averageRating
 			FROM hotels h
 			LEFT JOIN (

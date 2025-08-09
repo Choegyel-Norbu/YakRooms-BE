@@ -1,7 +1,6 @@
 package com.yakrooms.be.projection;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 import com.yakrooms.be.model.enums.HotelType;
 
@@ -25,5 +24,6 @@ public interface HotelWithCollectionsAndRatingProjection {
     HotelType getHotelType();
     Set<String> getAmenities();
     Set<String> getPhotoUrls();
+    String getPhotoUrl();
     Double getAverageRating();
 } 

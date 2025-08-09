@@ -13,5 +13,6 @@ public interface HotelListingProjection {
     LocalDateTime getCreatedAt();
     String getHotelType();
     String getPhotoUrls();
+    String getPhotoUrl();
     String getAmenities();
 }

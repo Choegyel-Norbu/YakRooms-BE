@@ -80,12 +80,21 @@ public class HotelController {
 		return ResponseEntity.ok(hotelService.updateHotel(id, request));
 	}
 
+//	@GetMapping("/search")
+//	public ResponseEntity<Page<HotelResponse>> searchHotels(@RequestParam(required = false) String district,
+//			@RequestParam(required = false) String hotelType, @RequestParam(defaultValue = "0") int page,
+//			@RequestParam(defaultValue = "10") int size) {
+//
+//		Page<HotelResponse> results = hotelService.searchHotels(district, hotelType, page, size);
+//		return ResponseEntity.ok(results);
+//	}
+	
 	@GetMapping("/search")
-	public ResponseEntity<Page<HotelResponse>> searchHotels(@RequestParam(required = false) String district,
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> searchHotels(@RequestParam(required = false) String district,
 			@RequestParam(required = false) String hotelType, @RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
 
-		Page<HotelResponse> results = hotelService.searchHotels(district, hotelType, page, size);
+		Page<HotelWithLowestPriceProjection> results = hotelService.searchHotels(district, hotelType, page, size);
 		return ResponseEntity.ok(results);
 	}
 

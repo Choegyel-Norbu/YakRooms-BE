@@ -20,5 +20,4 @@ public interface HotelWithPriceProjection {
     String getPhotoUrls();
     String getPhotoUrl();
     Double getAvgRating();
-
 }
