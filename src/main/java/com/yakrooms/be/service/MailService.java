@@ -44,11 +44,15 @@ public class MailService {
 		}
 	}
 
-	public void sendBookingNotificationEmail(String toEmail, String hotelName, String roomNumber, String guestName) {
+	public void sendBookingNotificationEmail(String toEmail, String hotelName, String roomNumber, String guestName, Long bookingId, LocalDate checkInDate, LocalDate checkOutDate, String guestEmail) {
 		Context context = new Context();
 		context.setVariable("hotelName", hotelName);
 		context.setVariable("roomNumber", roomNumber);
 		context.setVariable("guestName", guestName);
+		context.setVariable("bookingId", bookingId);
+		context.setVariable("checkInDate", checkInDate);
+		context.setVariable("checkOutDate", checkOutDate);
+		context.setVariable("guestEmail", guestEmail);
 
 		String htmlContent = templateEngine.process("booking-notification.html", context);
 
@@ -66,7 +70,7 @@ public class MailService {
 		}
 	}
 
-	public void sendPasscodeEmailToGuest(String toEmail, String guestName, String passcode, String hotelName, String roomNumber, LocalDate checkInDate, LocalDate checkOutDate) {
+	public void sendPasscodeEmailToGuest(String toEmail, String guestName, String passcode, String hotelName, String roomNumber, LocalDate checkInDate, LocalDate checkOutDate, Long bookingId) {
 		Context context = new Context();
 		context.setVariable("guestName", guestName);
 		context.setVariable("passcode", passcode);
@@ -74,6 +78,7 @@ public class MailService {
 		context.setVariable("roomNumber", roomNumber);
 		context.setVariable("checkInDate", checkInDate);
 		context.setVariable("checkOutDate", checkOutDate);
+		context.setVariable("bookingId", bookingId);
 
 		String htmlContent = templateEngine.process("booking-passcode.html", context);
 

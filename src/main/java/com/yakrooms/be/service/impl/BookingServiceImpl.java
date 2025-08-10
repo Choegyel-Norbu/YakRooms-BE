@@ -451,13 +451,18 @@ public class BookingServiceImpl implements BookingService {
                 // Save notification in database
                 saveNotificationToDatabase(hotelAdmin, booking, guest, room);
                 
-                // Send email notification
+                // Send email notification with complete data
                 String guestName = guest != null ? guest.getName() : "Anonymous Guest";
+                String guestEmail = guest != null ? guest.getEmail() : "No email provided";
                 mailService.sendBookingNotificationEmail(
                     hotelAdmin.getEmail(), 
                     hotel.getName(), 
                     room.getRoomNumber(), 
-                    guestName
+                    guestName,
+                    booking.getId(),
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate(),
+                    guestEmail
                 );
                 
                 logger.info("Sent booking notification to hotel admin: {}", hotelAdmin.getId());
@@ -491,7 +496,8 @@ public class BookingServiceImpl implements BookingService {
                 hotel.getName(),
                 room.getRoomNumber(),
                 booking.getCheckInDate(),
-                booking.getCheckOutDate()
+                booking.getCheckOutDate(),
+                booking.getId()
             );
             logger.info("Sent passcode email to guest: {}", guest.getEmail());
         } catch (Exception e) {

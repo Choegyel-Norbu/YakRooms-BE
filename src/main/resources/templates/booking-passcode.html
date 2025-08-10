@@ -225,15 +225,15 @@
         <div class="booking-info">
             <h2 class="info-title">Booking Details</h2>
             <div class="info-row">
-                <span class="info-label">Room Number</span>
+                <span class="info-label">Room Number: </span>
                 <span class="info-value" th:text="${roomNumber}">101</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Check-in</span>
+                <span class="info-label">Check-in: </span>
                 <span class="info-value" th:text="${#temporals.format(checkInDate, 'EEEE, dd MMMM yyyy')}">Monday, 01 January 2024</span>
             </div>
             <div class="info-row">
-                <span class="info-label">Check-out</span>
+                <span class="info-label">Check-out: </span>
                 <span class="info-value" th:text="${#temporals.format(checkOutDate, 'EEEE, dd MMMM yyyy')}">Wednesday, 03 January 2024</span>
             </div>
         </div>
