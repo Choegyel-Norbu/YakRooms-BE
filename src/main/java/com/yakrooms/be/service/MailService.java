@@ -71,19 +71,19 @@ public class MailService {
 	}
 
 	public void sendPasscodeEmailToGuest(String toEmail, String guestName, String passcode, String hotelName, String roomNumber, LocalDate checkInDate, LocalDate checkOutDate, Long bookingId) {
-		Context context = new Context();
-		context.setVariable("guestName", guestName);
-		context.setVariable("passcode", passcode);
-		context.setVariable("hotelName", hotelName);
-		context.setVariable("roomNumber", roomNumber);
-		context.setVariable("checkInDate", checkInDate);
-		context.setVariable("checkOutDate", checkOutDate);
-		context.setVariable("bookingId", bookingId);
-
-		String htmlContent = templateEngine.process("booking-passcode", context);
-
-		MimeMessage mimeMessage = mailSender.createMimeMessage();
 		try {
+			Context context = new Context();
+			context.setVariable("guestName", guestName);
+			context.setVariable("passcode", passcode);
+			context.setVariable("hotelName", hotelName);
+			context.setVariable("roomNumber", roomNumber);
+			context.setVariable("checkInDate", checkInDate);
+			context.setVariable("checkOutDate", checkOutDate);
+			context.setVariable("bookingId", bookingId);
+
+			String htmlContent = templateEngine.process("booking-passcode", context);
+
+			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
 			helper.setTo(toEmail);
@@ -91,8 +91,30 @@ public class MailService {
 			helper.setText(htmlContent, true); // true = isHtml
 
 			mailSender.send(mimeMessage);
-		} catch (MessagingException e) {
-			throw new IllegalStateException("Failed to send passcode email", e);
+		} catch (Exception e) {
+			// Fallback: Send simple text email
+			try {
+				String fallbackContent = String.format(
+					"Hello %s,\n\n" +
+					"Your booking passcode for %s, Room %s is: %s\n\n" +
+					"Check-in: %s\n" +
+					"Check-out: %s\n" +
+					"Booking ID: %d\n\n" +
+					"Best regards,\nYakRooms Team",
+					guestName, hotelName, roomNumber, passcode, checkInDate, checkOutDate, bookingId
+				);
+				
+				MimeMessage fallbackMessage = mailSender.createMimeMessage();
+				MimeMessageHelper fallbackHelper = new MimeMessageHelper(fallbackMessage, false, "UTF-8");
+				
+				fallbackHelper.setTo(toEmail);
+				fallbackHelper.setSubject("YakRooms: Your Booking Passcode");
+				fallbackHelper.setText(fallbackContent, false);
+				
+				mailSender.send(fallbackMessage);
+			} catch (Exception fallbackException) {
+				throw new IllegalStateException("Failed to send passcode email (both template and fallback failed)", e);
+			}
 		}
 	}
 }

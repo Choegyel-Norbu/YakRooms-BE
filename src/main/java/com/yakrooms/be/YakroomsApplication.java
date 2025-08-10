@@ -16,5 +16,4 @@ public class YakroomsApplication {
 	public jakarta.validation.Validator validator() {
 		return new LocalValidatorFactoryBean();
 	}
-
 }
