@@ -81,7 +81,14 @@ public class MailService {
 			context.setVariable("checkOutDate", checkOutDate);
 			context.setVariable("bookingId", bookingId);
 
-			String htmlContent = templateEngine.process("booking-passcode", context);
+			// Try different template names for production compatibility
+			String htmlContent;
+			try {
+				htmlContent = templateEngine.process("booking-passcode", context);
+			} catch (Exception e) {
+				// Try with full path
+				htmlContent = templateEngine.process("templates/booking-passcode", context);
+			}
 
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
