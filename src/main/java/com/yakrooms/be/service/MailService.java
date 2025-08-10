@@ -28,7 +28,7 @@ public class MailService {
 		Context context = new Context();
 		context.setVariable("hotelName", hotelName);
 
-		String htmlContent = templateEngine.process("verify-hotel.html", context);
+		String htmlContent = templateEngine.process("verify-hotel", context);
 
 		MimeMessage mimeMessage = mailSender.createMimeMessage();
 		try {
@@ -54,7 +54,7 @@ public class MailService {
 		context.setVariable("checkOutDate", checkOutDate);
 		context.setVariable("guestEmail", guestEmail);
 
-		String htmlContent = templateEngine.process("booking-notification.html", context);
+		String htmlContent = templateEngine.process("booking-notification", context);
 
 		MimeMessage mimeMessage = mailSender.createMimeMessage();
 		try {
@@ -80,7 +80,7 @@ public class MailService {
 		context.setVariable("checkOutDate", checkOutDate);
 		context.setVariable("bookingId", bookingId);
 
-		String htmlContent = templateEngine.process("booking-passcode.html", context);
+		String htmlContent = templateEngine.process("booking-passcode", context);
 
 		MimeMessage mimeMessage = mailSender.createMimeMessage();
 		try {
