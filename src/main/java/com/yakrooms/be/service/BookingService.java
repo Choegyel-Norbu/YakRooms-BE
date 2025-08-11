@@ -78,4 +78,12 @@ public interface BookingService {
      * @return List of booking responses
      */
     List<BookingResponse> getAllBookingsByUserIdAndStatus(Long userId, String status);
+    
+    /**
+     * Change booking status to CHECKED_IN for stats tracking.
+     * 
+     * @param bookingId The booking ID to update
+     * @return true if status was successfully changed, false otherwise
+     */
+    boolean changeBookingToCheckIn(Long bookingId);
 }

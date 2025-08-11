@@ -658,5 +658,11 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
+	@Override
+	public boolean changeBookingToCheckIn(Long bookingId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 
 }
