@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,9 @@ public class MailService {
 	private final JavaMailSender mailSender;
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
-	@Autowired
+	@Value("${spring.mail.username}")
+	private String fromEmail;
+
 	public MailService(JavaMailSender mailSender) {
 		super();
 		this.mailSender = mailSender;
@@ -29,6 +32,7 @@ public class MailService {
 		try {
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+			helper.setFrom(fromEmail);
 			helper.setTo(toEmail);
 			helper.setSubject("YakRooms: Your Hotel Listing is Verified");
 			helper.setText(htmlContent, true); // true = isHtml
@@ -46,6 +50,7 @@ public class MailService {
 		try {
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+			helper.setFrom(fromEmail);
 			helper.setTo(toEmail);
 			helper.setSubject("YakRooms: New Booking Alert!");
 			helper.setText(htmlContent, true); // true = isHtml
@@ -63,6 +68,7 @@ public class MailService {
 			MimeMessage mimeMessage = mailSender.createMimeMessage();
 			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+			helper.setFrom(fromEmail);
 			helper.setTo(toEmail);
 			helper.setSubject("YakRooms: Your Booking Passcode");
 			helper.setText(htmlContent, true); // true = isHtml
@@ -84,6 +90,7 @@ public class MailService {
 				MimeMessage fallbackMessage = mailSender.createMimeMessage();
 				MimeMessageHelper fallbackHelper = new MimeMessageHelper(fallbackMessage, false, "UTF-8");
 				
+				fallbackHelper.setFrom(fromEmail);
 				fallbackHelper.setTo(toEmail);
 				fallbackHelper.setSubject("YakRooms: Your Booking Passcode");
 				fallbackHelper.setText(fallbackContent, false);

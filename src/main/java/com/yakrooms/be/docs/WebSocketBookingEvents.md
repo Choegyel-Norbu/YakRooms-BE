@@ -17,6 +17,25 @@ The WebSocket booking events system provides real-time notifications when bookin
 3. WebSocket service broadcasts to multiple topics/queues
 4. Frontend receives real-time updates
 
+## WebSocket Connection
+
+### Important: SockJS Path Requirements
+When using SockJS, the client should connect to the base endpoint `/ws`, not `/ws/bookings`. SockJS automatically handles the internal routing and requires specific path patterns.
+
+**Correct connection:**
+```javascript
+const socket = new SockJS('/ws');  // ✅ Correct
+```
+
+**Incorrect connection:**
+```javascript
+const socket = new SockJS('/ws/bookings');  // ❌ Will cause "Invalid SockJS path" error
+```
+
+### Available Endpoints
+- **Primary**: `/ws` - Main WebSocket endpoint for all connections
+- **Alternative**: `/ws/bookings` - Specific endpoint for booking-related connections (if needed)
+
 ## WebSocket Topics and Queues
 
 ### General Booking Events
@@ -61,7 +80,7 @@ The WebSocket booking events system provides real-time notifications when bookin
 
 ### JavaScript/TypeScript Example
 ```javascript
-// Connect to WebSocket
+// Connect to WebSocket - IMPORTANT: Use /ws, not /ws/bookings
 const socket = new SockJS('/ws');
 const stompClient = Stomp.over(socket);
 
@@ -140,6 +159,7 @@ export const useBookingWebSocket = (hotelId?: number, userId?: number) => {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
+    // IMPORTANT: Connect to /ws, not /ws/bookings
     const socket = new SockJS('/ws');
     const stompClient = new Client({
       webSocketFactory: () => socket,

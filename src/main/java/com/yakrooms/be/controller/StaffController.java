@@ -21,13 +21,9 @@ public class StaffController {
     private StaffService staffService;
 
     @PostMapping
-    public ResponseEntity<?> addStaff(@Validated @RequestBody StaffRequestDTO requestDTO) {
-        try {
-            StaffResponseDTO response = staffService.addStaff(requestDTO);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<StaffResponseDTO> addStaff(@Validated @RequestBody StaffRequestDTO requestDTO) {
+        StaffResponseDTO response = staffService.addStaff(requestDTO);
+        return ResponseEntity.ok(response);
     }
 
     // Optimized endpoint with pagination support
@@ -54,12 +50,8 @@ public class StaffController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteStaff(@PathVariable Long id) {
-        try {
-            staffService.deleteStaffById(id);
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteStaff(@PathVariable Long id) {
+        staffService.deleteStaffById(id);
+        return ResponseEntity.noContent().build();
     }
 }

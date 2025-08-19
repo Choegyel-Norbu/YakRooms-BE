@@ -4,6 +4,7 @@ import com.yakrooms.be.dto.StaffRequestDTO;
 import com.yakrooms.be.dto.StaffResponseDTO;
 import com.yakrooms.be.dto.mapper.StaffMapper;
 import com.yakrooms.be.exception.ResourceNotFoundException;
+import com.yakrooms.be.exception.ResourceConflictException;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.entity.Staff;
 import com.yakrooms.be.model.entity.User;
@@ -33,7 +34,6 @@ public class StaffServiceImpl implements StaffService {
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
     
-    @Autowired
     public StaffServiceImpl(StaffRepository staffRepository,
                            HotelRepository hotelRepository,
                            UserRepository userRepository) {
@@ -48,11 +48,11 @@ public class StaffServiceImpl implements StaffService {
         log.debug("Adding new staff with email: {}", requestDTO.getEmail());
         
         if (staffRepository.existsByEmail(requestDTO.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new ResourceConflictException("Staff", "email", requestDTO.getEmail());
         }
         
         Hotel hotel = hotelRepository.findById(requestDTO.getHotelId())
-                .orElseThrow(() -> new IllegalArgumentException("Hotel not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel", "id", requestDTO.getHotelId()));
         
         User user = new User();
         user.setEmail(requestDTO.getEmail());

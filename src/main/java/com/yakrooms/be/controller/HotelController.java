@@ -1,8 +1,11 @@
 package com.yakrooms.be.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -112,9 +115,39 @@ public class HotelController {
 
 	// Verify hotel listing (Admin/Moderator)
 	@PostMapping("/{id}/verify")
-	public ResponseEntity<Void> verifyHotel(@PathVariable Long id) {
-		hotelService.verifyHotel(id);
-		return ResponseEntity.ok().build();
+	public ResponseEntity<Map<String, Object>> verifyHotel(@PathVariable Long id) {
+		try {
+			Map<String, Object> serviceResult = hotelService.verifyHotel(id);
+			
+			// Build response based on service result
+			Map<String, Object> response = new HashMap<>();
+			response.put("success", true);
+			response.putAll(serviceResult); // Include all service results
+			
+			// Add user-friendly message based on results
+			boolean emailSent = (Boolean) serviceResult.getOrDefault("emailSent", false);
+			boolean alreadyVerified = (Boolean) serviceResult.getOrDefault("alreadyVerified", false);
+			
+			if (alreadyVerified) {
+				response.put("message", "Hotel was already verified");
+			} else if (emailSent) {
+				response.put("message", "Hotel verified successfully and notification email sent");
+			} else {
+				response.put("message", "Hotel verified successfully, but email notification failed");
+			}
+			
+			return ResponseEntity.ok(response);
+			
+		} catch (Exception e) {
+			Map<String, Object> response = new HashMap<>();
+			response.put("success", false);
+			response.put("hotelId", id);
+			response.put("message", "Failed to verify hotel: " + e.getMessage());
+			response.put("emailSent", false);
+			response.put("error", e.getMessage());
+			
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
 	}
 
 

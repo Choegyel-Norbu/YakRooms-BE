@@ -8,11 +8,21 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class CorsConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
-		registry.addMapping("/**").allowedOriginPatterns( // Use allowedOriginPatterns instead
-				"http://localhost:5173", "https://yak-rooms-fe.vercel.app", "https://0d123863c798.ngrok-free.app",
-				"https://*.ngrok-free.app" // Pattern for any ngrok subdomain
-		).allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH").allowedHeaders("*")
-				.exposedHeaders("Authorization").allowCredentials(true).maxAge(3600);
+		registry.addMapping("/**")
+			.allowedOriginPatterns( // Use allowedOriginPatterns instead
+				"http://localhost:*", 
+				"https://localhost:*",
+				"http://127.0.0.1:*",
+				"https://yak-rooms-fe.vercel.app", 
+				"https://0d123863c798.ngrok-free.app",
+				"https://*.ngrok-free.app", // Pattern for any ngrok subdomain
+				"https://*.vercel.app" // Pattern for any vercel deployment
+			)
+			.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD")
+			.allowedHeaders("*")
+			.exposedHeaders("Authorization", "Content-Type", "X-Requested-With")
+			.allowCredentials(true)
+			.maxAge(3600);
 	}
 
 }

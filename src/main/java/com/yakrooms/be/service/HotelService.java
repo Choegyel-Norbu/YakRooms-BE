@@ -2,6 +2,7 @@ package com.yakrooms.be.service;
 
 import org.springframework.data.domain.Pageable;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public interface HotelService {
     HotelResponse updateHotel(Long id, HotelRequest request);
     HotelResponse getHotelById(Long hotelId);
     void deleteHotel(Long id);
-    void verifyHotel(Long id);
+    Map<String, Object> verifyHotel(Long id);
 //    Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size);
     Page<HotelWithLowestPriceProjection> searchHotels(String district, String hotelType, int page, int size);
     List<HotelWithPriceProjection> getTopThreeHotels();

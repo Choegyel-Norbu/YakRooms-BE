@@ -1,6 +1,8 @@
 package com.yakrooms.be.service.impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -203,7 +205,9 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    public void verifyHotel(Long id) {
+    public Map<String, Object> verifyHotel(Long id) {
+        Map<String, Object> result = new HashMap<>();
+        
         if (id == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
@@ -211,7 +215,18 @@ public class HotelServiceImpl implements HotelService {
         // Check if already verified to avoid unnecessary DB write
         if (hotelRepository.isHotelVerified(id)) {
             log.info("Hotel with ID: {} is already verified", id);
-            return;
+            
+            Hotel hotel = hotelRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
+            
+            result.put("hotelVerified", true);
+            result.put("hotelId", id);
+            result.put("hotelName", hotel.getName());
+            result.put("alreadyVerified", true);
+            result.put("emailSent", false);
+            result.put("emailError", "Hotel was already verified, no email sent");
+            
+            return result;
         }
 
         Hotel hotel = hotelRepository.findById(id)
@@ -221,8 +236,30 @@ public class HotelServiceImpl implements HotelService {
         hotelRepository.save(hotel);
         log.info("Verified hotel with ID: {}", id);
 
-        // Send email asynchronously
-        sendVerificationEmailAsync(hotel);
+        result.put("hotelVerified", true);
+        result.put("hotelId", id);
+        result.put("hotelName", hotel.getName());
+        result.put("alreadyVerified", false);
+        
+        // Try to send email synchronously for immediate feedback
+        if (StringUtils.hasText(hotel.getEmail())) {
+            try {
+                mailService.sendHotelVerificationEmail(hotel.getEmail(), hotel.getName());
+                log.info("Verification email sent for hotel: {}", hotel.getName());
+                result.put("emailSent", true);
+                result.put("emailAddress", hotel.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to send verification email for hotel: {}", hotel.getName(), e);
+                result.put("emailSent", false);
+                result.put("emailError", e.getMessage());
+                result.put("emailAddress", hotel.getEmail());
+            }
+        } else {
+            result.put("emailSent", false);
+            result.put("emailError", "No email address provided for hotel");
+        }
+        
+        return result;
     }
 
     @Async
