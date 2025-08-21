@@ -7,6 +7,7 @@ public interface HotelListingProjection {
     String getName();
     String getAddress();
     String getDistrict();
+    String getLocality();
     String getDescription();
     String getPhone();
     Boolean getIsVerified();

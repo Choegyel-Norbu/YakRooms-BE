@@ -11,6 +11,7 @@ public interface HotelWithLowestPriceProjection {
     String getPhone();
     String getAddress();
     String getDistrict();
+    String getLocality();
     String getLogoUrl();
     String getDescription();
     boolean getIsVerified();

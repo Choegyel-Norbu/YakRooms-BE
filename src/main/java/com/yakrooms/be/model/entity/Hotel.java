@@ -18,9 +18,11 @@ import java.util.Objects;
 @Table(name = "hotels", indexes = {
     @Index(name = "idx_hotel_email", columnList = "email"),
     @Index(name = "idx_hotel_district", columnList = "district"),
+    @Index(name = "idx_hotel_locality", columnList = "locality"),
     @Index(name = "idx_hotel_verified", columnList = "is_verified"),
     @Index(name = "idx_hotel_type", columnList = "hotel_type"),
-    @Index(name = "idx_hotel_district_type_verified", columnList = "district,hotel_type,is_verified")
+    @Index(name = "idx_hotel_district_type_verified", columnList = "district,hotel_type,is_verified"),
+    @Index(name = "idx_hotel_district_locality", columnList = "district,locality")
 })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Hotel {
@@ -43,6 +45,9 @@ public class Hotel {
 
     @Column(nullable = false, length = 100)
     private String district;
+
+    @Column(nullable = false, length = 100)
+    private String locality;
 
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
@@ -131,13 +136,14 @@ public class Hotel {
         this.isVerified = false;
     }
 
-    public Hotel(String name, String email, String phone, String address, String district) {
+    public Hotel(String name, String email, String phone, String address, String district, String locality) {
         this();
         this.name = name;
         this.email = email;
         this.phone = phone;
         this.address = address;
         this.district = district;
+        this.locality = locality;
     }
 
     // Lifecycle callbacks
@@ -149,6 +155,9 @@ public class Hotel {
         if (district != null) {
             district = district.trim();
         }
+        if (locality != null) {
+            locality = locality.trim();
+        }
     }
 
     @PreUpdate
@@ -158,6 +167,9 @@ public class Hotel {
         }
         if (district != null) {
             district = district.trim();
+        }
+        if (locality != null) {
+            locality = locality.trim();
         }
     }
 
@@ -259,6 +271,14 @@ public class Hotel {
 
     public void setDistrict(String district) {
         this.district = district;
+    }
+
+    public String getLocality() {
+        return locality;
+    }
+
+    public void setLocality(String locality) {
+        this.locality = locality;
     }
 
     public String getLogoUrl() {
@@ -434,6 +454,7 @@ public class Hotel {
                 ", phone='" + phone + '\'' +
                 ", address='" + address + '\'' +
                 ", district='" + district + '\'' +
+                ", locality='" + locality + '\'' +
                 ", hotelType=" + hotelType +
                 ", isVerified=" + isVerified +
                 ", createdAt=" + createdAt +

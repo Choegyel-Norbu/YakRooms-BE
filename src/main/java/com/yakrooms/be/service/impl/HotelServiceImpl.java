@@ -300,12 +300,12 @@ public class HotelServiceImpl implements HotelService {
 //    }
     
     @Override
-    public Page<HotelWithLowestPriceProjection> searchHotels(String district, String hotelType, int page, int size) {
+    public Page<HotelWithLowestPriceProjection> searchHotels(String district, String locality, String hotelType, int page, int size) {
         validatePagination(page, size);
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<HotelWithLowestPriceProjection> hotelPage = hotelRepository.findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(district, hotelType, pageable);
+        Page<HotelWithLowestPriceProjection> hotelPage = hotelRepository.findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(district, locality, hotelType, pageable);
         return hotelPage;
     }
 

@@ -14,6 +14,7 @@ public class HotelListingDto {
     private String name;
     private String address;
     private String district;
+    private String locality;
     private String description;
     private String phone;
     private Boolean isVerified;
@@ -25,7 +26,7 @@ public class HotelListingDto {
     public HotelListingDto() {
     }
     
-    public HotelListingDto(Long id, String name, String address, String district, 
+    public HotelListingDto(Long id, String name, String address, String district, String locality,
                           String description, String phone, Boolean isVerified, 
                           LocalDateTime createdAt, List<String> photoUrls, 
                           List<String> amenities, String hotelType) {
@@ -33,6 +34,7 @@ public class HotelListingDto {
         this.name = name;
         this.address = address;
         this.district = district;
+        this.locality = locality;
         this.description = description;
         this.phone = phone;
         this.isVerified = isVerified;
@@ -48,6 +50,7 @@ public class HotelListingDto {
         dto.setName(projection.getName());
         dto.setAddress(projection.getAddress());
         dto.setDistrict(projection.getDistrict());
+        dto.setLocality(projection.getLocality());
         dto.setDescription(projection.getDescription());
         dto.setPhone(projection.getPhone());
         dto.setIsVerified(projection.getIsVerified());
@@ -96,6 +99,14 @@ public class HotelListingDto {
     
     public void setDistrict(String district) {
         this.district = district;
+    }
+    
+    public String getLocality() {
+        return locality;
+    }
+    
+    public void setLocality(String locality) {
+        this.locality = locality;
     }
     
     public String getDescription() {

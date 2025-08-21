@@ -11,6 +11,7 @@ public class HotelRequest {
 	private String phone;
 	private String address;
 	private String district;
+	private String locality;
 	private String description;
 	private String websiteUrl;
 	private List<String> photoUrls;
@@ -124,6 +125,14 @@ public class HotelRequest {
 
 	public void setDistrict(String district) {
 		this.district = district;
+	}
+
+	public String getLocality() {
+		return locality;
+	}
+
+	public void setLocality(String locality) {
+		this.locality = locality;
 	}
 
 	public String getDescription() {

@@ -27,7 +27,7 @@ public interface HotelService {
     void deleteHotel(Long id);
     Map<String, Object> verifyHotel(Long id);
 //    Page<HotelResponse> searchHotels(String district, String hotelType, int page, int size);
-    Page<HotelWithLowestPriceProjection> searchHotels(String district, String hotelType, int page, int size);
+    Page<HotelWithLowestPriceProjection> searchHotels(String district, String locality, String hotelType, int page, int size);
     List<HotelWithPriceProjection> getTopThreeHotels();
     public Page<HotelResponse> getAllHotelsForSuperAdmin(Pageable pageable);
     Page<com.yakrooms.be.projection.HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable);

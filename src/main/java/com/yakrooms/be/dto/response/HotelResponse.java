@@ -13,6 +13,7 @@ public class HotelResponse {
 	private String phone;
 	private String address;
 	private String district;
+	private String locality;
 	private String logoUrl;
 	private String description;
 	private boolean isVerified;
@@ -78,6 +79,14 @@ public class HotelResponse {
 
 	public void setDistrict(String district) {
 		this.district = district;
+	}
+
+	public String getLocality() {
+		return locality;
+	}
+
+	public void setLocality(String locality) {
+		this.locality = locality;
 	}
 
 	public String getLogoUrl() {

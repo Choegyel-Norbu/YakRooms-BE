@@ -41,6 +41,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.phone as phone,
 			    h.address as address,
 			    h.district as district,
+			    h.locality as locality,
 			    h.logo_url as logoUrl,
 			    h.description as description,
 			    h.is_verified as isVerified,
@@ -87,6 +88,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.name as name,
 			    h.address as address,
 			    h.district as district,
+			    h.locality as locality,
 			    h.description as description,
 			    h.phone as phone,
 			    h.is_verified as isVerified,
@@ -111,6 +113,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			h.phone as phone,
 			h.address as address,
 			h.district as district,
+			h.locality as locality,
 			h.logo_url as logoUrl,
 			h.description as description,
 			h.is_verified as isVerified,
@@ -141,6 +144,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			) rv ON rv.hotel_id = h.id
 			WHERE h.is_verified = 1
 			AND (:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%')))
+			AND (:locality IS NULL OR LOWER(h.locality) LIKE LOWER(CONCAT('%', :locality, '%')))
 			AND (:hotelType IS NULL OR h.hotel_type = :hotelType)
 			ORDER BY COALESCE(rm.min_price, 999999) ASC
 			""", 
@@ -149,21 +153,16 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			FROM hotels h 
 			WHERE h.is_verified = 1
 			AND (:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%')))
+			AND (:locality IS NULL OR LOWER(h.locality) LIKE LOWER(CONCAT('%', :locality, '%')))
 			AND (:hotelType IS NULL OR h.hotel_type = :hotelType)
 			""", 
 			nativeQuery = true)
-			Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(
-			    @Param("district") String district,
-			    @Param("hotelType") String hotelType,
-			    Pageable pageable
-			);
-
-//	@Query("SELECT h FROM Hotel h WHERE h.isVerified = true AND " +
-//		       "(:district IS NULL OR LOWER(h.district) LIKE LOWER(CONCAT('%', :district, '%'))) AND " +
-//		       "(:hotelType IS NULL OR h.hotelType = :hotelType)")
-//		Page<Hotel> findVerifiedHotelsByFilters(@Param("district") String district,
-//		                                       @Param("hotelType") HotelType hotelType,
-//		                                       Pageable pageable);
+	Page<HotelWithLowestPriceProjection> findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(
+	    @Param("district") String district,
+	    @Param("locality") String locality,
+	    @Param("hotelType") String hotelType,
+	    Pageable pageable
+	);
 
 	// Optimized top 3 hotels query
 		@Query(value = """
@@ -174,6 +173,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 		    h.phone,
 		    h.address,
 		    h.district,
+		    h.locality,
 		    h.logo_url,
 		    h.description,
 		    h.is_verified,
@@ -205,6 +205,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.phone as phone,
 			    h.address as address,
 			    h.district as district,
+			    h.locality as locality,
 			    h.logo_url as logoUrl,
 			    h.description as description,
 			    h.is_verified as isVerified,
@@ -247,6 +248,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
 			    h.phone as phone,
 			    h.address as address,
 			    h.district as district,
+			    h.locality as locality,
 			    h.logo_url as logoUrl,
 			    h.description as description,
 			    h.is_verified as isVerified,

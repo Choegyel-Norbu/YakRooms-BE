@@ -28,6 +28,7 @@ public class HotelMapper {
         response.setPhone(hotel.getPhone());
         response.setAddress(hotel.getAddress());
         response.setDistrict(hotel.getDistrict());
+        response.setLocality(hotel.getLocality());
         response.setLogoUrl(hotel.getLogoUrl());
         response.setDescription(hotel.getDescription());
         response.setVerified(hotel.isVerified());
@@ -61,6 +62,7 @@ public class HotelMapper {
         response.setPhone(projection.getPhone());
         response.setAddress(projection.getAddress());
         response.setDistrict(projection.getDistrict());
+        response.setLocality(projection.getLocality());
         response.setLogoUrl(projection.getLogoUrl());
         response.setDescription(projection.getDescription());
         response.setVerified(projection.getIsVerified());
@@ -97,6 +99,7 @@ public class HotelMapper {
         hotel.setPhone(dto.getPhone());
         hotel.setAddress(dto.getAddress());
         hotel.setDistrict(dto.getDistrict());
+        hotel.setLocality(dto.getLocality());
         hotel.setDescription(dto.getDescription());
         hotel.setWebsiteUrl(dto.getWebsiteUrl());
         hotel.setLicenseUrl(dto.getLicenseUrl());
@@ -148,6 +151,10 @@ public class HotelMapper {
         
         if (dto.getDistrict() != null) {
             entity.setDistrict(dto.getDistrict());
+        }
+        
+        if (dto.getLocality() != null) {
+            entity.setLocality(dto.getLocality());
         }
         
         if (dto.getDescription() != null) {

@@ -57,23 +57,27 @@ public class HotelController {
 
 	// Get all hotels with pagination
 	@GetMapping
-	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotels(@PageableDefault(size = 10) Pageable pageable) {
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotels(
+			@PageableDefault(size = 10) Pageable pageable) {
 		return ResponseEntity.ok(hotelService.getAllHotels(pageable));
 	}
-	
+
 	@GetMapping("/superAdmin")
-	public ResponseEntity<Page<HotelResponse>> getAllHotelsForSuperAdmin(@PageableDefault(size = 10) Pageable pageable) {
+	public ResponseEntity<Page<HotelResponse>> getAllHotelsForSuperAdmin(
+			@PageableDefault(size = 10) Pageable pageable) {
 		Page<HotelResponse> hotels = hotelService.getAllHotelsForSuperAdmin(pageable);
 		return ResponseEntity.ok(hotels);
 	}
 
 	@GetMapping("/sortedByLowestPrice")
-	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByLowestPrice(@PageableDefault(size = 10) Pageable pageable) {
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByLowestPrice(
+			@PageableDefault(size = 10) Pageable pageable) {
 		return ResponseEntity.ok(hotelService.getAllHotelsSortedByLowestPrice(pageable));
 	}
 
 	@GetMapping("/sortedByHighestPrice")
-	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByHighestPrice(@PageableDefault(size = 10) Pageable pageable) {
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByHighestPrice(
+			@PageableDefault(size = 10) Pageable pageable) {
 		return ResponseEntity.ok(hotelService.getAllHotelsSortedByHighestPrice(pageable));
 	}
 
@@ -91,13 +95,15 @@ public class HotelController {
 //		Page<HotelResponse> results = hotelService.searchHotels(district, hotelType, page, size);
 //		return ResponseEntity.ok(results);
 //	}
-	
-	@GetMapping("/search")
-	public ResponseEntity<Page<HotelWithLowestPriceProjection>> searchHotels(@RequestParam(required = false) String district,
-			@RequestParam(required = false) String hotelType, @RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size) {
 
-		Page<HotelWithLowestPriceProjection> results = hotelService.searchHotels(district, hotelType, page, size);
+	@GetMapping("/search")
+	public ResponseEntity<Page<HotelWithLowestPriceProjection>> searchHotels(
+			@RequestParam(required = false) String district, 
+			@RequestParam(required = false) String locality,
+			@RequestParam(required = false) String hotelType,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+
+		Page<HotelWithLowestPriceProjection> results = hotelService.searchHotels(district, locality, hotelType, page, size);
 		return ResponseEntity.ok(results);
 	}
 
@@ -118,16 +124,16 @@ public class HotelController {
 	public ResponseEntity<Map<String, Object>> verifyHotel(@PathVariable Long id) {
 		try {
 			Map<String, Object> serviceResult = hotelService.verifyHotel(id);
-			
+
 			// Build response based on service result
 			Map<String, Object> response = new HashMap<>();
 			response.put("success", true);
 			response.putAll(serviceResult); // Include all service results
-			
+
 			// Add user-friendly message based on results
 			boolean emailSent = (Boolean) serviceResult.getOrDefault("emailSent", false);
 			boolean alreadyVerified = (Boolean) serviceResult.getOrDefault("alreadyVerified", false);
-			
+
 			if (alreadyVerified) {
 				response.put("message", "Hotel was already verified");
 			} else if (emailSent) {
@@ -135,9 +141,9 @@ public class HotelController {
 			} else {
 				response.put("message", "Hotel verified successfully, but email notification failed");
 			}
-			
+
 			return ResponseEntity.ok(response);
-			
+
 		} catch (Exception e) {
 			Map<String, Object> response = new HashMap<>();
 			response.put("success", false);
@@ -145,12 +151,10 @@ public class HotelController {
 			response.put("message", "Failed to verify hotel: " + e.getMessage());
 			response.put("emailSent", false);
 			response.put("error", e.getMessage());
-			
+
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
 		}
 	}
-
-
 
 	// Search hotels by criteria
 //	@PostMapping("/search")
