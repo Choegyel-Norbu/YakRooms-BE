@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -46,8 +47,9 @@ public class FirebaseServiceImpl implements FirebaseService {
 		}
 	}
 
+	@Transactional
 	private JwtLoginResponse handleUser(FirebaseUserData data) {
-	    Optional<User> optionalUser = userRepo.findByEmail(data.getEmail());
+	    Optional<User> optionalUser = userRepo.findByEmailWithCollections(data.getEmail());
 	    User user;
 
 	    if (optionalUser.isPresent()) {
