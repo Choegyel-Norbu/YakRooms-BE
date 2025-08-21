@@ -47,7 +47,7 @@ public class FirebaseServiceImpl implements FirebaseService {
 	}
 
 	private JwtLoginResponse handleUser(FirebaseUserData data) {
-	    Optional<User> optionalUser = userRepo.findByEmailWithCollections(data.getEmail());
+	    Optional<User> optionalUser = userRepo.findByEmail(data.getEmail());
 	    User user;
 
 	    if (optionalUser.isPresent()) {
