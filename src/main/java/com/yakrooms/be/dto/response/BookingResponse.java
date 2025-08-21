@@ -29,6 +29,12 @@ public class BookingResponse {
 	private String hotelLatitude;
 	private String hotelLongitude;
 
+	private String cid;
+
+	private String destination;
+
+	private String origin;
+
 	public String getHotelName() {
 		return hotelName;
 	}
@@ -171,6 +177,30 @@ public class BookingResponse {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public String getCid() {
+		return cid;
+	}
+
+	public void setCid(String cid) {
+		this.cid = cid;
+	}
+
+	public String getDestination() {
+		return destination;
+	}
+
+	public void setDestination(String destination) {
+		this.destination = destination;
+	}
+
+	public String getOrigin() {
+		return origin;
+	}
+
+	public void setOrigin(String origin) {
+		this.origin = origin;
 	}
 
 }

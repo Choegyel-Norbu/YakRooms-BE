@@ -23,6 +23,12 @@ public class BookingRequest {
 
 	private String phone;
 
+	private String cid;
+
+	private String destination;
+
+	private String origin;
+
 	public BigDecimal getTotalPrice() {
 		return totalPrice;
 	}
@@ -93,6 +99,30 @@ public class BookingRequest {
 
 	public void setGuests(int guests) {
 		this.guests = guests;
+	}
+
+	public String getCid() {
+		return cid;
+	}
+
+	public void setCid(String cid) {
+		this.cid = cid;
+	}
+
+	public String getDestination() {
+		return destination;
+	}
+
+	public void setDestination(String destination) {
+		this.destination = destination;
+	}
+
+	public String getOrigin() {
+		return origin;
+	}
+
+	public void setOrigin(String origin) {
+		this.origin = origin;
 	}
 
 }

@@ -22,7 +22,9 @@ import jakarta.persistence.*;
     @Index(name = "idx_booking_passcode", columnList = "passcode"),
     @Index(name = "idx_booking_status", columnList = "status"),
     @Index(name = "idx_booking_dates", columnList = "check_in_date, check_out_date"),
-    @Index(name = "idx_booking_created_at", columnList = "created_at")
+    @Index(name = "idx_booking_created_at", columnList = "created_at"),
+    @Index(name = "idx_booking_cid", columnList = "cid"),
+    @Index(name = "idx_booking_destination", columnList = "destination")
 })
 @NamedEntityGraphs({
     @NamedEntityGraph(
@@ -79,6 +81,15 @@ public class Booking {
     @Max(value = 20, message = "Maximum 20 guests allowed")
     private int guests;
 
+    @Column(name = "cid", length = 20)
+    private String cid;
+
+    @Column(name = "destination", length = 255)
+    private String destination;
+
+    @Column(name = "origin", length = 255)
+    private String origin;
+
     @Column(name = "check_in_passcode", length = 10)
     private String checkInPasscode;
 
@@ -124,6 +135,23 @@ public class Booking {
         this.checkOutDate = checkOutDate;
         this.guests = guests;
         this.totalPrice = totalPrice;
+        this.status = BookingStatus.PENDING;
+        this.paymentStatus = PaymentStatus.PENDING;
+    }
+
+    public Booking(User user, Hotel hotel, Room room, LocalDate checkInDate, 
+                   LocalDate checkOutDate, int guests, BigDecimal totalPrice, 
+                   String cid, String destination, String origin) {
+        this.user = user;
+        this.hotel = hotel;
+        this.room = room;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.guests = guests;
+        this.totalPrice = totalPrice;
+        this.cid = cid;
+        this.destination = destination;
+        this.origin = origin;
         this.status = BookingStatus.PENDING;
         this.paymentStatus = PaymentStatus.PENDING;
     }
@@ -191,6 +219,30 @@ public class Booking {
 
     public void setGuests(int guests) {
         this.guests = guests;
+    }
+
+    public String getCid() {
+        return cid;
+    }
+
+    public void setCid(String cid) {
+        this.cid = cid != null ? cid.trim() : null;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setDestination(String destination) {
+        this.destination = destination != null ? destination.trim() : null;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin != null ? origin.trim() : null;
     }
 
     public String getCheckInPasscode() {
@@ -305,6 +357,9 @@ public class Booking {
                 ", checkInDate=" + checkInDate +
                 ", checkOutDate=" + checkOutDate +
                 ", guests=" + guests +
+                ", cid='" + cid + '\'' +
+                ", destination='" + destination + '\'' +
+                ", origin='" + origin + '\'' +
                 ", status=" + status +
                 ", totalPrice=" + totalPrice +
                 '}';
