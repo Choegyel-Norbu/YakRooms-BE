@@ -8,6 +8,7 @@ import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,7 +21,8 @@ public class NotificationController {
     @Autowired
     private UserRepository userRepository;
 
-    // Fetch all notifications for a user
+    // Fetch all notifications for a user - All authenticated users can access their own notifications
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HOTEL_ADMIN', 'STAFF', 'GUEST')")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<NotificationDTO>> getAllNotifications(@PathVariable Long userId) {
         List<Notification> notifications = notificationService.getAllNotificationsByUserId(userId);
@@ -28,7 +30,8 @@ public class NotificationController {
         return ResponseEntity.ok(dtos);
     }
 
-    // Mark all unread notifications as read for a user
+    // Mark all unread notifications as read for a user - All authenticated users can mark their own notifications as read
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HOTEL_ADMIN', 'STAFF', 'GUEST')")
     @PutMapping("/user/{userId}/markAllRead")
     public ResponseEntity<Void> markAllAsRead(@PathVariable Long userId) {
         User user = userRepository.findByIdWithCollections(userId).orElseThrow(() -> new RuntimeException("User not found"));
@@ -36,7 +39,8 @@ public class NotificationController {
         return ResponseEntity.ok().build();
     }
 
-    // Delete all notifications for a user
+    // Delete all notifications for a user - All authenticated users can delete their own notifications
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HOTEL_ADMIN', 'STAFF', 'GUEST')")
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<Void> deleteAllNotifications(@PathVariable Long userId) {
         User user = userRepository.findByIdWithCollections(userId).orElseThrow(() -> new RuntimeException("User not found"));

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,28 +40,31 @@ public class BookingController {
 	@Autowired
 	private RoomRepository roomRepository;
 
-	// Create a booking (User)
+	// Create a booking - GUEST, HOTEL_ADMIN, and STAFF can create
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
 	@PostMapping
 	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
 		BookingResponse response = bookingService.createBooking(request);
 		return ResponseEntity.ok(response);
 	}
 
-	// Cancel booking (User)
+	// Cancel booking - GUEST, HOTEL_ADMIN, and STAFF can cancel
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
 	@PostMapping("/{id}/cancel")
 	public ResponseEntity<Void> cancelBooking(@PathVariable("id") Long bookingId, @RequestParam("userId") Long userId) {
 		bookingService.cancelBooking(bookingId, userId);
 		return ResponseEntity.ok().build();
 	}
 
-	// Confirm booking (Admin/Owner)
+	// Confirm booking - Only HOTEL_ADMIN and STAFF can confirm
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@PostMapping("/{id}/confirm")
 	public ResponseEntity<BookingResponse> confirmBooking(@PathVariable("id") Long bookingId) {
 		BookingResponse response = bookingService.confirmBooking(bookingId);
 		return ResponseEntity.ok(response);
 	}
 
-	// Check room availability
+	// Check room availability - Public access
 	@GetMapping("/availability")
 	public ResponseEntity<Boolean> checkRoomAvailability(@RequestParam Long roomId, @RequestParam LocalDate checkIn,
 			@RequestParam LocalDate checkOut) {
@@ -68,6 +72,8 @@ public class BookingController {
 		return ResponseEntity.ok(isAvailable);
 	}
 	
+	// Get all bookings for hotel - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/")
 	public Page<BookingResponse> getAllBookings(
 	    @RequestParam(required = false) Long hotelId,
@@ -81,6 +87,8 @@ public class BookingController {
 	    return bookingService.listAllBooking(pageable);
 	}
 
+	// Update booking status - Only HOTEL_ADMIN and STAFF can update
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@PutMapping("/{bookingId}/status/{status}")
 	public ResponseEntity<String> updateBookingStatus(
 	        @PathVariable Long bookingId,
@@ -95,19 +103,39 @@ public class BookingController {
         }
     }
 	
-	  @DeleteMapping("/{bookingId}")
-	    public ResponseEntity<?> deleteBooking(@PathVariable Long bookingId) {
-	        bookingService.deleteBookingById(bookingId);
-	        return ResponseEntity.ok().body("Booking deleted successfully");
-	    }
+	// Check-in guest - Only HOTEL_ADMIN and STAFF can check-in guests
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+	@PutMapping("/{bookingId}/status/checked_in")
+	public ResponseEntity<String> checkInGuest(@PathVariable Long bookingId) {
+		try {
+			boolean success = bookingService.updateBookingStatus(bookingId, "CHECKED_IN");
+			if (success) {
+				return ResponseEntity.ok("Guest checked in successfully.");
+			} else {
+				return ResponseEntity.badRequest().body("Failed to check-in guest.");
+			}
+		} catch (Exception e) {
+			return ResponseEntity.internalServerError().body("Error during check-in: " + e.getMessage());
+		}
+	}
+	
+	// Delete booking - GUEST, HOTEL_ADMIN, and STAFF can delete
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
+	@DeleteMapping("/{bookingId}")
+	public ResponseEntity<?> deleteBooking(@PathVariable Long bookingId) {
+		bookingService.deleteBookingById(bookingId);
+		return ResponseEntity.ok().body("Booking deleted successfully");
+	}
 
-	// Get all bookings for a user
+	// Get all bookings for a user - Only GUEST can access their own bookings
+	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/{userId}")
 	public ResponseEntity<List<BookingResponse>> getUserBookings(@PathVariable Long userId) {
 		return ResponseEntity.ok(bookingService.getAllBookingsByUserId(userId));
 	}
 
-	// Get all bookings for a user with pagination
+	// Get all bookings for a user with pagination - Only GUEST can access their own bookings
+	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/{userId}/page")
 	public ResponseEntity<Page<BookingResponse>> getUserBookingsPaginated(
 			@PathVariable Long userId,
@@ -117,7 +145,8 @@ public class BookingController {
 		return ResponseEntity.ok(bookingService.getAllBookingsByUserId(userId, pageable));
 	}
 
-	// Get all bookings for a user by status
+	// Get all bookings for a user by status - Only GUEST can access their own bookings
+	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/{userId}/status/{status}")
 	public ResponseEntity<List<BookingResponse>> getUserBookingsByStatus(
 			@PathVariable Long userId,
@@ -125,19 +154,22 @@ public class BookingController {
 		return ResponseEntity.ok(bookingService.getAllBookingsByUserIdAndStatus(userId, status));
 	}
 
-	// Get all bookings for a hotel (Owner/Admin)
+	// Get all bookings for a hotel - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/hotel/{hotelId}")
 	public ResponseEntity<List<BookingResponse>> getBookingsByHotel(@PathVariable Long hotelId) {
 		return ResponseEntity.ok(bookingService.getBookingsByHotel(hotelId));
 	}
 
-	// Get a single booking detail
+	// Get a single booking detail - HOTEL_ADMIN, STAFF, and GUEST can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF', 'GUEST')")
 	@GetMapping("/{id}")
 	public ResponseEntity<BookingResponse> getBookingDetails(@PathVariable("id") Long bookingId) {
 		return ResponseEntity.ok(bookingService.getBookingDetails(bookingId));
 	}
 
-	// Debug endpoint to check room capacity (for development/testing)
+	// Debug endpoint to check room capacity - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/debug/room/{roomId}/capacity")
 	public ResponseEntity<Map<String, Object>> getRoomCapacityInfo(@PathVariable Long roomId) {
 		try {
@@ -160,7 +192,3 @@ public class BookingController {
 		}
 	}
 }
-
-// NOTE:
-// Authentication context (userId) is passed manually here for simplicity.
-// In production, extract userId from security context or token.

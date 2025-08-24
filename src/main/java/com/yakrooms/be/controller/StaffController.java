@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,13 +21,16 @@ public class StaffController {
     @Autowired
     private StaffService staffService;
 
+    // Add new staff member - Only HOTEL_ADMIN can add
+    @PreAuthorize("hasRole('HOTEL_ADMIN')")
     @PostMapping
     public ResponseEntity<StaffResponseDTO> addStaff(@Validated @RequestBody StaffRequestDTO requestDTO) {
         StaffResponseDTO response = staffService.addStaff(requestDTO);
         return ResponseEntity.ok(response);
     }
 
-    // Optimized endpoint with pagination support
+    // Get staff by hotel ID with pagination - HOTEL_ADMIN and STAFF can access
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/hotel/{hotelId}/page")
     public ResponseEntity<Page<StaffResponseDTO>> getStaffByHotelIdPaginated(
             @PathVariable Long hotelId,
@@ -43,12 +47,15 @@ public class StaffController {
         return ResponseEntity.ok(staffPage);
     }
 
-    // Legacy endpoint for backward compatibility
+    // Get staff by hotel ID - HOTEL_ADMIN and STAFF can access
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/hotel/{hotelId}")
     public ResponseEntity<List<StaffResponseDTO>> getStaffByHotelId(@PathVariable Long hotelId) {
         return ResponseEntity.ok(staffService.getStaffByHotelId(hotelId));
     }
 
+    // Delete staff member - Only HOTEL_ADMIN can delete
+    @PreAuthorize("hasRole('HOTEL_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteStaff(@PathVariable Long id) {
         staffService.deleteStaffById(id);

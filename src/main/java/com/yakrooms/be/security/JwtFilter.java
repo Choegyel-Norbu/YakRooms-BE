@@ -1,79 +1,66 @@
 package com.yakrooms.be.security;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.util.AntPathMatcher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-public class JwtFilter implements Filter {
+import com.yakrooms.be.model.enums.Role;
 
-    private static final String[] AUTH_WHITELIST = {
-        "/auth/firebase",
-        "/api/hotels/**",
-        "/api/bookings/**",
-        "/api/rooms/**",
-        "/api/upload",
-        "/test/**",
-        "/ws/**",
-        "/api/notifications/**",
-        "/api/reviews/hotel/*/testimonials/paginated",
-    };
-
-    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+public class JwtFilter extends OncePerRequestFilter {
 
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-
-        String path = httpRequest.getRequestURI();
-
-        if ("OPTIONS".equalsIgnoreCase(httpRequest.getMethod())) {
-            httpResponse.setStatus(HttpServletResponse.SC_OK);
-            chain.doFilter(httpRequest, httpResponse);
-            return;
-        }
-
-        if (isPathInWhitelist(path)) {
-            chain.doFilter(httpRequest, httpResponse);
-            return;
-        }
-
-        String authorizationHeader = httpRequest.getHeader("Authorization");
+        String authorizationHeader = request.getHeader("Authorization");
 
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or Invalid token");
+            filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            if (!JwtUtil.validateToken(authorizationHeader.substring(7))) {
-                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
-                return;
+            String token = authorizationHeader.substring(7);
+            if (JwtUtil.validateToken(token)) {
+                // Extract user information from JWT
+                String email = JwtUtil.extractEmail(token);
+                Long userId = JwtUtil.extractUserId(token);
+                String rolesString = JwtUtil.extractRoles(token);
+                
+                // Convert roles string to authorities
+                List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                if (rolesString != null && !rolesString.isEmpty()) {
+                    String[] roles = rolesString.split(",");
+                    for (String role : roles) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    }
+                }
+                
+                // Create authentication token
+                UsernamePasswordAuthenticationToken authentication = 
+                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                
+                // Set additional details
+                authentication.setDetails(new JwtAuthenticationDetails(userId, token));
+                
+                // Set authentication in security context
+                org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token validation failed");
-            return;
+            // Log the exception but don't fail the request
+            // Spring Security will handle unauthorized access
         }
 
-        chain.doFilter(httpRequest, httpResponse);
-    }
-
-    private boolean isPathInWhitelist(String path) {
-        for (String whitelistedPath : AUTH_WHITELIST) {
-            if (pathMatcher.match(whitelistedPath, path)) {
-                return true;
-            }
-        }
-        return false;
+        filterChain.doFilter(request, response);
     }
 }

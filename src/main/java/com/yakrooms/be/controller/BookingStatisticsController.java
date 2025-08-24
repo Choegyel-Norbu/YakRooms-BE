@@ -5,6 +5,7 @@ import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
 import com.yakrooms.be.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,8 @@ public class BookingStatisticsController {
     @Autowired
     private BookingService bookingService;
 
+    // Get monthly booking statistics - Only HOTEL_ADMIN and STAFF can access
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/monthly")
     public ResponseEntity<List<BookingStatisticsDTO>> getBookingStatisticsByMonth(
             @RequestParam String startDate) {
@@ -27,6 +30,8 @@ public class BookingStatisticsController {
         }
     }
 
+    // Get monthly booking statistics for specific hotel - Only HOTEL_ADMIN and STAFF can access
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/monthly/hotel/{hotelId}")
     public ResponseEntity<List<BookingStatisticsDTO>> getBookingStatisticsByMonthAndHotel(
             @PathVariable Long hotelId,
@@ -39,6 +44,8 @@ public class BookingStatisticsController {
         }
     }
 
+    // Get monthly revenue statistics for specific hotel - Only HOTEL_ADMIN and STAFF can access
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/revenue/monthly/{hotelId}")
     public ResponseEntity<List<MonthlyRevenueStatsDTO>> getMonthlyRevenueStats(
             @PathVariable Long hotelId,

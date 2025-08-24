@@ -8,9 +8,12 @@ import com.yakrooms.be.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +24,8 @@ public class ReviewController {
 	@Autowired
 	private ReviewService reviewService;
 
-	// Create a new review
+	// Create a new review - Only GUEST can create reviews
+	@PreAuthorize("hasRole('GUEST')")
 	@PostMapping
 	public ResponseEntity<?> createReview(@RequestBody ReviewRequest reviewRequest) {
 		try {
@@ -36,7 +40,43 @@ public class ReviewController {
 		}
 	}
 
-	// Get average rating for a hotel
+	// Submit rating - Only GUEST can submit ratings
+	@PreAuthorize("hasRole('GUEST')")
+	@PostMapping("/rating")
+	public ResponseEntity<?> submitRating(@RequestBody Map<String, Object> ratingRequest) {
+		try {
+			// TODO: Implement rating submission logic
+			// This could include storing ratings in database, calculating averages, etc.
+			
+			Map<String, Object> response = new HashMap<>();
+			response.put("success", true);
+			response.put("message", "Rating submitted successfully!");
+			response.put("timestamp", System.currentTimeMillis());
+			
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			Map<String, Object> errorResponse = new HashMap<>();
+			errorResponse.put("success", false);
+			errorResponse.put("message", "Failed to submit rating. Please try again.");
+			errorResponse.put("error", e.getMessage());
+			
+			return ResponseEntity.internalServerError().body(errorResponse);
+		}
+	}
+
+	// Get average rating across platform - Public access
+	@GetMapping("/averageRating")
+	public ResponseEntity<?> getAverageRating() {
+		try {
+			// TODO: Implement average rating calculation across all hotels
+			double avgRating = 4.5; // Placeholder value
+			return ResponseEntity.ok(avgRating);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to retrieve average rating.");
+		}
+	}
+
+	// Get average rating for a hotel - Public access
 	@GetMapping("/hotel/{hotelId}/average-rating")
 	public ResponseEntity<?> getAverageRatingForHotel(@PathVariable Long hotelId) {
 		try {
@@ -47,7 +87,7 @@ public class ReviewController {
 		}
 	}
 
-	// Get number of reviews for a hotel
+	// Get number of reviews for a hotel - Public access
 	@GetMapping("/hotel/{hotelId}/review-count")
 	public ResponseEntity<?> getReviewCountForHotel(@PathVariable Long hotelId) {
 		try {
@@ -58,7 +98,7 @@ public class ReviewController {
 		}
 	}
 
-	// Get paginated reviews for a hotel (for testimonials with pagination)
+	// Get paginated reviews for a hotel (for testimonials with pagination) - Public access
 	@GetMapping("/hotel/{hotelId}/testimonials/paginated")
 	public ResponseEntity<?> getReviewsForHotelPaginated(@PathVariable Long hotelId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {

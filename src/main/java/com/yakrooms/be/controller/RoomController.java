@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,21 +31,27 @@ public class RoomController {
 	@Autowired
 	private RoomService roomService;
 
+	// Create new room - Only HOTEL_ADMIN and STAFF can create
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@PostMapping("/hotel/{hotelId}")
 	public ResponseEntity<?> createRoom(@PathVariable Long hotelId, @RequestBody RoomRequest request) {
 		return ResponseEntity.ok(roomService.createRoom(hotelId, request));
 	}
 
+	// Get room by ID - Public access
 	@GetMapping("/{roomId}")
 	public ResponseEntity<RoomResponseDTO> getRoomById(@PathVariable Long roomId) {
 		return ResponseEntity.ok(roomService.getRoomById(roomId));
 	}
 
+	// Get all rooms for a specific hotel - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/hotel/{hotelId}")
 	public ResponseEntity<List<RoomResponseDTO>> getRoomsByHotel(@PathVariable Long hotelId) {
 		return ResponseEntity.ok(roomService.getRoomsByHotel(hotelId));
 	}
 
+	// Get available rooms for booking - Public access
 	@GetMapping("/available/{hotelId}")
 	public ResponseEntity<Page<RoomResponseDTO>> getAvailable(@PathVariable Long hotelId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
@@ -52,28 +59,38 @@ public class RoomController {
 		return ResponseEntity.ok(roomService.getAvailableRooms(hotelId, pageable));
 	}
 
+	// Update room information - Only HOTEL_ADMIN and STAFF can update
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@PutMapping("/{roomId}")
 	public ResponseEntity<RoomResponseDTO> updateRoom(@PathVariable Long roomId, @RequestBody RoomRequest request) {
 		return ResponseEntity.ok(roomService.updateRoom(roomId, request));
 	}
 
+	// Delete room - Only HOTEL_ADMIN and STAFF can delete
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@DeleteMapping("/{roomId}")
 	public ResponseEntity<Void> deleteRoom(@PathVariable Long roomId) {
 		roomService.deleteRoom(roomId);
 		return ResponseEntity.noContent().build();
 	}
 
+	// Toggle room availability - Only HOTEL_ADMIN and STAFF can toggle
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@PatchMapping("/{roomId}/availability")
 	public ResponseEntity<RoomResponseDTO> toggleAvailability(@PathVariable Long roomId,
 			@RequestParam boolean isAvailable) {
 		return ResponseEntity.ok(roomService.toggleAvailability(roomId, isAvailable));
 	}
 
+	// Get room status for hotel management - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/status/{hotelId}")
 	public ResponseEntity<Page<RoomStatusProjection>> getRoomStatus(@PathVariable Long hotelId, Pageable pageable) {
 		return ResponseEntity.ok(roomService.getRoomStatusByHotelId(hotelId, pageable));
 	}
 
+	// Search rooms by room number - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/status/{hotelId}/search")
 	public ResponseEntity<Page<RoomStatusProjection>> getRoomStatusByRoomNumber(
 			@PathVariable Long hotelId,
@@ -83,11 +100,4 @@ public class RoomController {
 		Pageable pageable = PageRequest.of(page, size);
 		return ResponseEntity.ok(roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable));
 	}
-	
-	
-	
-	
-	
-	
-	
 }
