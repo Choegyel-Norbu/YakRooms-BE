@@ -1,7 +1,7 @@
 ---
+trigger: always_on
 description: Senior systems architect and mentor role with Spring Boot backend coding and design rules
 globs: ["**/*.{java,sql,properties,yml,yaml,xml,json,md,js,jsx,ts,tsx,css}"]
-alwaysApply: true
 ---
 
 # Role

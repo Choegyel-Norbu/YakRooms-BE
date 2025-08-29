@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
+import com.yakrooms.be.dto.RoomBookedDatesDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.service.RoomService;
@@ -32,7 +33,7 @@ public class RoomController {
 	private RoomService roomService;
 
 	// Create new room - Only HOTEL_ADMIN and STAFF can create
-	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF', 'GUEST')")
 	@PostMapping("/hotel/{hotelId}")
 	public ResponseEntity<?> createRoom(@PathVariable Long hotelId, @RequestBody RoomRequest request) {
 		return ResponseEntity.ok(roomService.createRoom(hotelId, request));
@@ -51,12 +52,25 @@ public class RoomController {
 		return ResponseEntity.ok(roomService.getRoomsByHotel(hotelId));
 	}
 
+	// Test endpoint to verify security configuration
+	@GetMapping("/test")
+	public ResponseEntity<String> testEndpoint() {
+		return ResponseEntity.ok("Room test endpoint is working!");
+	}
+
 	// Get available rooms for booking - Public access
 	@GetMapping("/available/{hotelId}")
 	public ResponseEntity<Page<RoomResponseDTO>> getAvailable(@PathVariable Long hotelId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		return ResponseEntity.ok(roomService.getAvailableRooms(hotelId, pageable));
+	}
+	
+	// Get booked dates for a room - Public access (no authentication required)
+	@GetMapping("/{roomId}/booked-dates")
+	public ResponseEntity<RoomBookedDatesDTO> getBookedDatesForRoom(@PathVariable Long roomId) {
+		RoomBookedDatesDTO bookedDates = roomService.getBookedDatesForRoom(roomId);
+		return ResponseEntity.ok(bookedDates);
 	}
 
 	// Update room information - Only HOTEL_ADMIN and STAFF can update

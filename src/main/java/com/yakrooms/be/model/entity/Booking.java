@@ -2,6 +2,7 @@ package com.yakrooms.be.model.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.math.BigDecimal;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -73,8 +74,15 @@ public class Booking {
 
     @Column(name = "check_out_date", nullable = false)
     @NotNull(message = "Check-out date is required")
-    @Future(message = "Check-out date must be in the future")
     private LocalDate checkOutDate;
+
+    @Column(name = "check_in_time", nullable = false)
+    @NotNull(message = "Check-in time is required")
+    private LocalTime checkInTime = LocalTime.of(0, 0); // Default: 12:00 AM (midnight)
+
+    @Column(name = "check_out_time", nullable = false)
+    @NotNull(message = "Check-out time is required")
+    private LocalTime checkOutTime = LocalTime.of(12, 0); // Default: 12:00 PM (noon)
 
     @Column(name = "guests", nullable = false)
     @Min(value = 1, message = "At least 1 guest is required")
@@ -133,6 +141,8 @@ public class Booking {
         this.room = room;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
+        this.checkInTime = LocalTime.of(0, 0); // Default: 12:00 AM (midnight)
+        this.checkOutTime = LocalTime.of(12, 0); // Default: 12:00 PM (noon)
         this.guests = guests;
         this.totalPrice = totalPrice;
         this.status = BookingStatus.PENDING;
@@ -147,6 +157,8 @@ public class Booking {
         this.room = room;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
+        this.checkInTime = LocalTime.of(0, 0); // Default: 12:00 AM (midnight)
+        this.checkOutTime = LocalTime.of(12, 0); // Default: 12:00 PM (noon)
         this.guests = guests;
         this.totalPrice = totalPrice;
         this.cid = cid;
@@ -211,6 +223,22 @@ public class Booking {
 
     public void setCheckOutDate(LocalDate checkOutDate) {
         this.checkOutDate = checkOutDate;
+    }
+
+    public LocalTime getCheckInTime() {
+        return checkInTime;
+    }
+
+    public void setCheckInTime(LocalTime checkInTime) {
+        this.checkInTime = checkInTime;
+    }
+
+    public LocalTime getCheckOutTime() {
+        return checkOutTime;
+    }
+
+    public void setCheckOutTime(LocalTime checkOutTime) {
+        this.checkOutTime = checkOutTime;
     }
 
     public int getGuests() {

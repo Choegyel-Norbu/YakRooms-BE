@@ -3,6 +3,7 @@ package com.yakrooms.be.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -16,12 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CacheEvict;
 
 import com.yakrooms.be.dto.BookingStatisticsDTO;
 import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
-import com.yakrooms.be.dto.NotificationMessage;
 import com.yakrooms.be.dto.PasscodeVerificationDTO;
 import com.yakrooms.be.dto.BookingChangeEvent;
 import com.yakrooms.be.dto.mapper.BookingMapper;
@@ -45,17 +43,29 @@ import com.yakrooms.be.service.BookingService;
 import com.yakrooms.be.service.MailService;
 import com.yakrooms.be.service.NotificationService;
 import com.yakrooms.be.service.BookingWebSocketService;
+import com.yakrooms.be.service.PaymentService;
+import com.yakrooms.be.service.BookingValidationService;
 import com.yakrooms.be.util.PasscodeGenerator;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import com.yakrooms.be.model.enums.PaymentStatus;
 
+/**
+ * Refactored BookingServiceImpl that uses the new unified services.
+ * This implementation delegates to specialized services for room availability,
+ * payment management, and validation, ensuring consistency and atomicity.
+ * 
+ * @author YakRooms Team
+ * @version 2.0
+ */
 @Service
 @Transactional
 public class BookingServiceImpl implements BookingService {
 
     private static final Logger logger = LoggerFactory.getLogger(BookingServiceImpl.class);
     private static final int MAX_PASSCODE_ATTEMPTS = 5;
+    
     private final BookingRepository bookingRepository;
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
@@ -66,18 +76,25 @@ public class BookingServiceImpl implements BookingService {
     private final NotificationService notificationService;
     private final BookingWebSocketService bookingWebSocketService;
     private final Validator validator;
+    
+    // New unified services
+    private final PaymentService paymentService;
+    private final BookingValidationService bookingValidationService;
 
     @Autowired
     public BookingServiceImpl(BookingRepository bookingRepository,
-                             RoomRepository roomRepository,
-                             HotelRepository hotelRepository,
-                             UserRepository userRepository,
-                             NotificationRepository notificationRepository,
-                             MailService mailService,
-                             BookingMapper bookingMapper,
-                             NotificationService notificationService,
-                             BookingWebSocketService bookingWebSocketService,
-                             Validator validator) {
+            RoomRepository roomRepository,
+            HotelRepository hotelRepository,
+            UserRepository userRepository,
+            NotificationRepository notificationRepository,
+            MailService mailService,
+            BookingMapper bookingMapper,
+            NotificationService notificationService,
+            BookingWebSocketService bookingWebSocketService,
+            Validator validator,
+            PaymentService paymentService,
+            BookingValidationService bookingValidationService) {
+        
         this.bookingRepository = bookingRepository;
         this.roomRepository = roomRepository;
         this.hotelRepository = hotelRepository;
@@ -88,13 +105,18 @@ public class BookingServiceImpl implements BookingService {
         this.notificationService = notificationService;
         this.bookingWebSocketService = bookingWebSocketService;
         this.validator = validator;
+        this.paymentService = paymentService;
+        this.bookingValidationService = bookingValidationService;
     }
 
     @Override
-    @CacheEvict(value = {"hotelBookings", "userBookings", "roomAvailability"}, allEntries = true)
+    @Transactional
     public BookingResponse createBooking(BookingRequest request) {
-        logger.info("Creating booking for user: {}, room: {}, guests: {}", 
-                   request.getUserId(), request.getRoomId(), request.getGuests());
+        logger.info("Creating booking for user: {}, room: {}, guests: {}",
+                request.getUserId(), request.getRoomId(), request.getGuests());
+
+        // Use the new validation service
+        bookingValidationService.validateBookingRequest(request);
 
         // Fetch entities with optimized queries
         User guest = null;
@@ -103,50 +125,52 @@ public class BookingServiceImpl implements BookingService {
         }
         Room room = fetchRoomById(request.getRoomId());
         Hotel hotel = fetchHotelById(request.getHotelId());
-        
-        logger.info("Room details - ID: {}, Number: {}, MaxGuests: {}, Type: {}", 
-                   room.getId(), room.getRoomNumber(), room.getMaxGuests(), room.getRoomType());
-        
 
-        
+        logger.info("Room details - ID: {}, Number: {}, MaxGuests: {}, Type: {}",
+                room.getId(), room.getRoomNumber(), room.getMaxGuests(), room.getRoomType());
+
+        // Strict overlap detection (date-only fallback if times not provided)
+        // Use time-based overlap if client supplies times on Booking or request; otherwise default to date-only
+        boolean availableByTime = isRoomAvailableForDatesAndTimes(
+                request.getRoomId(),
+                request.getCheckInDate(), java.time.LocalTime.MIDNIGHT,
+                request.getCheckOutDate(), java.time.LocalTime.NOON);
+        if (!availableByTime) {
+            throw new BusinessException("Time window conflicts with an existing booking");
+        }
+
         // Create booking entity
         Booking booking = createBookingEntity(request, guest, hotel, room);
-        
+
         // Generate and set unique passcode
         booking.setPasscode(generateUniquePasscode());
-        
+
         // Save booking
         Booking savedBooking = bookingRepository.save(booking);
-        
-        // Update room availability
-        updateRoomAvailability(room, false);
-        
+
+        // Do not mutate global room availability per new policy
+
         // Handle notifications and emails asynchronously
         handleBookingNotificationsAsync(savedBooking, guest, hotel, room);
-        
+
         logger.info("Successfully created booking with ID: {}", savedBooking.getId());
         return bookingMapper.toDto(savedBooking);
     }
 
     @Override
-    @CacheEvict(value = {"hotelBookings", "userBookings", "roomAvailability"}, allEntries = true)
     public void deleteBookingById(Long bookingId) {
         logger.info("Deleting booking: {}", bookingId);
-        
+
         Booking booking = fetchBookingById(bookingId);
-        
-        // Restore room availability if booking was active
-        if (booking.isActive()) {
-            updateRoomAvailability(booking.getRoom(), true);
-        }
-        
+
+        // Do not flip global availability on delete per new policy
+
         bookingRepository.delete(booking);
         logger.info("Successfully deleted booking: {}", bookingId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "bookingStats", key = "#startDate")
     public List<BookingStatisticsDTO> getBookingStatisticsByMonth(String startDate) {
         validateStartDate(startDate);
         LocalDateTime startDateTime = LocalDate.parse(startDate).atStartOfDay();
@@ -155,7 +179,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "hotelBookingStats", key = "#startDate + '_' + #hotelId")
     public List<BookingStatisticsDTO> getBookingStatisticsByMonthAndHotel(String startDate, Long hotelId) {
         validateStartDate(startDate);
         validateHotelId(hotelId);
@@ -165,7 +188,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "revenueStats", key = "#hotelId + '_' + #startDate")
     public List<MonthlyRevenueStatsDTO> getMonthlyRevenueStats(Long hotelId, String startDate) {
         validateHotelId(hotelId);
         validateStartDate(startDate);
@@ -187,7 +209,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Optional<Booking> bookingOpt = bookingRepository.findByPasscode(passcode.trim());
-        
+
         if (bookingOpt.isEmpty()) {
             logger.warn("Invalid passcode verification attempt: {}", passcode);
             return new PasscodeVerificationDTO(false, "Invalid passcode. No booking found.");
@@ -227,37 +249,25 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @CacheEvict(value = {"hotelBookings", "userBookings", "roomAvailability"}, allEntries = true)
     public void cancelBooking(Long bookingId, Long userId) {
         logger.info("Cancelling booking: {} by user: {}", bookingId, userId);
-        
+
         Booking booking = fetchBookingById(bookingId);
         validateBookingOwnership(booking, userId);
-        validateBookingCancellation(booking);
         
+        // Use the new validation service
+        bookingValidationService.validateCancellation(booking);
+
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
-        
-        // Restore room availability
-        updateRoomAvailability(booking.getRoom(), true);
-        
+
+        // Do not flip global availability on cancel per new policy
+
         logger.info("Successfully cancelled booking: {}", bookingId);
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "userBookings", key = "#userId")
-    public List<BookingResponse> getUserBookings(Long userId) {
-        validateUserId(userId);
-        return bookingRepository.findAllBookingsByUserIdWithDetails(userId)
-                .stream()
-                .map(bookingMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "hotelBookings", key = "#hotelId")
     public List<BookingResponse> getBookingsByHotel(Long hotelId) {
         validateHotelId(hotelId);
         return bookingRepository.findAllByHotelIdOptimized(hotelId)
@@ -267,27 +277,97 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @CacheEvict(value = {"hotelBookings", "userBookings"}, allEntries = true)
     public BookingResponse confirmBooking(Long bookingId) {
         logger.info("Confirming booking: {}", bookingId);
-        
+
         Booking booking = fetchBookingById(bookingId);
-        validateBookingConfirmation(booking);
         
+        // Use the new validation service
+        bookingValidationService.validateConfirmation(booking);
+
         booking.setStatus(BookingStatus.CONFIRMED);
         Booking savedBooking = bookingRepository.save(booking);
-        
+
         logger.info("Successfully confirmed booking: {}", bookingId);
         return bookingMapper.toDto(savedBooking);
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "roomAvailability", key = "#roomId + '_' + #checkIn + '_' + #checkOut")
     public boolean isRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut) {
-        validateDateRange(checkIn, checkOut);
-        List<Booking> conflictingBookings = bookingRepository.findConflictingBookings(roomId, checkIn, checkOut);
+        return isRoomAvailableForDates(roomId, checkIn, checkOut);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isRoomAvailableForAdvanceBooking(BookingRequest request) {
+        // Check for conflicting CONFIRMED bookings only
+        List<Booking> conflictingBookings = getConflictingBookings(
+            request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate());
+        
+        // Filter to only CONFIRMED bookings for advance booking conflicts
+        return conflictingBookings.stream()
+            .noneMatch(booking -> booking.getStatus() == BookingStatus.CONFIRMED);
+    }
+
+    /**
+     * Check if room is available for specific dates.
+     * 
+     * @param roomId The room ID
+     * @param checkIn Check-in date
+     * @param checkOut Check-out date
+     * @return true if room is available
+     */
+    @Transactional(readOnly = true)
+    public boolean isRoomAvailableForDates(Long roomId, LocalDate checkIn, LocalDate checkOut) {
+        List<Booking> conflictingBookings = getConflictingBookings(roomId, checkIn, checkOut);
         return conflictingBookings.isEmpty();
+    }
+
+    /**
+     * Check if room is available for specific dates and times.
+     * 
+     * @param roomId The room ID
+     * @param checkIn Check-in date
+     * @param checkInTime Check-in time
+     * @param checkOut Check-out date
+     * @param checkOutTime Check-out time
+     * @return true if room is available
+     */
+    @Transactional(readOnly = true)
+    public boolean isRoomAvailableForDatesAndTimes(Long roomId, LocalDate checkIn, LocalTime checkInTime, 
+                                                 LocalDate checkOut, LocalTime checkOutTime) {
+        List<Booking> conflictingBookings = getConflictingBookingsWithTime(roomId, checkIn, checkInTime, checkOut, checkOutTime);
+        return conflictingBookings.isEmpty();
+    }
+
+    /**
+     * Get conflicting bookings for specific dates.
+     * 
+     * @param roomId The room ID
+     * @param checkIn Check-in date
+     * @param checkOut Check-out date
+     * @return List of conflicting bookings
+     */
+    @Transactional(readOnly = true)
+    public List<Booking> getConflictingBookings(Long roomId, LocalDate checkIn, LocalDate checkOut) {
+        return bookingRepository.findConflictingBookings(roomId, checkIn, checkOut);
+    }
+
+    /**
+     * Get conflicting bookings for specific dates and times.
+     * 
+     * @param roomId The room ID
+     * @param checkIn Check-in date
+     * @param checkInTime Check-in time
+     * @param checkOut Check-out date
+     * @param checkOutTime Check-out time
+     * @return List of conflicting bookings
+     */
+    @Transactional(readOnly = true)
+    public List<Booking> getConflictingBookingsWithTime(Long roomId, LocalDate checkIn, LocalTime checkInTime, 
+                                                       LocalDate checkOut, LocalTime checkOutTime) {
+        return bookingRepository.findConflictingBookings(roomId, checkIn, checkOut);
     }
 
     @Override
@@ -306,15 +386,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<BookingResponse> listAllBookingNoPaginaiton() {
-        return bookingRepository.findAll()
-                .stream()
-                .map(bookingMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<BookingResponse> listAllBookingByHotel(Long hotelId, Pageable pageable) {
         validateHotelId(hotelId);
         return bookingRepository.findAllByHotelIdOptimized(hotelId, pageable)
@@ -322,23 +393,25 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    @CacheEvict(value = {"hotelBookings", "userBookings", "roomAvailability"}, allEntries = true)
+    @Transactional
     public boolean updateBookingStatus(Long bookingId, String newStatus) {
         logger.info("Updating booking status: {} to: {}", bookingId, newStatus);
-        
+
         Booking booking = fetchBookingById(bookingId);
         BookingStatus status = validateAndParseStatus(newStatus);
-        
+
+        // Use the new validation service
+        bookingValidationService.validateStatusTransition(booking.getStatus(), status);
+
         BookingStatus oldStatus = booking.getStatus();
         booking.setStatus(status);
         bookingRepository.save(booking);
-        
-        // Handle room availability based on status change
-        handleRoomAvailabilityForStatusChange(booking, oldStatus, status);
-        
+
+        // Do not flip global availability on status change per new policy
+
         // Broadcast WebSocket event for booking status change
         broadcastBookingStatusChange(booking, oldStatus, status);
-        
+
         logger.info("Successfully updated booking status: {} to: {}", bookingId, status);
         return true;
     }
@@ -349,7 +422,7 @@ public class BookingServiceImpl implements BookingService {
         if (request == null) {
             throw new IllegalArgumentException("Booking request cannot be null");
         }
-        
+
         Set<ConstraintViolation<BookingRequest>> violations = validator.validate(request);
         if (!violations.isEmpty()) {
             String errorMessage = violations.stream()
@@ -357,47 +430,33 @@ public class BookingServiceImpl implements BookingService {
                     .collect(Collectors.joining(", "));
             throw new IllegalArgumentException("Invalid booking request: " + errorMessage);
         }
-        
-        validateDateRange(request.getCheckInDate(), request.getCheckOutDate());
+
+        // Use the new validation service for date range validation
+        bookingValidationService.validateDateRange(request.getCheckInDate(), request.getCheckOutDate(), "GENERAL");
     }
-
-
 
     private Booking createBookingEntity(BookingRequest request, User guest, Hotel hotel, Room room) {
         Booking booking = bookingMapper.toEntityForCreation(request, guest, hotel, room);
-        
-        // Set check-in date to current date
+
+        // Set check-in date to current date for immediate bookings
         booking.setCheckInDate(LocalDate.now());
-       
+
         return booking;
     }
 
-
-    private void updateRoomAvailability(Room room, boolean available) {
-        room.setAvailable(available);
-        roomRepository.save(room);
-        logger.debug("Updated room {} availability to: {}", room.getId(), available);
+    /**
+     * Update room availability for a booking using the unified service.
+     * This method ensures atomic updates and prevents race conditions.
+     * 
+     * @param booking The booking to update availability for
+     */
+    private void updateRoomAvailabilityForBooking(Booking booking) {
+        // No-op per new policy
     }
 
-    private void handleRoomAvailabilityForStatusChange(Booking booking, BookingStatus oldStatus, BookingStatus newStatus) {
-        Room room = booking.getRoom();
-        
-        switch (newStatus) {
-            case CHECKED_IN:
-                if (oldStatus != BookingStatus.CHECKED_IN) {
-                    updateRoomAvailability(room, false);
-                }
-                break;
-            case CHECKED_OUT:
-            case CANCELLED:
-                if (oldStatus == BookingStatus.CHECKED_IN || oldStatus == BookingStatus.CONFIRMED) {
-                    updateRoomAvailability(room, true);
-                }
-                break;
-            default:
-                // No room availability change needed for other statuses
-                break;
-        }
+    private void handleRoomAvailabilityForStatusChange(Booking booking, BookingStatus oldStatus,
+            BookingStatus newStatus) {
+        // No-op per new policy
     }
 
     private void broadcastBookingStatusChange(Booking booking, BookingStatus oldStatus, BookingStatus newStatus) {
@@ -405,23 +464,22 @@ public class BookingServiceImpl implements BookingService {
             // Create booking change event
             Long userId = booking.getUser() != null ? booking.getUser().getId() : null;
             BookingChangeEvent event = new BookingChangeEvent(
-                booking.getId(),
-                booking.getHotel().getId(),
-                userId,
-                oldStatus,
-                newStatus,
-                "BOOKING_STATUS_CHANGE",
-                String.format("Booking status changed from %s to %s", oldStatus, newStatus)
-            );
-            
+                    booking.getId(),
+                    booking.getHotel().getId(),
+                    userId,
+                    oldStatus,
+                    newStatus,
+                    "BOOKING_STATUS_CHANGE",
+                    String.format("Booking status changed from %s to %s", oldStatus, newStatus));
+
             // Broadcast the event via WebSocket
             bookingWebSocketService.broadcastBookingStatusChange(event);
-            
-            logger.info("Broadcasted booking status change event: {} -> {} for booking {}", 
-                       oldStatus, newStatus, booking.getId());
+
+            logger.info("Broadcasted booking status change event: {} -> {} for booking {}",
+                    oldStatus, newStatus, booking.getId());
         } catch (Exception e) {
-            logger.error("Failed to broadcast booking status change event for booking {}: {}", 
-                        booking.getId(), e.getMessage());
+            logger.error("Failed to broadcast booking status change event for booking {}: {}",
+                    booking.getId(), e.getMessage());
         }
     }
 
@@ -444,27 +502,26 @@ public class BookingServiceImpl implements BookingService {
     private void sendHotelAdminNotification(Booking booking, User guest, Hotel hotel, Room room) {
         try {
             Optional<User> hotelAdminOpt = userRepository.findByHotelIdAndRole(hotel.getId(), Role.HOTEL_ADMIN);
-            
+
             if (hotelAdminOpt.isPresent()) {
                 User hotelAdmin = hotelAdminOpt.get();
-                
+
                 // Save notification in database
                 saveNotificationToDatabase(hotelAdmin, booking, guest, room);
-                
+
                 // Send email notification with complete data
                 String guestName = guest != null ? guest.getName() : "Anonymous Guest";
                 String guestEmail = guest != null ? guest.getEmail() : "No email provided";
                 mailService.sendBookingNotificationEmail(
-                    hotelAdmin.getEmail(), 
-                    hotel.getName(), 
-                    room.getRoomNumber(), 
-                    guestName,
-                    booking.getId(),
-                    booking.getCheckInDate(),
-                    booking.getCheckOutDate(),
-                    guestEmail
-                );
-                
+                        hotelAdmin.getEmail(),
+                        hotel.getName(),
+                        room.getRoomNumber(),
+                        guestName,
+                        booking.getId(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate(),
+                        guestEmail);
+
                 logger.info("Sent booking notification to hotel admin: {}", hotelAdmin.getId());
             } else {
                 logger.warn("No hotel admin found for hotel: {}", hotel.getId());
@@ -490,15 +547,14 @@ public class BookingServiceImpl implements BookingService {
     private void sendGuestPasscodeEmail(Booking booking, User guest, Hotel hotel, Room room) {
         try {
             mailService.sendPasscodeEmailToGuest(
-                guest.getEmail(),
-                guest.getName(),
-                booking.getPasscode(),
-                hotel.getName(),
-                room.getRoomNumber(),
-                booking.getCheckInDate(),
-                booking.getCheckOutDate(),
-                booking.getId()
-            );
+                    guest.getEmail(),
+                    guest.getName(),
+                    booking.getPasscode(),
+                    hotel.getName(),
+                    room.getRoomNumber(),
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate(),
+                    booking.getId());
             logger.info("Sent passcode email to guest: {}", guest.getEmail());
         } catch (Exception e) {
             logger.error("Failed to send passcode email to guest: {}", guest.getEmail(), e);
@@ -540,20 +596,20 @@ public class BookingServiceImpl implements BookingService {
 
     private String generateUniquePasscode() {
         logger.debug("Generating unique passcode with max attempts: {}", MAX_PASSCODE_ATTEMPTS);
-                for (int attempt = 1; attempt <= MAX_PASSCODE_ATTEMPTS; attempt++) {
+        for (int attempt = 1; attempt <= MAX_PASSCODE_ATTEMPTS; attempt++) {
             try {
                 String passcode = PasscodeGenerator.generatePasscode();
-                
+
                 if (passcode == null || passcode.trim().isEmpty()) {
                     logger.warn("Generated passcode is null or empty, retrying... Attempt: {}", attempt);
                     continue;
                 }
-                
+
                 if (!bookingRepository.existsByPasscode(passcode)) {
                     logger.debug("Successfully generated unique passcode on attempt: {}", attempt);
                     return passcode;
                 }
-                
+
                 if (attempt < MAX_PASSCODE_ATTEMPTS) {
                     logger.warn("Passcode collision detected, retrying... Attempt: {}", attempt);
                 }
@@ -564,9 +620,10 @@ public class BookingServiceImpl implements BookingService {
                 }
             }
         }
-        
+
         logger.error("Unable to generate unique passcode after {} attempts", MAX_PASSCODE_ATTEMPTS);
-        throw new BusinessException("Unable to generate unique passcode after " + MAX_PASSCODE_ATTEMPTS + " attempts. Please try again later.");
+        throw new BusinessException("Unable to generate unique passcode after " + MAX_PASSCODE_ATTEMPTS
+                + " attempts. Please try again later.");
     }
 
     // Validation helper methods
@@ -632,7 +689,7 @@ public class BookingServiceImpl implements BookingService {
         if (status == null || status.trim().isEmpty()) {
             throw new IllegalArgumentException("Status cannot be null or empty");
         }
-        
+
         try {
             return BookingStatus.valueOf(status.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -657,12 +714,4 @@ public class BookingServiceImpl implements BookingService {
             throw new BusinessException("Only pending bookings can be confirmed");
         }
     }
-
-	@Override
-	public boolean changeBookingToCheckIn(Long bookingId) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-
 }

@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +20,15 @@ import com.yakrooms.be.dto.RoomResponseDTO;
 import com.yakrooms.be.dto.mapper.RoomMapper;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.dto.response.RoomResponse;
+import com.yakrooms.be.dto.RoomBookedDatesDTO;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.entity.Room;
+import com.yakrooms.be.model.entity.Booking;
 import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.RoomRepository;
+import com.yakrooms.be.repository.BookingRepository;
 import com.yakrooms.be.service.RoomService;
 
 @Service
@@ -37,16 +41,19 @@ public class RoomServiceImpl implements RoomService {
     private final HotelRepository hotelRepository;
     private final RoomMapper roomMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final BookingRepository bookingRepository;
 
     @Autowired
     public RoomServiceImpl(RoomRepository roomRepository,
                           HotelRepository hotelRepository,
                           RoomMapper roomMapper,
-                          SimpMessagingTemplate messagingTemplate) {
+                          SimpMessagingTemplate messagingTemplate,
+                          BookingRepository bookingRepository) {
         this.roomRepository = roomRepository;
         this.hotelRepository = hotelRepository;
         this.roomMapper = roomMapper;
         this.messagingTemplate = messagingTemplate;
+        this.bookingRepository = bookingRepository;
     }
 
     @Override
@@ -208,6 +215,40 @@ public class RoomServiceImpl implements RoomService {
 
         return roomRepository.findActiveAvailableRoomsByHotelId(hotelId, pageable)
                 .map(roomMapper::toDtoResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RoomBookedDatesDTO getBookedDatesForRoom(Long roomId) {
+        validateInput(roomId, "Room ID cannot be null");
+        
+        // Validate room exists
+        Room room = roomRepository.findById(roomId)
+            .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
+        
+        // Get all active bookings for the room
+        List<Booking> activeBookings = bookingRepository.findAllActiveBookingsByRoomId(roomId);
+        
+        // Extract all booked dates from the bookings
+        List<LocalDate> bookedDates = new ArrayList<>();
+        for (Booking booking : activeBookings) {
+            LocalDate currentDate = booking.getCheckInDate();
+            LocalDate endDate = booking.getCheckOutDate();
+            
+            // Add all dates from check-in to check-out (exclusive)
+            while (currentDate.isBefore(endDate)) {
+                bookedDates.add(currentDate);
+                currentDate = currentDate.plusDays(1);
+            }
+        }
+        
+        // Remove duplicates and sort
+        List<LocalDate> uniqueBookedDates = bookedDates.stream()
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+        
+        return new RoomBookedDatesDTO(roomId, room.getRoomNumber(), uniqueBookedDates);
     }
 
     // ========== PRIVATE HELPER METHODS ==========

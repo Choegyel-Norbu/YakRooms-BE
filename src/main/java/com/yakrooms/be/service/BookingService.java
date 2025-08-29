@@ -19,17 +19,23 @@ public interface BookingService {
 
 	void cancelBooking(Long bookingId, Long userId);
 
-	List<BookingResponse> getUserBookings(Long userId);
-
 	List<BookingResponse> getBookingsByHotel(Long hotelId);
 	
 	public Page<BookingResponse> listAllBooking(Pageable pageable);
-	
-	public List<BookingResponse> listAllBookingNoPaginaiton();
 
 	BookingResponse confirmBooking(Long bookingId);
 
 	boolean isRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut);
+
+	/**
+	 * Check if a room is available for advance booking (future dates).
+	 * This method specifically checks for CONFIRMED bookings that might conflict
+	 * with the requested date range.
+	 * 
+	 * @param request The booking request containing roomId, checkInDate, checkOutDate, and other details
+	 * @return true if the room is available for advance booking, false otherwise
+	 */
+	boolean isRoomAvailableForAdvanceBooking(BookingRequest request);
 
 	BookingResponse getBookingDetails(Long bookingId);
 	
@@ -45,45 +51,12 @@ public interface BookingService {
     
     List<MonthlyRevenueStatsDTO> getMonthlyRevenueStats(Long hotelId, String startDate);
     
-    /**
-     * Verify booking by passcode.
-     * 
-     * @param passcode The passcode to verify
-     * @return PasscodeVerificationDTO with verification result and booking details
-     */
     PasscodeVerificationDTO verifyBookingByPasscode(String passcode);
 
-    /**
-     * Get all bookings for a specific user.
-     * 
-     * @param userId The user ID
-     * @return List of booking responses
-     */
     List<BookingResponse> getAllBookingsByUserId(Long userId);
 
-    /**
-     * Get all bookings for a specific user with pagination.
-     * 
-     * @param userId The user ID
-     * @param pageable Pagination parameters
-     * @return Page of booking responses
-     */
     Page<BookingResponse> getAllBookingsByUserId(Long userId, Pageable pageable);
 
-    /**
-     * Get all bookings for a specific user by status.
-     * 
-     * @param userId The user ID
-     * @param status The booking status to filter by
-     * @return List of booking responses
-     */
     List<BookingResponse> getAllBookingsByUserIdAndStatus(Long userId, String status);
-    
-    /**
-     * Change booking status to CHECKED_IN for stats tracking.
-     * 
-     * @param bookingId The booking ID to update
-     * @return true if status was successfully changed, false otherwise
-     */
-    boolean changeBookingToCheckIn(Long bookingId);
+
 }

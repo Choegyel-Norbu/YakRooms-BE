@@ -1,0 +1,13 @@
+Endpoint | Auth Required | Status | Response Time | Result | Description
+---------|---------------|---------|---------------|---------|-------------
+GET /api/test-data/status | Public | 200 | 0.137402s | ✅ PASS | Test data controller status
+GET /api/hotels/topThree | Public | 200 | 0.089286s | ✅ PASS | Get top 3 hotels for homepage display
+GET /api/hotels | Public | 200 | 0.048618s | ✅ PASS | Get all hotels with pagination
+GET /api/rooms/available/1 | Public | 200 | 0.039488s | ✅ PASS | Get available rooms for booking
+GET /api/reviews/averageRating | Public | 200 | 0.005352s | ✅ PASS | Get average rating across platform
+POST /api/getIntouch | Public | 200 | 0.022745s | ✅ PASS | Contact form submission
+GET /api/hotels/superAdmin | Protected | 403 | 0.007727s | ✅ PASS (Correctly protected with role check) | Get all hotels for super admin management
+GET /api/staff/hotel/1 | Protected | 403 | 0.004415s | ✅ PASS (Correctly protected with role check) | Get staff by hotel ID
+POST /api/reviews | Protected | 403 | 0.003576s | ✅ PASS (Correctly protected with role check) | Submit hotel review
+GET /api/jwt-test/tokens | Public | 200 | 0.020644s | ✅ PASS | Get all test JWT tokens
+GET /api/jwt-test/token/SUPER_ADMIN | Public | 200 | 0.007764s | ✅ PASS | Get SUPER_ADMIN test token

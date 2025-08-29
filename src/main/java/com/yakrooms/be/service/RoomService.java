@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
 import com.yakrooms.be.dto.RoomStatusDTO;
+import com.yakrooms.be.dto.RoomBookedDatesDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.dto.response.RoomResponse;
 import com.yakrooms.be.projection.RoomStatusProjection;
@@ -31,4 +32,13 @@ public interface RoomService {
 	Page<RoomStatusProjection> getRoomStatusByHotelId(Long hotelId, Pageable pageable);
 	
 	Page<RoomStatusProjection> getRoomStatusByHotelIdAndRoomNumber(Long hotelId, String roomNumber, Pageable pageable);
+	
+	/**
+	 * Get all booked dates for a specific room.
+	 * This method returns dates that should be blocked in frontend date pickers.
+	 * 
+	 * @param roomId The room ID
+	 * @return RoomBookedDatesDTO with room info and list of booked dates
+	 */
+	RoomBookedDatesDTO getBookedDatesForRoom(Long roomId);
 }

@@ -1,0 +1,63 @@
+Endpoint | Auth Required | Status | Response Time | Result | Description
+---------|---------------|---------|---------------|---------|-------------
+POST /auth/firebase | Public | 400 | 0.041917s | ❌ FAIL (Expected 200, got 400) | Firebase authentication for all users
+GET /api/hotels/topThree | Public | 200 | 0.095147s | ✅ PASS | Get top 3 hotels for homepage display
+GET /api/hotels/details/1 | Public | 404 | 0.017907s | ❌ FAIL (Expected 200, got 404) | Get detailed hotel information by ID
+GET /api/hotels | Public | 403 | 0.010469s | ❌ FAIL (Expected 200, got 403) | Get all hotels with pagination
+GET /api/hotels/search | Public | 403 | 0.004842s | ❌ FAIL (Expected 200, got 403) | Search hotels by criteria
+GET /api/hotels/sortedByLowestPrice | Public | 403 | 0.005434s | ❌ FAIL (Expected 200, got 403) | Get hotels sorted by lowest price
+GET /api/hotels/sortedByHighestPrice | Public | 403 | 0.003900s | ❌ FAIL (Expected 200, got 403) | Get hotels sorted by highest price
+GET /api/hotels/superAdmin | Protected | 403 | 0.003276s | ✅ PASS (Correctly protected with role check) | Get all hotels for super admin management
+POST /api/hotels/1/verify | Protected | 403 | 0.003595s | ✅ PASS (Correctly protected with role check) | Verify a hotel (admin approval)
+GET /api/hotels/1 | Protected | 403 | 0.014863s | ✅ PASS (Correctly protected with role check) | Get hotel information by user ID
+POST /api/hotels/1 | Protected | 403 | 0.004552s | ✅ PASS (Correctly protected with role check) | Create new hotel listing
+PUT /api/hotels/1 | Protected | 403 | 0.005051s | ✅ PASS (Correctly protected with role check) | Update hotel information
+DELETE /api/hotels/1 | Protected | 403 | 0.004895s | ✅ PASS (Correctly protected with role check) | Delete hotel and all associated data
+GET /api/rooms/1 | Public | 403 | 0.004810s | ❌ FAIL (Expected 200, got 403) | Get room by ID
+GET /api/rooms/available/1 | Public | 200 | 0.045503s | ✅ PASS | Get available rooms for booking
+GET /api/rooms/hotel/1 | Protected | 403 | 0.004567s | ✅ PASS (Correctly protected with role check) | Get all rooms for a specific hotel
+POST /api/rooms/hotel/1 | Protected | 403 | 0.005661s | ✅ PASS (Correctly protected with role check) | Create new room for hotel
+PUT /api/rooms/1 | Protected | 403 | 0.005325s | ✅ PASS (Correctly protected with role check) | Update room information
+DELETE /api/rooms/1 | Protected | 403 | 0.006040s | ✅ PASS (Correctly protected with role check) | Delete room
+PATCH /api/rooms/1/availability | Protected | 403 | 0.017163s | ✅ PASS (Correctly protected with role check) | Toggle room availability
+GET /api/rooms/status/1 | Protected | 403 | 0.007224s | ✅ PASS (Correctly protected with role check) | Get room status for hotel management
+GET /api/rooms/status/1/search | Protected | 403 | 0.008018s | ✅ PASS (Correctly protected with role check) | Search rooms by room number
+GET /api/bookings/availability | Public | 403 | 0.010327s | ❌ FAIL (Expected 200, got 403) | Check room availability
+POST /api/bookings | Protected | 403 | 0.005373s | ✅ PASS (Correctly protected with role check) | Create new booking
+POST /api/bookings/1/cancel | Protected | 403 | 0.005080s | ✅ PASS (Correctly protected with role check) | Cancel booking
+POST /api/bookings/1/confirm | Protected | 403 | 0.006043s | ✅ PASS (Correctly protected with role check) | Confirm booking
+PUT /api/bookings/1/status/confirmed | Protected | 403 | 0.005514s | ✅ PASS (Correctly protected with role check) | Update booking status
+PUT /api/bookings/1/status/checked_in | Protected | 403 | 0.005965s | ✅ PASS (Correctly protected with role check) | Check-in guest
+DELETE /api/bookings/1 | Protected | 403 | 0.004581s | ✅ PASS (Correctly protected with role check) | Cancel/delete booking
+GET /api/bookings/ | Protected | 403 | 0.004383s | ✅ PASS (Correctly protected with role check) | Get paginated bookings for hotel
+GET /api/bookings/user/1 | Protected | 403 | 0.004534s | ✅ PASS (Correctly protected with role check) | Get user's booking history
+GET /api/bookings/user/1/page | Protected | 403 | 0.004590s | ✅ PASS (Correctly protected with role check) | Get user's booking history with pagination
+GET /api/bookings/user/1/status/confirmed | Protected | 403 | 0.004663s | ✅ PASS (Correctly protected with role check) | Get user's bookings by status
+GET /api/bookings/hotel/1 | Protected | 403 | 0.012523s | ✅ PASS (Correctly protected with role check) | Get all bookings for a hotel
+GET /api/bookings/1 | Protected | 403 | 0.004346s | ✅ PASS (Correctly protected with role check) | Get specific booking details
+GET /api/bookings/debug/room/1/capacity | Protected | 403 | 0.004400s | ✅ PASS (Correctly protected with role check) | Debug endpoint to check room capacity
+POST /api/staff | Protected | 403 | 0.004495s | ✅ PASS (Correctly protected with role check) | Add new staff member
+GET /api/staff/hotel/1/page | Protected | 403 | 0.004923s | ✅ PASS (Correctly protected with role check) | Get staff by hotel ID with pagination
+GET /api/staff/hotel/1 | Protected | 403 | 0.004563s | ✅ PASS (Correctly protected with role check) | Get staff by hotel ID
+DELETE /api/staff/1 | Protected | 403 | 0.004983s | ✅ PASS (Correctly protected with role check) | Remove staff member
+GET /api/reviews/hotel/1/testimonials/paginated | Public | 404 | 0.029736s | ❌ FAIL (Expected 200, got 404) | Get hotel testimonials with pagination
+GET /api/reviews/hotel/1/average-rating | Public | 403 | 0.005181s | ❌ FAIL (Expected 200, got 403) | Get average rating for a hotel
+GET /api/reviews/hotel/1/review-count | Public | 403 | 0.004661s | ❌ FAIL (Expected 200, got 403) | Get number of reviews for a hotel
+GET /api/reviews/averageRating | Public | 200 | 0.009491s | ✅ PASS | Get average rating across platform
+POST /api/reviews | Protected | 403 | 0.004763s | ✅ PASS (Correctly protected with role check) | Submit hotel review
+POST /api/reviews/rating | Protected | 403 | 0.005064s | ✅ PASS (Correctly protected with role check) | Submit rating
+GET /api/notifications/user/1 | Protected | 403 | 0.005846s | ✅ PASS (Correctly protected with role check) | Get user notifications
+PUT /api/notifications/user/1/markAllRead | Protected | 403 | 0.005130s | ✅ PASS (Correctly protected with role check) | Mark all user notifications as read
+DELETE /api/notifications/user/1 | Protected | 403 | 0.005085s | ✅ PASS (Correctly protected with role check) | Delete all user notifications
+GET /api/booking-statistics/monthly | Protected | 403 | 0.004908s | ✅ PASS (Correctly protected with role check) | Get monthly booking trends
+GET /api/booking-statistics/monthly/hotel/1 | Protected | 403 | 0.005171s | ✅ PASS (Correctly protected with role check) | Get monthly booking trends for hotel
+GET /api/booking-statistics/revenue/monthly/1 | Protected | 403 | 0.004689s | ✅ PASS (Correctly protected with role check) | Get monthly revenue statistics
+GET /api/passcode/verify | Protected | 403 | 0.004328s | ✅ PASS (Correctly protected with role check) | Verify check-in passcode
+POST /api/passcode/verify | Protected | 403 | 0.004094s | ✅ PASS (Correctly protected with role check) | Verify check-in passcode
+POST /api/user-roles/1/roles/ADMIN | Protected | 403 | 0.004227s | ✅ PASS (Correctly protected with role check) | Add role to user
+DELETE /api/user-roles/1/roles/ADMIN | Protected | 403 | 0.004241s | ✅ PASS (Correctly protected with role check) | Remove role from user
+GET /api/user-roles/1/roles | Protected | 403 | 0.004141s | ✅ PASS (Correctly protected with role check) | Get user roles
+GET /api/user-roles/1/roles/ADMIN | Protected | 403 | 0.004304s | ✅ PASS (Correctly protected with role check) | Check if user has specific role
+PUT /api/user-roles/1/roles | Protected | 403 | 0.004439s | ✅ PASS (Correctly protected with role check) | Set user roles
+POST /api/getIntouch | Public | 200 | 0.006616s | ✅ PASS | Contact form submission
+GET /api/websocket/test | Public | 403 | 0.004335s | ❌ FAIL (Expected 200, got 403) | WebSocket test endpoint

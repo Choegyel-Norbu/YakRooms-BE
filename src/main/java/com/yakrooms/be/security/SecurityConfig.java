@@ -1,42 +1,136 @@
 package com.yakrooms.be.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    @Autowired
+    private JwtAuthenticationProvider jwtAuthenticationProvider;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
+    public JwtFilter jwtFilter() {
+        return new JwtFilter();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.and())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authenticationProvider(jwtAuthenticationProvider)
+            .headers(headers -> headers
+                // Prevent clickjacking attacks
+                .frameOptions().deny()
+                // Prevent MIME type sniffing
+                .contentTypeOptions().and()
+                // Force HTTPS for 1 year (including subdomains)
+                .httpStrictTransportSecurity(hstsConfig -> hstsConfig
+                    .maxAgeInSeconds(31536000) // 1 year
+                )
+                // Content Security Policy - restrict resource loading
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; " +
+                                   "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                                   "style-src 'self' 'unsafe-inline'; " +
+                                   "img-src 'self' data: https:; " +
+                                   "font-src 'self'; " +
+                                   "connect-src 'self' ws: wss:; " +
+                                   "frame-ancestors 'none';")
+                )
+                // Additional security headers
+                .xssProtection(xss -> xss.disable())
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            )
             .authorizeHttpRequests(authz -> authz
-                // Public endpoints
+                // Public endpoints - No authentication required (MORE SPECIFIC FIRST)
                 .requestMatchers("/auth/firebase").permitAll()
+                .requestMatchers("/api/hotels/list").permitAll()
                 .requestMatchers("/api/hotels/topThree").permitAll()
                 .requestMatchers("/api/hotels/details/**").permitAll()
+                .requestMatchers("/api/hotels/search").permitAll()
+                .requestMatchers("/api/hotels/sortedByLowestPrice").permitAll()
+                .requestMatchers("/api/hotels/sortedByHighestPrice").permitAll()
                 .requestMatchers("/api/rooms/available/**").permitAll()
+                .requestMatchers("/api/rooms/*/booked-dates").permitAll()
                 .requestMatchers("/api/reviews/hotel/*/testimonials/paginated").permitAll()
                 .requestMatchers("/api/reviews/averageRating").permitAll()
                 .requestMatchers("/api/getIntouch").permitAll()
+                
+                // WebSocket endpoints - Public access for SockJS
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/test/**").permitAll()
-                .requestMatchers("/api/upload").permitAll()
+                .requestMatchers("/ws").permitAll()
+
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow specific origins (your frontend domains)
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:3000",      // React dev server
+            "http://localhost:5173",      // Vite dev server
+            "https://yakrooms.com",       // Production domain
+            "https://www.yakrooms.com"    // Production www domain
+        ));
+        
+        // Allow specific HTTP methods
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        
+        // Allow specific headers
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+        
+        // Allow credentials (cookies, authorization headers)
+        configuration.setAllowCredentials(true);
+        
+        // Set max age for preflight requests (1 hour)
+        configuration.setMaxAge(3600L);
+        
+        // Apply to all paths
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        return source;
     }
 }

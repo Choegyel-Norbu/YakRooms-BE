@@ -78,7 +78,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.created_at,
                 r.updated_at
             FROM room r 
-            WHERE r.hotel_id = :hotelId AND r.is_available = true 
+            WHERE r.hotel_id = :hotelId 
             ORDER BY r.room_number
             """, 
            countQuery = "SELECT count(*) FROM room WHERE hotel_id = :hotelId AND is_available = true",

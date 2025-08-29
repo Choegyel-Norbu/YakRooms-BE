@@ -2,7 +2,11 @@ package com.yakrooms.be.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,53 +27,42 @@ import jakarta.validation.Valid;
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.service.BookingService;
+import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.exception.ResourceNotFoundException;
-import java.util.Map;
-import java.util.HashMap;
 
 
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
 
+	private static final Logger logger = LoggerFactory.getLogger(BookingController.class);
+
 	@Autowired
 	private BookingService bookingService;
 	
 	@Autowired
 	private RoomRepository roomRepository;
+	
+	// New unified booking service
+	@Autowired
+	private UnifiedBookingService unifiedBookingService;
 
+	
 	// Create a booking - GUEST, HOTEL_ADMIN, and STAFF can create
 	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
 	@PostMapping
-	public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
-		BookingResponse response = bookingService.createBooking(request);
-		return ResponseEntity.ok(response);
-	}
-
-	// Cancel booking - GUEST, HOTEL_ADMIN, and STAFF can cancel
-	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
-	@PostMapping("/{id}/cancel")
-	public ResponseEntity<Void> cancelBooking(@PathVariable("id") Long bookingId, @RequestParam("userId") Long userId) {
-		bookingService.cancelBooking(bookingId, userId);
-		return ResponseEntity.ok().build();
-	}
-
-	// Confirm booking - Only HOTEL_ADMIN and STAFF can confirm
-	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
-	@PostMapping("/{id}/confirm")
-	public ResponseEntity<BookingResponse> confirmBooking(@PathVariable("id") Long bookingId) {
-		BookingResponse response = bookingService.confirmBooking(bookingId);
-		return ResponseEntity.ok(response);
-	}
-
-	// Check room availability - Public access
-	@GetMapping("/availability")
-	public ResponseEntity<Boolean> checkRoomAvailability(@RequestParam Long roomId, @RequestParam LocalDate checkIn,
-			@RequestParam LocalDate checkOut) {
-		boolean isAvailable = bookingService.isRoomAvailable(roomId, checkIn, checkOut);
-		return ResponseEntity.ok(isAvailable);
+	public ResponseEntity<BookingResponse> createBooking(
+			@Valid @RequestBody BookingRequest request) {
+		
+		try {
+			BookingResponse response = unifiedBookingService.createBooking(request);
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			logger.error("Failed to create booking: {}", e.getMessage());
+			throw new RuntimeException("Failed to create booking: " + e.getMessage());
+		}
 	}
 	
 	// Get all bookings for hotel - Only HOTEL_ADMIN and STAFF can access
@@ -146,7 +139,7 @@ public class BookingController {
 	}
 
 	// Get all bookings for a user by status - Only GUEST can access their own bookings
-	@PreAuthorize("hasRole('GUEST')")
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/user/{userId}/status/{status}")
 	public ResponseEntity<List<BookingResponse>> getUserBookingsByStatus(
 			@PathVariable Long userId,

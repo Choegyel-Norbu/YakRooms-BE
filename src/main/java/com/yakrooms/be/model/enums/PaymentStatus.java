@@ -1,5 +1,5 @@
 package com.yakrooms.be.model.enums;
 
 public enum PaymentStatus {
-	PENDING, SUCCESS, FAILED, REFUNDED, CANCELLED, EXPIRED
+	PENDING, PAID, FAILED, REFUNDED, CANCELLED, EXPIRED
 }

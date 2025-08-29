@@ -2,12 +2,15 @@ package com.yakrooms.be.repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
@@ -58,9 +61,110 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         AND b.checkInDate < :checkOut 
         AND b.checkOutDate > :checkIn
         """)
-    List<Booking> findConflictingBookings(@Param("roomId") Long roomId, 
+    List<Booking> findConflictingBookingsBasic(@Param("roomId") Long roomId,
+                                              @Param("checkIn") LocalDate checkIn,
+                                              @Param("checkOut") LocalDate checkOut);
+
+    // Simplified query using only date-based conflict detection
+    // When one booking's check-in date equals another's check-out date, allow the booking
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkInDate < :checkOut
+        AND b.checkOutDate > :checkIn
+        """)
+    List<Booking> findConflictingBookings(@Param("roomId") Long roomId,
                                          @Param("checkIn") LocalDate checkIn,
                                          @Param("checkOut") LocalDate checkOut);
+
+    // Simplified conflict detection with pessimistic locking to serialize concurrent creations
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkInDate < :checkOut
+        AND b.checkOutDate > :checkIn
+        """)
+    List<Booking> findConflictingBookingsForUpdate(@Param("roomId") Long roomId,
+                                                  @Param("checkIn") LocalDate checkIn,
+                                                  @Param("checkOut") LocalDate checkOut);
+
+
+    // Room availability check excluding a specific booking (for updates)
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkInDate < :checkOut 
+        AND b.checkOutDate > :checkIn
+        AND b.id != :excludeBookingId
+        """)
+    List<Booking> findConflictingBookingsExcluding(@Param("roomId") Long roomId,
+                                                  @Param("checkIn") LocalDate checkIn,
+                                                  @Param("checkOut") LocalDate checkOut,
+                                                  @Param("excludeBookingId") Long excludeBookingId);
+
+    // Get all active bookings for a room (for date blocking)
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        ORDER BY b.checkInDate ASC
+        """)
+    List<Booking> findAllActiveBookingsByRoomId(@Param("roomId") Long roomId);
+
+    // Simplified room availability check excluding a specific booking (for updates)
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkInDate < :checkOut
+        AND b.checkOutDate > :checkIn
+        AND b.id != :excludeBookingId
+        """)
+    List<Booking> findConflictingBookingsExcludingUpdated(@Param("roomId") Long roomId,
+                                                         @Param("checkIn") LocalDate checkIn,
+                                                         @Param("checkOut") LocalDate checkOut,
+                                                         @Param("excludeBookingId") Long excludeBookingId);
+
+    // Find bookings that need room availability updates based on date only
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkOutDate <= :currentDate
+        """)
+    List<Booking> findBookingsNeedingAvailabilityUpdate(@Param("roomId") Long roomId,
+                                                       @Param("currentDate") LocalDate currentDate);
+
+    // Find all bookings that have ended today and need room availability restoration
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkOutDate <= :currentDate
+        """)
+    List<Booking> findEndedBookingsNeedingAvailabilityRestoration(@Param("currentDate") LocalDate currentDate);
+
+    // Find bookings starting today that need room availability updates
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.status IN ('PENDING', 'CONFIRMED')
+        AND b.checkInDate = :currentDate
+        """)
+    List<Booking> findBookingsStartingToday(@Param("currentDate") LocalDate currentDate);
+
+    // Advance booking availability check - for future dates
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status = 'CONFIRMED'
+        AND ( (b.checkInDate < :requestedCheckOut) AND (b.checkOutDate > :requestedCheckIn) )
+        """)
+    List<Booking> findAdvanceBookingConflicts(@Param("roomId") Long roomId,
+                                             @Param("requestedCheckIn") LocalDate requestedCheckIn,
+                                             @Param("requestedCheckOut") LocalDate requestedCheckOut);
 
     // Passcode operations
     @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.passcode = :passcode")
@@ -90,14 +194,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         ORDER BY DATE_FORMAT(b.created_at, '%Y-%m')
         """, nativeQuery = true)
     List<BookingStatisticsDTO> getBookingStatisticsByMonth(@Param("startDate") LocalDateTime startDate);
-
+    
     @Query(value = """
         WITH RECURSIVE month_series AS (
             SELECT 
                 DATE(:startDate) as month_start,
                 DATE_FORMAT(:startDate, '%Y-%m') as month_year
             UNION ALL
-            SELECT 
+            SELECT
                 DATE_ADD(month_start, INTERVAL 1 MONTH),
                 DATE_FORMAT(DATE_ADD(month_start, INTERVAL 1 MONTH), '%Y-%m')
             FROM month_series
@@ -188,4 +292,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     java.math.BigDecimal getTotalRevenueByPeriod(@Param("hotelId") Long hotelId,
                                                  @Param("startDate") LocalDateTime startDate,
                                                  @Param("endDate") LocalDateTime endDate);
+
 }

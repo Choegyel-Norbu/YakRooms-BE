@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 
 import com.yakrooms.be.model.enums.HotelType;
 import com.yakrooms.be.model.entity.Review;
@@ -24,7 +23,7 @@ import java.util.Objects;
     @Index(name = "idx_hotel_district_type_verified", columnList = "district,hotel_type,is_verified"),
     @Index(name = "idx_hotel_district_locality", columnList = "district,locality")
 })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+
 public class Hotel {
 
     @Id

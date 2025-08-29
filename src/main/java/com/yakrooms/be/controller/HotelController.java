@@ -24,12 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yakrooms.be.dto.HotelListingDto;
 import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
-import com.yakrooms.be.model.entity.Hotel;
-import com.yakrooms.be.projection.HotelListingProjection;
 import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.service.HotelService;
-import com.yakrooms.be.util.HotelSearchCriteria;
 
 @RestController
 @RequestMapping("/api/hotels")
@@ -39,7 +36,7 @@ public class HotelController {
 	private HotelService hotelService;
 
 	// Create new hotel - Only HOTEL_ADMIN can create
-	@PreAuthorize("hasRole('HOTEL_ADMIN')")
+	@PreAuthorize("hasRole('GUEST')")
 	@PostMapping("/{userId}")
 	public ResponseEntity<HotelResponse> createHotel(@RequestBody HotelRequest request, @PathVariable Long userId) {
 		HotelResponse response = hotelService.createHotel(request, userId);
@@ -47,20 +44,22 @@ public class HotelController {
 	}
 
 	// Get hotel by user ID - HOTEL_ADMIN and STAFF can access their own hotel
-	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF', 'GUEST')")
 	@GetMapping("/{userId}")
 	public ResponseEntity<HotelListingDto> getHotelById(@PathVariable Long userId) {
 		return ResponseEntity.ok(hotelService.getListingForUser(userId));
 	}
 
 	// Get hotel details by hotel ID - Public access
+	@PreAuthorize("permitAll()")
 	@GetMapping("/details/{hotelId}")
 	public ResponseEntity<HotelResponse> getHotelByHotelId(@PathVariable Long hotelId) {
 		return ResponseEntity.ok(hotelService.getHotelById(hotelId));
 	}
 
 	// Get all hotels with pagination - Public access
-	@GetMapping
+	@PreAuthorize("permitAll()")
+	@GetMapping("/list")
 	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotels(
 			@PageableDefault(size = 10) Pageable pageable) {
 		return ResponseEntity.ok(hotelService.getAllHotels(pageable));
@@ -76,6 +75,7 @@ public class HotelController {
 	}
 
 	// Get hotels sorted by lowest price - Public access
+	@PreAuthorize("permitAll()")
 	@GetMapping("/sortedByLowestPrice")
 	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByLowestPrice(
 			@PageableDefault(size = 10) Pageable pageable) {
@@ -83,6 +83,7 @@ public class HotelController {
 	}
 
 	// Get hotels sorted by highest price - Public access
+	@PreAuthorize("permitAll()")
 	@GetMapping("/sortedByHighestPrice")
 	public ResponseEntity<Page<HotelWithLowestPriceProjection>> getAllHotelsSortedByHighestPrice(
 			@PageableDefault(size = 10) Pageable pageable) {
@@ -90,13 +91,14 @@ public class HotelController {
 	}
 
 	// Update a hotel by ID - Only HOTEL_ADMIN can update
-	@PreAuthorize("hasRole('HOTEL_ADMIN')")
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'GUEST')")
 	@PutMapping("/{id}")
 	public ResponseEntity<HotelResponse> updateHotel(@PathVariable Long id, @RequestBody HotelRequest request) {
 		return ResponseEntity.ok(hotelService.updateHotel(id, request));
 	}
 
 	// Search hotels - Public access
+	@PreAuthorize("permitAll()")
 	@GetMapping("/search")
 	public ResponseEntity<Page<HotelWithLowestPriceProjection>> searchHotels(
 			@RequestParam(required = false) String district, 

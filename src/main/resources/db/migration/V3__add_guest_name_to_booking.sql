@@ -4,3 +4,5 @@
 
 ALTER TABLE booking ADD COLUMN guest_name VARCHAR(100);
 
+
+

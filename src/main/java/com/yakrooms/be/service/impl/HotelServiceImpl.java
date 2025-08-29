@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,7 @@ import com.yakrooms.be.repository.ReviewRepository;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.repository.StaffRepository;
 import com.yakrooms.be.repository.UserRepository;
+
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.service.MailService;
 
@@ -58,6 +60,7 @@ public class HotelServiceImpl implements HotelService {
     private final RestaurantRepository restaurantRepository;
     private final HotelMapper hotelMapper;
     private final MailService mailService;
+
 
     @Autowired
     public HotelServiceImpl(HotelRepository hotelRepository,
@@ -115,6 +118,7 @@ public class HotelServiceImpl implements HotelService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
 
+        log.debug("Fetching hotel listing for user from database: {}", userId);
         HotelListingProjection projection = hotelRepository.findHotelListingByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("No hotel found for user ID: " + userId));
 
@@ -122,12 +126,16 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    
     public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
+        log.debug("Fetching all hotels from database with pagination: {}", pageable);
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
     }
     
     @Override
+    
     public Page<HotelResponse> getAllHotelsForSuperAdmin(Pageable pageable) {
+        log.debug("Fetching all hotels for super admin from database with pagination: {}", pageable);
         return hotelRepository.findAll(pageable).map(hotelMapper::toDto);
     }
 
@@ -275,11 +283,13 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    
     public HotelResponse getHotelById(Long hotelId) {
         if (hotelId == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
+        log.debug("Fetching hotel details from database for ID: {}", hotelId);
         HotelWithCollectionsAndRatingProjection hotelProjection = hotelRepository.findByIdWithCollections(hotelId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with ID: " + hotelId));
 
@@ -300,27 +310,36 @@ public class HotelServiceImpl implements HotelService {
 //    }
     
     @Override
+    
     public Page<HotelWithLowestPriceProjection> searchHotels(String district, String locality, String hotelType, int page, int size) {
         validatePagination(page, size);
 
         Pageable pageable = PageRequest.of(page, size);
 
+        log.debug("Searching hotels from database with filters - district: {}, locality: {}, type: {}, page: {}, size: {}", 
+                 district, locality, hotelType, page, size);
         Page<HotelWithLowestPriceProjection> hotelPage = hotelRepository.findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(district, locality, hotelType, pageable);
         return hotelPage;
     }
 
     @Override
+    
     public List<HotelWithPriceProjection> getTopThreeHotels() {
+        log.debug("Fetching top three hotels from database");
         return hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
     }
 
     @Override
+    
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
+        log.debug("Fetching hotels sorted by lowest price from database with pagination: {}", pageable);
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
     }
 
     @Override
+    
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
+        log.debug("Fetching hotels sorted by highest price from database with pagination: {}", pageable);
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
     }
 

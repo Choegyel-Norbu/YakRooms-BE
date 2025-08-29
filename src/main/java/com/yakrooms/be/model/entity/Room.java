@@ -9,8 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import org.hibernate.annotations.BatchSize;
 
 import com.yakrooms.be.model.enums.RoomType;
@@ -29,7 +28,7 @@ import org.hibernate.annotations.OnDeleteAction;
     @Index(name = "idx_room_hotel_available", columnList = "hotel_id,is_available"),
     @Index(name = "idx_room_created_at", columnList = "created_at")
 })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+
 public class Room {
     
     @Id
@@ -42,7 +41,7 @@ public class Room {
     private Hotel hotel;
 
     // Unique identifier within hotel - part of unique index
-    @Column(name = "room_number", nullable = false, length = 50)
+    @Column(name = "room_number", nullable = false, length = 50, unique = false)
     private String roomNumber;
 
     // Frequently filtered columns
@@ -73,8 +72,6 @@ public class Room {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-
 
     // Collections - separate tables
     @ElementCollection(fetch = FetchType.LAZY)
