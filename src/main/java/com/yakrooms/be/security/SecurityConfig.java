@@ -101,10 +101,13 @@ public class SecurityConfig {
         
         // Allow specific origins (your frontend domains)
         configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:3000",      // React dev server
-            "http://localhost:5173",      // Vite dev server
-            "https://yakrooms.com",       // Production domain
-            "https://www.yakrooms.com"    // Production www domain
+            "http://localhost:*",         // Local development servers
+            "https://localhost:*",        // Local HTTPS development
+            "http://127.0.0.1:*",        // Local IP development
+            "https://yak-rooms-fe.vercel.app",        // Vercel main deployment
+            "https://yak-rooms-fe-main.vercel.app",   // Vercel branch deployment
+            "https://*.vercel.app",                   // Pattern for any Vercel deployment
+            "https://*.ngrok-free.app"                // Pattern for any ngrok subdomain
         ));
         
         // Allow specific HTTP methods
