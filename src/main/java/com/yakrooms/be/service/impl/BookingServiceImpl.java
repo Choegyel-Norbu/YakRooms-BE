@@ -407,7 +407,53 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(status);
         bookingRepository.save(booking);
 
-        // Do not flip global availability on status change per new policy
+        // Handle room availability based on status change
+        Room room = booking.getRoom();
+        if (room != null) {
+            try {
+                boolean shouldBeAvailable = true;
+                String action = "freed up";
+                
+                if (status == BookingStatus.CHECKED_IN) {
+                    shouldBeAvailable = false;
+                    action = "occupied";
+                } else if (status == BookingStatus.CHECKED_OUT || status == BookingStatus.CANCELLED) {
+                    shouldBeAvailable = true;
+                    action = "freed up";
+                } else {
+                    // No room availability change needed for other statuses
+                    // Note: CONFIRMED status could potentially make room unavailable in future implementations
+                    logger.debug("No room availability change needed for status: {} for booking {}", status, bookingId);
+                    return true;
+                }
+                
+                // Validate that the room belongs to the same hotel as the booking
+                if (booking.getHotel() != null && room.getHotel() != null && 
+                    !booking.getHotel().getId().equals(room.getHotel().getId())) {
+                    logger.warn("Room {} and booking {} belong to different hotels, skipping availability update", 
+                        room.getId(), bookingId);
+                    return true;
+                }
+                
+                // Only update if the current availability is different
+                if (room.isAvailable() != shouldBeAvailable) {
+                    room.setAvailable(shouldBeAvailable);
+                    roomRepository.save(room);
+                    logger.info("Room {} availability set to {} after {} for booking {} ({}: {})", 
+                        room.getId(), shouldBeAvailable, status.toString().toLowerCase(), bookingId, 
+                        action, room.getRoomNumber());
+                } else {
+                    logger.debug("Room {} is already {}, no update needed for booking {}", 
+                        room.getId(), shouldBeAvailable ? "available" : "unavailable", bookingId);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to update room {} availability after {} for booking {}: {}", 
+                    room.getId(), status.toString().toLowerCase(), bookingId, e.getMessage());
+                // Don't fail the entire operation if room update fails
+            }
+        } else {
+            logger.warn("Room is null for booking {}, cannot update availability", bookingId);
+        }
 
         // Broadcast WebSocket event for booking status change
         broadcastBookingStatusChange(booking, oldStatus, status);

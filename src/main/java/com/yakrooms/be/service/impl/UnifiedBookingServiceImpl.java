@@ -89,12 +89,13 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     public BookingResponse createBooking(BookingRequest request) {
         logger.info("Creating booking for room: {}", request.getRoomId());
         
-        // Check room availability for date conflicts
-        if (!checkRoomAvailability(request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate())) {
-            throw new BusinessException("Room is not available for the requested dates");
-        }
-        
         try {
+            // CRITICAL: Check room availability WITH pessimistic locking to prevent race conditions
+            // This must happen inside the transaction to ensure atomicity
+            if (!checkRoomAvailabilityWithPessimisticLock(request.getRoomId(), request.getCheckInDate(), request.getCheckOutDate())) {
+                throw new BusinessException("Room is not available for the requested dates");
+            }
+            
             // Create the booking
             Booking booking = createBookingEntity(request, "IMMEDIATE");
             booking.setStatus(BookingStatus.CONFIRMED);
@@ -137,6 +138,22 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         // Check for conflicting bookings using time-based logic
         List<Booking> conflicts = bookingRepository.findConflictingBookings(
             roomId, checkIn, checkOut);
+        return conflicts.isEmpty();
+    }
+    
+    /**
+     * Check room availability with pessimistic locking to prevent race conditions during booking creation.
+     * This method MUST be called within a transaction to ensure proper locking behavior.
+     * 
+     * @param roomId The room ID to check
+     * @param checkIn Check-in date
+     * @param checkOut Check-out date
+     * @return true if room is available, false if conflicts exist
+     */
+    private boolean checkRoomAvailabilityWithPessimisticLock(Long roomId, LocalDate checkIn, LocalDate checkOut) {
+        // Use pessimistic locking to prevent concurrent access during availability check
+        // This ensures that only one thread can check availability at a time for the same room
+        List<Booking> conflicts = bookingRepository.findConflictingBookingsForUpdate(roomId, checkIn, checkOut);
         return conflicts.isEmpty();
     }
     
@@ -325,10 +342,15 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
             
-            room.setAvailable(false);
-            roomRepository.save(room);
+            // Only update if the current availability is different
+            if (room.isAvailable() != available) {
+                room.setAvailable(available);
+                roomRepository.save(room);
+                logger.info("Updated room {} availability from {} to {}", roomId, !available, available);
+            } else {
+                logger.debug("Room {} availability already set to {}, no update needed", roomId, available);
+            }
             
-            logger.debug("Updated room {} availability to: {}", roomId, available);
             return true;
         } catch (Exception e) {
             logger.error("Failed to update room {} availability to {}: {}", roomId, available, e.getMessage());
