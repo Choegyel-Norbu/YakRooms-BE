@@ -13,7 +13,8 @@ public class CorsConfig implements WebMvcConfigurer {
 				"http://localhost:*", 
 				"https://localhost:*",
 				"http://127.0.0.1:*",
-				"https://yak-rooms-fe.vercel.app", 
+				"https://yak-rooms-fe.vercel.app",
+				"https://yak-rooms-fe-main.vercel.app",
 				"https://0d123863c798.ngrok-free.app",
 				"https://*.ngrok-free.app", // Pattern for any ngrok subdomain
 				"https://*.vercel.app" // Pattern for any vercel deployment
