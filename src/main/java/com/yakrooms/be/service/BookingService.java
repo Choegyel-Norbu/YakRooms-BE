@@ -5,17 +5,14 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
 
 import com.yakrooms.be.dto.BookingStatisticsDTO;
 import com.yakrooms.be.dto.MonthlyRevenueStatsDTO;
 import com.yakrooms.be.dto.PasscodeVerificationDTO;
-import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 
-@Service
 public interface BookingService {
-	BookingResponse createBooking(BookingRequest request);
+	// createBooking method removed - now handled by UnifiedBookingService
 
 	void cancelBooking(Long bookingId, Long userId);
 
@@ -23,19 +20,9 @@ public interface BookingService {
 	
 	public Page<BookingResponse> listAllBooking(Pageable pageable);
 
-	BookingResponse confirmBooking(Long bookingId);
+	// confirmBooking method removed - functionality now handled by updateBookingStatus
 
 	boolean isRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut);
-
-	/**
-	 * Check if a room is available for advance booking (future dates).
-	 * This method specifically checks for CONFIRMED bookings that might conflict
-	 * with the requested date range.
-	 * 
-	 * @param request The booking request containing roomId, checkInDate, checkOutDate, and other details
-	 * @return true if the room is available for advance booking, false otherwise
-	 */
-	boolean isRoomAvailableForAdvanceBooking(BookingRequest request);
 
 	BookingResponse getBookingDetails(Long bookingId);
 	
@@ -58,5 +45,22 @@ public interface BookingService {
     Page<BookingResponse> getAllBookingsByUserId(Long userId, Pageable pageable);
 
     List<BookingResponse> getAllBookingsByUserIdAndStatus(Long userId, String status);
+
+    // ========== SEARCH METHODS ==========
+    
+    // Individual search methods for optimal performance
+    Page<BookingResponse> searchBookingsByCid(String cid, Long hotelId, Pageable pageable);
+    
+    Page<BookingResponse> searchBookingsByPhone(String phone, Long hotelId, Pageable pageable);
+    
+    Page<BookingResponse> searchBookingsByCheckInDate(LocalDate checkInDate, Long hotelId, Pageable pageable);
+    
+    Page<BookingResponse> searchBookingsByCheckOutDate(LocalDate checkOutDate, Long hotelId, Pageable pageable);
+    
+    Page<BookingResponse> searchBookingsByStatus(String status, Long hotelId, Pageable pageable);
+    
+    Page<BookingResponse> searchBookingsByDateRange(LocalDate startDate, LocalDate endDate, Long hotelId, Pageable pageable);
+    
+
 
 }

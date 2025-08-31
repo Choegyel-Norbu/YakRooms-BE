@@ -36,7 +36,7 @@ public class HotelController {
 	private HotelService hotelService;
 
 	// Create new hotel - Only HOTEL_ADMIN can create
-	@PreAuthorize("hasRole('GUEST')")
+	@PreAuthorize("hasRole('HOTEL_ADMIN')")
 	@PostMapping("/{userId}")
 	public ResponseEntity<HotelResponse> createHotel(@RequestBody HotelRequest request, @PathVariable Long userId) {
 		HotelResponse response = hotelService.createHotel(request, userId);
@@ -91,7 +91,7 @@ public class HotelController {
 	}
 
 	// Update a hotel by ID - Only HOTEL_ADMIN can update
-	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'GUEST')")
+	@PreAuthorize("hasRole('HOTEL_ADMIN')")
 	@PutMapping("/{id}")
 	public ResponseEntity<HotelResponse> updateHotel(@PathVariable Long id, @RequestBody HotelRequest request) {
 		return ResponseEntity.ok(hotelService.updateHotel(id, request));

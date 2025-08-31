@@ -91,21 +91,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                                   @Param("checkIn") LocalDate checkIn,
                                                   @Param("checkOut") LocalDate checkOut);
 
-
-    // Room availability check excluding a specific booking (for updates)
-    @Query("""
-        SELECT b FROM Booking b 
-        WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
-        AND b.checkInDate < :checkOut 
-        AND b.checkOutDate > :checkIn
-        AND b.id != :excludeBookingId
-        """)
-    List<Booking> findConflictingBookingsExcluding(@Param("roomId") Long roomId,
-                                                  @Param("checkIn") LocalDate checkIn,
-                                                  @Param("checkOut") LocalDate checkOut,
-                                                  @Param("excludeBookingId") Long excludeBookingId);
-
     // Get all active bookings for a room (for date blocking)
     @Query("""
         SELECT b FROM Booking b 
@@ -114,6 +99,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         ORDER BY b.checkInDate ASC
         """)
     List<Booking> findAllActiveBookingsByRoomId(@Param("roomId") Long roomId);
+    
+    // Room availability scheduler queries - optimized for bulk operations
+    @Query("SELECT DISTINCT b.room.id FROM Booking b " +
+           "WHERE b.checkOutDate = :checkoutDate " +
+           "AND b.status IN :statuses")
+    List<Long> findRoomIdsByCheckoutDateAndStatuses(@Param("checkoutDate") LocalDate checkoutDate, 
+                                                   @Param("statuses") java.util.Set<BookingStatus> statuses);
+    
+    @Query("SELECT DISTINCT b.room.id FROM Booking b " +
+           "WHERE b.checkInDate = :checkinDate " +
+           "AND b.status IN :statuses")
+    List<Long> findRoomIdsByCheckinDateAndStatuses(@Param("checkinDate") LocalDate checkinDate, 
+                                                  @Param("statuses") java.util.Set<BookingStatus> statuses);
 
     // Simplified room availability check excluding a specific booking (for updates)
     @Query("""
@@ -138,6 +136,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         """)
     List<Booking> findBookingsNeedingAvailabilityUpdate(@Param("roomId") Long roomId,
                                                        @Param("currentDate") LocalDate currentDate);
+
+    // Find conflicting bookings for extension period (excludes current booking)
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.id = :roomId 
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.checkInDate < :newCheckOut
+        AND b.checkOutDate > :currentCheckOut
+        """)
+    List<Booking> findConflictingBookingsForExtension(@Param("roomId") Long roomId,
+                                                     @Param("currentCheckOut") LocalDate currentCheckOut,
+                                                     @Param("newCheckOut") LocalDate newCheckOut);
 
     // Find all bookings that have ended today and need room availability restoration
     @Query("""
@@ -292,5 +302,51 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     java.math.BigDecimal getTotalRevenueByPeriod(@Param("hotelId") Long hotelId,
                                                  @Param("startDate") LocalDateTime startDate,
                                                  @Param("endDate") LocalDateTime endDate);
+
+    // ========== SEARCH METHODS ==========
+    
+    // Individual search methods - one criteria per search for optimal performance
+    
+    // Search by CID (Citizen ID)
+    @EntityGraph("Booking.withDetails")
+    @Query("SELECT b FROM Booking b WHERE b.cid = :cid AND b.hotel.id = :hotelId ORDER BY b.createdAt DESC")
+    Page<Booking> findByCidAndHotelId(@Param("cid") String cid, @Param("hotelId") Long hotelId, Pageable pageable);
+    
+    // Search by phone number
+    @EntityGraph("Booking.withDetails")
+    @Query("SELECT b FROM Booking b WHERE b.phone = :phone AND b.hotel.id = :hotelId ORDER BY b.createdAt DESC")
+    Page<Booking> findByPhoneAndHotelId(@Param("phone") String phone, @Param("hotelId") Long hotelId, Pageable pageable);
+    
+    // Search by check-in date
+    @EntityGraph("Booking.withDetails")
+    @Query("SELECT b FROM Booking b WHERE b.checkInDate = :checkInDate AND b.hotel.id = :hotelId ORDER BY b.createdAt DESC")
+    Page<Booking> findByCheckInDateAndHotelId(@Param("checkInDate") LocalDate checkInDate, @Param("hotelId") Long hotelId, Pageable pageable);
+    
+    // Search by check-out date
+    @EntityGraph("Booking.withDetails")
+    @Query("SELECT b FROM Booking b WHERE b.checkOutDate = :checkOutDate AND b.hotel.id = :hotelId ORDER BY b.createdAt DESC")
+    Page<Booking> findByCheckOutDateAndHotelId(@Param("checkOutDate") LocalDate checkOutDate, @Param("hotelId") Long hotelId, Pageable pageable);
+    
+    // Search by booking status
+    @EntityGraph("Booking.withDetails")
+    @Query("SELECT b FROM Booking b WHERE b.status = :status AND b.hotel.id = :hotelId ORDER BY b.createdAt DESC")
+    Page<Booking> findByStatusAndHotelId(@Param("status") String status, @Param("hotelId") Long hotelId, Pageable pageable);
+    
+    // Search by date range (for check-in dates)
+    @EntityGraph("Booking.withDetails")
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.hotel.id = :hotelId
+        AND b.checkInDate BETWEEN :startDate AND :endDate
+        ORDER BY b.checkInDate ASC, b.createdAt DESC
+        """)
+    Page<Booking> findByCheckInDateRange(
+        @Param("hotelId") Long hotelId,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate,
+        Pageable pageable
+    );
+    
+
 
 }

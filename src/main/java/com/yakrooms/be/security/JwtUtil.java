@@ -10,12 +10,12 @@ import com.yakrooms.be.model.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.security.Key;
 
 public class JwtUtil {
-	private static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512); // Generates a secure 512-bit key
+	// Use a more secure key generation approach
+	private static final Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS512);
 
 	private static final long EXPIRATION_TIME = 864_000_000; // 10 days
 

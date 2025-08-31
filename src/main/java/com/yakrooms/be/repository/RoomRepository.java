@@ -92,6 +92,11 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
 
     @Query(value = "SELECT ri.room_id, ri.url FROM room_image_urls ri WHERE ri.room_id IN :roomIds", nativeQuery = true)
     List<Object[]> findImageUrlsByRoomIds(@Param("roomIds") List<Long> roomIds);
+    
+    // Bulk update room availability for scheduler operations
+    @Modifying
+    @Query("UPDATE Room r SET r.isAvailable = :available WHERE r.id IN :roomIds")
+    int bulkUpdateRoomAvailability(@Param("roomIds") List<Long> roomIds, @Param("available") boolean available);
 
     // Room status projections - optimized for dashboard/status views
     @Query(value = """
@@ -99,7 +104,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.room_number AS roomNumber,
                 r.room_type AS roomType,
                 CASE
-                    WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Booked'
+                    WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Occupied'
                     WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed'
                     WHEN r.is_available = 1 THEN 'Available'
                     WHEN r.is_available = 0 AND b.status IS NULL THEN 'Under Repair'
@@ -112,10 +117,29 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 END AS guestName,
                 b.check_out_date AS checkOutDate
             FROM room r
-            LEFT JOIN booking b
-                ON r.id = b.room_id AND b.status IN ('CHECKED_IN', 'CONFIRMED')
-            LEFT JOIN users u
-                ON b.user_id = u.id
+            LEFT JOIN (
+                SELECT b1.room_id, b1.status, b1.user_id, b1.check_out_date
+                FROM booking b1
+                INNER JOIN (
+                    SELECT room_id, status, user_id, check_out_date
+                    FROM (
+                        SELECT room_id, status, user_id, check_out_date,
+                               ROW_NUMBER() OVER (PARTITION BY room_id ORDER BY 
+                                   CASE 
+                                       WHEN status = 'CHECKED_IN' THEN check_in_date
+                                       WHEN status = 'CONFIRMED' THEN check_in_date
+                                       ELSE created_at
+                                   END DESC) as rn
+                        FROM booking 
+                        WHERE status IN ('CHECKED_IN', 'CONFIRMED')
+                    ) ranked_bookings
+                    WHERE rn = 1
+                ) b2 ON b1.room_id = b2.room_id 
+                    AND b1.status = b2.status 
+                    AND b1.user_id = b2.user_id 
+                    AND b1.check_out_date = b2.check_out_date
+            ) b ON r.id = b.room_id
+            LEFT JOIN users u ON b.user_id = u.id
             WHERE r.hotel_id = :hotelId
             ORDER BY r.room_number
             """, nativeQuery = true)
@@ -139,10 +163,29 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 END AS guestName,
                 b.check_out_date AS checkOutDate
             FROM room r
-            LEFT JOIN booking b
-                ON r.id = b.room_id AND b.status IN ('CHECKED_IN', 'CONFIRMED')
-            LEFT JOIN users u
-                ON b.user_id = u.id
+            LEFT JOIN (
+                SELECT b1.room_id, b1.status, b1.user_id, b1.check_out_date
+                FROM booking b1
+                INNER JOIN (
+                    SELECT room_id, status, user_id, check_out_date
+                    FROM (
+                        SELECT room_id, status, user_id, check_out_date,
+                               ROW_NUMBER() OVER (PARTITION BY room_id ORDER BY 
+                                   CASE 
+                                       WHEN status = 'CHECKED_IN' THEN check_in_date
+                                       WHEN status = 'CONFIRMED' THEN check_in_date
+                                       ELSE created_at
+                                   END DESC) as rn
+                        FROM booking 
+                        WHERE status IN ('CHECKED_IN', 'CONFIRMED')
+                    ) ranked_bookings
+                    WHERE rn = 1
+                ) b2 ON b1.room_id = b2.room_id 
+                    AND b1.status = b2.status 
+                    AND b1.user_id = b2.user_id 
+                    AND b1.check_out_date = b2.check_out_date
+            ) b ON r.id = b.room_id
+            LEFT JOIN users u ON b.user_id = u.id
             WHERE r.hotel_id = :hotelId 
             AND r.room_number LIKE CONCAT('%', :roomNumber, '%')
             ORDER BY r.room_number

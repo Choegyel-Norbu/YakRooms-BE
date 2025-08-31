@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 
 /**
  * Scheduler for room availability updates.
- * This service has been simplified after removing the RoomAvailabilityService.
+ * This service runs daily at noon to update room availability based on check-in/check-out dates.
  * 
  * @author YakRooms Team
- * @version 2.0
+ * @version 3.0
  */
 @Service
 public class RoomAvailabilityScheduler {
@@ -23,30 +23,46 @@ public class RoomAvailabilityScheduler {
     
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     
+    private final RoomAvailabilityService roomAvailabilityService;
+    
+    @Autowired
+    public RoomAvailabilityScheduler(RoomAvailabilityService roomAvailabilityService) {
+        this.roomAvailabilityService = roomAvailabilityService;
+    }
+    
     /**
-     * Scheduled task to process room availability updates.
-     * This method now logs that the service has been removed and simplified.
+     * Scheduled task to process room availability updates daily at noon (12:00 PM).
+     * This job handles:
+     * - Rooms becoming available (checkout completed today)
+     * - Rooms becoming unavailable (checkin starting today)
      */
-    @Scheduled(fixedRate = 300000) // Every 5 minutes
-    public void processRoomAvailabilityUpdates() {
+    @Scheduled(cron = "0 0 12 * * ?") // Every day at 12:00 PM
+    public void processDailyRoomAvailabilityUpdates() {
         LocalDateTime now = LocalDateTime.now();
-        logger.info("Room availability scheduler triggered at: {}", now.format(formatter));
-        logger.info("RoomAvailabilityService has been removed. Room availability is now managed directly by booking services.");
+        logger.info("Daily room availability scheduler triggered at: {}", now.format(formatter));
         
-        // No-op: Room availability is now managed directly by booking services
-        // This maintains the scheduled job structure while removing the dependency
+        try {
+            int updatedRooms = roomAvailabilityService.processDailyRoomAvailabilityUpdates();
+            logger.info("Daily room availability update completed successfully. {} rooms updated.", updatedRooms);
+        } catch (Exception e) {
+            logger.error("Failed to process daily room availability updates", e);
+        }
     }
     
     /**
      * Manual trigger for room availability updates.
-     * This method now logs that the service has been removed and simplified.
+     * Useful for testing or immediate updates.
      */
     public void manualRoomAvailabilityUpdate() {
         LocalDateTime now = LocalDateTime.now();
         logger.info("Manual room availability update triggered at: {}", now.format(formatter));
-        logger.info("RoomAvailabilityService has been removed. Room availability is now managed directly by booking services.");
         
-        // No-op: Room availability is now managed directly by booking services
-        // This maintains the manual trigger structure while removing the dependency
+        try {
+            int updatedRooms = roomAvailabilityService.processDailyRoomAvailabilityUpdates();
+            logger.info("Manual room availability update completed successfully. {} rooms updated.", updatedRooms);
+        } catch (Exception e) {
+            logger.error("Failed to process manual room availability updates", e);
+        }
     }
 }
+ 

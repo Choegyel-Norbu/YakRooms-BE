@@ -25,12 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 
 import com.yakrooms.be.dto.request.BookingRequest;
+import com.yakrooms.be.dto.request.BookingExtensionRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
+import com.yakrooms.be.dto.response.BookingExtensionResponse;
 import com.yakrooms.be.service.BookingService;
 import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.exception.ResourceNotFoundException;
+import org.springframework.format.annotation.DateTimeFormat;
 
 
 @RestController
@@ -119,6 +122,32 @@ public class BookingController {
 		bookingService.deleteBookingById(bookingId);
 		return ResponseEntity.ok().body("Booking deleted successfully");
 	}
+	
+	// Extend booking stay - GUEST, HOTEL_ADMIN, and STAFF can extend
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
+	@PutMapping("/{bookingId}/extend")
+	public ResponseEntity<BookingExtensionResponse> extendBooking(
+			@PathVariable Long bookingId,
+			@Valid @RequestBody BookingExtensionRequest request) {
+		
+		try {
+			logger.info("Extending booking: {} with request: {}", bookingId, request);
+			
+			BookingExtensionResponse response = unifiedBookingService.extendBooking(bookingId, request);
+			
+			if (response.isSuccess()) {
+				return ResponseEntity.ok(response);
+			} else {
+				return ResponseEntity.badRequest().body(response);
+			}
+			
+		} catch (Exception e) {
+			logger.error("Failed to extend booking: {} - {}", bookingId, e.getMessage());
+			BookingExtensionResponse errorResponse = new BookingExtensionResponse(
+				bookingId, "Failed to extend booking: " + e.getMessage(), false);
+			return ResponseEntity.badRequest().body(errorResponse);
+		}
+	}
 
 	// Get all bookings for a user - Only GUEST can access their own bookings
 	@PreAuthorize("hasRole('GUEST')")
@@ -184,4 +213,134 @@ public class BookingController {
 			return ResponseEntity.badRequest().body(error);
 		}
 	}
+
+    // ========== SEARCH ENDPOINTS ==========
+    
+    /**
+     * Search bookings by CID - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/cid")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByCid(
+            @RequestParam String cid,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByCid(cid, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by CID: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * Search bookings by phone number (exact match) - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/phone")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByPhone(
+            @RequestParam String phone,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByPhone(phone, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by phone: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * Search bookings by check-in date - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/checkin-date")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByCheckInDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByCheckInDate(checkInDate, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by check-in date: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * Search bookings by check-out date - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/checkout-date")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByCheckOutDate(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByCheckOutDate(checkOutDate, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by check-out date: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * Search bookings by status - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/status")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByStatus(
+            @RequestParam String status,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByStatus(status, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by status: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
+     * Search bookings by date range - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/date-range")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByDateRange(startDate, endDate, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by date range: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 }

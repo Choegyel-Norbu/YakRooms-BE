@@ -127,7 +127,7 @@ public class RoomMapper {
         }
         
         // boolean primitive - always update
-        room.setAvailable(request.isAvailable());
+        // room.setAvailable(request.isAvailable());
         
         // Update lists only if they are not null
         if (request.getAmenities() != null) {

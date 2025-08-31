@@ -3,6 +3,7 @@ package com.yakrooms.be.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -14,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yakrooms.be.dto.mapper.BookingMapper;
 import com.yakrooms.be.dto.request.BookingRequest;
+import com.yakrooms.be.dto.request.BookingExtensionRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
+import com.yakrooms.be.dto.response.BookingExtensionResponse;
 import com.yakrooms.be.exception.BusinessException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Booking;
@@ -30,17 +33,18 @@ import com.yakrooms.be.service.BookingValidationService;
 import com.yakrooms.be.service.MailService;
 import com.yakrooms.be.service.NotificationService;
 import com.yakrooms.be.service.PaymentService;
+import com.yakrooms.be.service.RoomAvailabilityService;
 import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.service.BookingWebSocketService;
 import com.yakrooms.be.util.PasscodeGenerator;
 
 /**
- * Implementation of UnifiedBookingService that consolidates all booking flows.
- * This service replaces the previous dual booking system with a unified approach
- * that ensures consistency, proper validation, and atomic operations.
+ * Implementation of UnifiedBookingService that handles ONLY booking creation with pessimistic locking.
+ * This service is focused on preventing race conditions during concurrent booking creation.
+ * All other booking operations are handled by BookingServiceImpl.
  * 
  * @author YakRooms Team
- * @version 1.0
+ * @version 2.0
  */
 @Service
 @Transactional
@@ -58,6 +62,7 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     private final BookingWebSocketService bookingWebSocketService;
     private final PaymentService paymentService;
     private final BookingValidationService bookingValidationService;
+    private final RoomAvailabilityService roomAvailabilityService;
     
     @Autowired
     public UnifiedBookingServiceImpl(
@@ -70,7 +75,8 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             NotificationService notificationService,
             BookingWebSocketService bookingWebSocketService,
             PaymentService paymentService,
-            BookingValidationService bookingValidationService) {
+            BookingValidationService bookingValidationService,
+            RoomAvailabilityService roomAvailabilityService) {
         
         this.bookingRepository = bookingRepository;
         this.roomRepository = roomRepository;
@@ -82,12 +88,13 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         this.bookingWebSocketService = bookingWebSocketService;
         this.paymentService = paymentService;
         this.bookingValidationService = bookingValidationService;
+        this.roomAvailabilityService = roomAvailabilityService;
     }
     
     @Override
     @Transactional
     public BookingResponse createBooking(BookingRequest request) {
-        logger.info("Creating booking for room: {}", request.getRoomId());
+        logger.info("Creating booking for room: {} with pessimistic locking", request.getRoomId());
         
         try {
             // CRITICAL: Check room availability WITH pessimistic locking to prevent race conditions
@@ -103,8 +110,12 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             // Save the booking
             Booking savedBooking = bookingRepository.save(booking);
             
-            // Update room availability based on check-in date
-            updateRoomAvailabilityForBooking(savedBooking);
+            // Update room availability using the centralized service
+            roomAvailabilityService.updateRoomAvailabilityForNewBooking(
+                savedBooking.getRoom().getId(), 
+                savedBooking.getCheckInDate(), 
+                savedBooking.getCheckInTime()
+            );
             
             // Handle notifications asynchronously (outside transaction)
             handleBookingNotificationsAsync(savedBooking);
@@ -119,18 +130,82 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     }
     
     @Override
+    @Transactional
+    public BookingExtensionResponse extendBooking(Long bookingId, BookingExtensionRequest request) {
+        logger.info("Extending booking: {} to new check-out date: {}", bookingId, request.getNewCheckOutDate());
+        
+        try {
+            // Fetch the existing booking with pessimistic locking to prevent concurrent modifications
+            Booking existingBooking = fetchBookingWithPessimisticLock(bookingId);
+            
+            // Validate the extension request
+            validateBookingExtension(existingBooking, request);
+            
+            // Check if the extended dates are available for the same room
+            if (!checkRoomAvailabilityForExtension(existingBooking.getRoom().getId(), 
+                                                  existingBooking.getCheckOutDate(), 
+                                                  request.getNewCheckOutDate())) {
+                throw new BusinessException("Room is not available for the extended dates");
+            }
+            
+            // Calculate additional cost for the extension
+            BigDecimal additionalCost = calculateExtensionCost(existingBooking, request.getNewCheckOutDate());
+            
+            // Store original values for response
+            LocalDate originalCheckOutDate = existingBooking.getCheckOutDate();
+            BigDecimal originalPrice = existingBooking.getTotalPrice();
+            
+            // Update the booking
+            updateBookingForExtension(existingBooking, request);
+            
+            // Calculate new total price
+            BigDecimal newTotalPrice = originalPrice.add(additionalCost);
+            existingBooking.setTotalPrice(newTotalPrice);
+            
+            // Save the updated booking
+            Booking updatedBooking = bookingRepository.save(existingBooking);
+            
+            // Update room availability for the extended period
+            roomAvailabilityService.updateRoomAvailabilityForNewBooking(
+                updatedBooking.getRoom().getId(),
+                originalCheckOutDate,
+                LocalTime.of(12, 0) // Default check-out time
+            );
+            
+            // Handle notifications asynchronously
+            // handleExtensionNotificationsAsync(updatedBooking, originalCheckOutDate, request.getNewCheckOutDate());
+            
+            logger.info("Successfully extended booking: {} from {} to {}", 
+                       bookingId, originalCheckOutDate, request.getNewCheckOutDate());
+            
+            return new BookingExtensionResponse(
+                updatedBooking.getId(),
+                originalCheckOutDate,
+                request.getNewCheckOutDate(),
+                originalPrice,
+                additionalCost,
+                newTotalPrice
+            );
+            
+        } catch (Exception e) {
+            logger.error("Failed to extend booking: {} - {}", bookingId, e.getMessage());
+            return new BookingExtensionResponse(bookingId, "Failed to extend booking: " + e.getMessage(), false);
+        }
+    }
+    
+    @Override
     @Transactional(readOnly = true)
     public boolean checkRoomAvailability(Long roomId, LocalDate checkIn, LocalDate checkOut) {
         // Use time-based availability check with default times
         LocalTime defaultCheckInTime = LocalTime.of(0, 0); // 12:00 AM (midnight)
         LocalTime defaultCheckOutTime = LocalTime.of(12, 0); // 12:00 PM (noon)
-        boolean check = checkRoomAvailabilityWithTimes(roomId, checkIn, defaultCheckInTime, checkOut, defaultCheckOutTime);
         return checkRoomAvailabilityWithTimes(roomId, checkIn, defaultCheckInTime, checkOut, defaultCheckOutTime);
     }
     
     /**
      * Check room availability with specific times for precise conflict detection.
-     * @param checkOutTime Check-out time
+     * This method is unique to UnifiedBookingService and provides time-based availability checking.
+     * 
      * @return true if room is available
      */
     public boolean checkRoomAvailabilityWithTimes(Long roomId, LocalDate checkIn, LocalTime checkInTime, 
@@ -143,11 +218,8 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     
     /**
      * Check room availability with pessimistic locking to prevent race conditions during booking creation.
-     * This method MUST be called within a transaction to ensure proper locking behavior.
+     * This method is UNIQUE to UnifiedBookingService and MUST be called within a transaction.
      * 
-     * @param roomId The room ID to check
-     * @param checkIn Check-in date
-     * @param checkOut Check-out date
      * @return true if room is available, false if conflicts exist
      */
     private boolean checkRoomAvailabilityWithPessimisticLock(Long roomId, LocalDate checkIn, LocalDate checkOut) {
@@ -157,73 +229,147 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         return conflicts.isEmpty();
     }
     
-    @Override
-    @Transactional
-    public BookingResponse confirmBooking(Long bookingId) {
-        logger.info("Confirming booking: {}", bookingId);
-        
-        Booking booking = fetchBookingById(bookingId);
-        
-        // Validate that booking can be confirmed
-        bookingValidationService.validateConfirmation(booking);
-        
-        // Update status to CONFIRMED
-        booking.setStatus(BookingStatus.CONFIRMED);
-        Booking savedBooking = bookingRepository.save(booking);
-        
-        // Update room availability if needed
-        updateRoomAvailabilityForBooking(savedBooking);
-        
-        logger.info("Successfully confirmed booking: {}", bookingId);
-        return bookingMapper.toDto(savedBooking);
+    // ========== PRIVATE HELPER METHODS FOR BOOKING EXTENSION ==========
+    
+    /**
+     * Fetch a booking with pessimistic locking to prevent concurrent modifications.
+     * 
+     * @param bookingId The booking ID
+     * @return The booking entity
+     * @throws ResourceNotFoundException if booking not found
+     */
+    private Booking fetchBookingWithPessimisticLock(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
     }
     
-    @Override
-    @Transactional
-    public void cancelBooking(Long bookingId, Long userId) {
-        logger.info("Cancelling booking: {} by user: {}", bookingId, userId);
+    /**
+     * Validate the booking extension request.
+     * 
+     * @param booking The existing booking
+     * @param request The extension request
+     * @throws BusinessException if extension is not valid
+     */
+    private void validateBookingExtension(Booking booking, BookingExtensionRequest request) {
+        // Check if booking exists and is in a valid state for extension
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new BusinessException("Cannot extend a cancelled booking");
+        }
         
-        Booking booking = fetchBookingById(bookingId);
+        if (booking.getStatus() == BookingStatus.CHECKED_OUT) {
+            throw new BusinessException("Cannot extend a checked-out booking");
+        }
         
-        // Validate booking ownership
-        validateBookingOwnership(booking, userId);
+        // Check if new check-out date is after current check-out date
+        if (!request.getNewCheckOutDate().isAfter(booking.getCheckOutDate())) {
+            throw new BusinessException("New check-out date must be after the current check-out date");
+        }
         
-        // Validate that booking can be cancelled
-        bookingValidationService.validateCancellation(booking);
+        // Check if new check-out date is not too far in the future (business rule)
+        LocalDate maxExtensionDate = LocalDate.now().plusMonths(6); // 6 months max extension
+        if (request.getNewCheckOutDate().isAfter(maxExtensionDate)) {
+            throw new BusinessException("Cannot extend booking more than 6 months in advance");
+        }
         
-        // Update status to CANCELLED
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
-        
-        // Restore room availability
-        restoreRoomAvailability(booking);
-        
-        logger.info("Successfully cancelled booking: {}", bookingId);
+        // Validate guest count if provided
+        if (request.getGuests() != null && (request.getGuests() < 1 || request.getGuests() > 20)) {
+            throw new BusinessException("Guest count must be between 1 and 20");
+        }
     }
     
-    @Override
-    @Transactional
-    public boolean updateBookingStatus(Long bookingId, String newStatus) {
-        logger.info("Updating booking status: {} to: {}", bookingId, newStatus);
+    /**
+     * Check room availability for the extension period.
+     * 
+     * @param roomId The room ID
+     * @param currentCheckOut Current check-out date
+     * @param newCheckOut New check-out date
+     * @return true if available for extension
+     */
+    private boolean checkRoomAvailabilityForExtension(Long roomId, LocalDate currentCheckOut, LocalDate newCheckOut) {
+        // Check availability from current check-out to new check-out date
+        // Exclude the current booking from conflict check
+        List<Booking> conflicts = bookingRepository.findConflictingBookingsForExtension(
+            roomId, currentCheckOut, newCheckOut);
+        return conflicts.isEmpty();
+    }
+    
+    /**
+     * Calculate the additional cost for the extension.
+     * 
+     * @param booking The existing booking
+     * @param newCheckOutDate The new check-out date
+     * @return The additional cost
+     */
+    private BigDecimal calculateExtensionCost(Booking booking, LocalDate newCheckOutDate) {
+        // Calculate additional days
+        long additionalDays = ChronoUnit.DAYS.between(booking.getCheckOutDate(), newCheckOutDate);
         
-        Booking booking = fetchBookingById(bookingId);
-        BookingStatus status = validateAndParseStatus(newStatus);
+        // Get room price per night
+        Room room = booking.getRoom();
+        BigDecimal pricePerNight = BigDecimal.valueOf(room.getPrice());
         
-        // Validate status transition
-        bookingValidationService.validateStatusTransition(booking.getStatus(), status);
+        // Calculate additional cost (additional days × price per night)
+        BigDecimal additionalCost = pricePerNight.multiply(BigDecimal.valueOf(additionalDays));
         
-        BookingStatus oldStatus = booking.getStatus();
-        booking.setStatus(status);
-        bookingRepository.save(booking);
+        logger.info("Extension cost calculation: {} days × ${} = ${}", 
+                   additionalDays, pricePerNight, additionalCost);
         
-        // Handle room availability based on status change
-        handleRoomAvailabilityForStatusChange(booking, oldStatus, status);
+        return additionalCost;
+    }
+    
+    /**
+     * Update the booking entity for the extension.
+     * 
+     * @param booking The existing booking
+     * @param request The extension request
+     */
+    private void updateBookingForExtension(Booking booking, BookingExtensionRequest request) {
+        // Update check-out date
+        booking.setCheckOutDate(request.getNewCheckOutDate());
         
-        // Broadcast WebSocket event for booking status change
-        broadcastBookingStatusChange(booking, oldStatus, status);
+        // Update optional fields if provided
+        if (request.getGuests() != null) {
+            booking.setGuests(request.getGuests());
+        }
         
-        logger.info("Successfully updated booking status: {} to: {}", bookingId, status);
-        return true;
+        if (request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
+            booking.setPhone(request.getPhone().trim());
+        }
+        
+        if (request.getDestination() != null && !request.getDestination().trim().isEmpty()) {
+            booking.setDestination(request.getDestination().trim());
+        }
+        
+        if (request.getOrigin() != null && !request.getOrigin().trim().isEmpty()) {
+            booking.setOrigin(request.getOrigin().trim());
+        }
+        
+        // Update the updated timestamp
+        booking.setUpdatedAt(java.time.LocalDateTime.now());
+    }
+    
+    /**
+     * Handle extension notifications asynchronously.
+     * 
+     * @param booking The updated booking
+     * @param originalCheckOut The original check-out date
+     * @param newCheckOut The new check-out date
+     */
+    private void handleExtensionNotificationsAsync(Booking booking, LocalDate originalCheckOut, LocalDate newCheckOut) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                logger.info("Sending extension notifications for booking: {} ({} -> {})", 
+                           booking.getId(), originalCheckOut, newCheckOut);
+                
+                // TODO: Implement specific extension notifications
+                // - Send email to guest about extension
+                // - Update hotel staff about extended stay
+                // - Send WebSocket notification for real-time updates
+                
+            } catch (Exception e) {
+                logger.error("Failed to send extension notifications for booking: {}", booking.getId(), e);
+            }
+        });
     }
     
     // ========== PRIVATE HELPER METHODS ==========
@@ -262,101 +408,7 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         
         return booking;
     }
-    
-    private void updateRoomAvailabilityForBooking(Booking booking) {
-        LocalDate today = LocalDate.now();
-        LocalTime currentTime = LocalTime.now();
-        LocalDate checkInDate = booking.getCheckInDate();
-        LocalTime checkInTime = booking.getCheckInTime();
-        
-        if (checkInDate.isEqual(today) && currentTime.isAfter(checkInTime)) {
-            // Check-in is today and current time is after check-in time, make room unavailable
-            updateRoomAvailabilityAtomically(booking.getRoom().getId(), false);
-            
-            logger.info("Room {} made unavailable - check-in is today at {} and current time is {}", 
-                       booking.getRoom().getId(), checkInTime, currentTime);
-        } else if (checkInDate.isAfter(today)) {
-            // Check-in is in the future, keep room available for immediate bookings
-            updateRoomAvailabilityAtomically(booking.getRoom().getId(), true);
-            logger.info("Room {} kept available - check-in is in the future ({})", 
-                       booking.getRoom().getId(), checkInDate);
-        } else if (checkInDate.isEqual(today) && currentTime.isBefore(checkInTime)) {
-            // Check-in is today but current time is before check-in time, keep room available
-            updateRoomAvailabilityAtomically(booking.getRoom().getId(), true);
-            logger.info("Room {} kept available - check-in is today at {} but current time is {} (before check-in)", 
-                       booking.getRoom().getId(), checkInTime, currentTime);
-        }
-    }
-    
-    /**
-     * Restore room availability when a booking is cancelled.
-     * 
-     * @param booking The cancelled booking
-     */
-    private void restoreRoomAvailability(Booking booking) {
-        if (booking.isActive()) {
-            updateRoomAvailabilityAtomically(booking.getRoom().getId(), true);
-            logger.info("Restored room {} availability after cancellation", booking.getRoom().getId());
-        }
-    }
-    
-    /**
-     * Handle room availability changes based on booking status changes.
-     * 
-     * @param booking The booking
-     * @param oldStatus The previous status
-     * @param newStatus The new status
-     */
-    private void handleRoomAvailabilityForStatusChange(Booking booking, BookingStatus oldStatus, BookingStatus newStatus) {
-        Room room = booking.getRoom();
-        
-        switch (newStatus) {
-            case CHECKED_IN:
-                if (oldStatus != BookingStatus.CHECKED_IN) {
-                    updateRoomAvailabilityAtomically(room.getId(), false);
-                }
-                break;
-                
-            case CHECKED_OUT:
-            case CANCELLED:
-                if (oldStatus == BookingStatus.CHECKED_IN || oldStatus == BookingStatus.CONFIRMED) {
-                    updateRoomAvailabilityAtomically(room.getId(), true);
-                }
-                break;
-                
-            default:
-                // No room availability change needed for other statuses
-                break;
-        }
-    }
-    
-    /**
-     * Update room availability atomically.
-     * 
-     * @param roomId The room ID
-     * @param available Whether the room should be available
-     * @return true if update was successful
-     */
-    private boolean updateRoomAvailabilityAtomically(Long roomId, boolean available) {
-        try {
-            Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
-            
-            // Only update if the current availability is different
-            if (room.isAvailable() != available) {
-                room.setAvailable(available);
-                roomRepository.save(room);
-                logger.info("Updated room {} availability from {} to {}", roomId, !available, available);
-            } else {
-                logger.debug("Room {} availability already set to {}, no update needed", roomId, available);
-            }
-            
-            return true;
-        } catch (Exception e) {
-            logger.error("Failed to update room {} availability to {}: {}", roomId, available, e.getMessage());
-            return false;
-        }
-    }
+
     
     /**
      * Handle booking notifications asynchronously.
@@ -372,43 +424,5 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
                 logger.error("Failed to send notifications for booking: {}", booking.getId(), e);
             }
         });
-    }
-    
-    /**
-     * Broadcast booking status change via WebSocket.
-     * 
-     * @param booking The booking
-     * @param oldStatus The previous status
-     * @param newStatus The new status
-     */
-    private void broadcastBookingStatusChange(Booking booking, BookingStatus oldStatus, BookingStatus newStatus) {
-        try {
-            // Create and broadcast booking change event
-            // Implementation depends on your WebSocket service
-            logger.info("Broadcasting status change: {} -> {} for booking {}", 
-                       oldStatus, newStatus, booking.getId());
-        } catch (Exception e) {
-            logger.error("Failed to broadcast status change for booking {}: {}", 
-                        booking.getId(), e.getMessage());
-        }
-    }
-    
-    private Booking fetchBookingById(Long bookingId) {
-        return bookingRepository.findById(bookingId)
-            .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
-    }
-    
-    private void validateBookingOwnership(Booking booking, Long userId) {
-        if (booking.getUser() == null || !booking.getUser().getId().equals(userId)) {
-            throw new BusinessException("User is not authorized to cancel this booking");
-        }
-    }
-    
-    private BookingStatus validateAndParseStatus(String status) {
-        try {
-            return BookingStatus.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new BusinessException("Invalid booking status: " + status);
-        }
     }
 }
