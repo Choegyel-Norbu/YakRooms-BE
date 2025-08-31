@@ -138,6 +138,23 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             // Fetch the existing booking with pessimistic locking to prevent concurrent modifications
             Booking existingBooking = fetchBookingWithPessimisticLock(bookingId);
             
+            // Log current time and checkout date for debugging
+            LocalTime currentTime = LocalTime.now();
+            LocalDate currentDate = LocalDate.now();
+            LocalTime jobScheduleTime = LocalTime.of(12, 0);
+            
+            logger.info("Extension request - Current time: {}, Current date: {}, Checkout date: {}", 
+                       currentTime, currentDate, existingBooking.getCheckOutDate());
+            
+            // Provide timing guidance for same-day extensions
+            if (existingBooking.getCheckOutDate().equals(currentDate)) {
+                if (currentTime.isBefore(jobScheduleTime)) {
+                    logger.info("Extension request made before 12:00 PM - optimal timing for checkout day extension");
+                } else {
+                    logger.info("Extension request made after 12:00 PM - room availability has been updated, checking for conflicts");
+                }
+            }
+            
             // Validate the extension request
             validateBookingExtension(existingBooking, request);
             
@@ -244,6 +261,34 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     }
     
     /**
+     * Check if extension is allowed based on time constraints.
+     * 
+     * @param checkoutDate The current checkout date of the booking
+     * @return true if extension is allowed, false otherwise
+     */
+    private boolean isExtensionAllowedByTime(LocalDate checkoutDate) {
+        LocalDate currentDate = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+        LocalTime jobScheduleTime = LocalTime.of(12, 0); // Job runs at 12:00 PM
+        
+        // If checkout is today and it's today, check if extension request is made before job schedule
+        if (checkoutDate.equals(currentDate)) {
+            // Allow extension if request is made before 12:00 PM (before job scheduler runs)
+            // This gives guests a chance to extend their stay before the system marks the room as available
+            // After 12:00 PM, we'll still allow extension but will check for conflicts more strictly
+            return true; // Always allow, but conflict checking will happen later
+        }
+        
+        // If checkout date is in the future, extension is allowed
+        if (checkoutDate.isAfter(currentDate)) {
+            return true;
+        }
+        
+        // If checkout date is in the past, extension is not allowed
+        return false;
+    }
+    
+    /**
      * Validate the booking extension request.
      * 
      * @param booking The existing booking
@@ -271,10 +316,31 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             throw new BusinessException("Cannot extend booking more than 6 months in advance");
         }
         
+        // TIME-BASED VALIDATION: Check if extension is allowed based on checkout date and current time
+        LocalDate currentDate = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+        LocalTime jobScheduleTime = LocalTime.of(12, 0); // Job runs at 12:00 PM
+        
+        // Check if this is a same-day extension request
+        if (booking.getCheckOutDate().equals(currentDate)) {
+            if (currentTime.isAfter(jobScheduleTime) || currentTime.equals(jobScheduleTime)) {
+                // After job scheduler has run, provide warning but still allow if no conflicts
+                logger.warn("Extension request made after 12:00 PM on checkout day for booking: {}. " +
+                           "Room availability has been updated by the system scheduler. " +
+                           "Proceeding with conflict check...", booking.getId());
+            }
+        } else if (booking.getCheckOutDate().isBefore(currentDate)) {
+            throw new BusinessException("Cannot extend a booking with a past checkout date. " +
+                "The original checkout date has already passed.");
+        }
+        
         // Validate guest count if provided
         if (request.getGuests() != null && (request.getGuests() < 1 || request.getGuests() > 20)) {
             throw new BusinessException("Guest count must be between 1 and 20");
         }
+        
+        logger.info("Booking extension validation passed for booking: {} - checkout: {}, new checkout: {}, current time: {}", 
+                   booking.getId(), booking.getCheckOutDate(), request.getNewCheckOutDate(), LocalTime.now());
     }
     
     /**
