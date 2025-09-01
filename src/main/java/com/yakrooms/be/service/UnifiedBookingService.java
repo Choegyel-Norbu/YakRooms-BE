@@ -58,4 +58,14 @@ public interface UnifiedBookingService {
      */
     boolean checkRoomAvailabilityWithTimes(Long roomId, java.time.LocalDate checkIn, java.time.LocalTime checkInTime, 
                                          java.time.LocalDate checkOut, java.time.LocalTime checkOutTime);
+    
+    /**
+     * Create a new booking with automatic checkout date (next day after check-in).
+     * This method simplifies booking creation for single-night stays by automatically
+     * setting the checkout date to the day after check-in.
+     * 
+     * @param request The booking request (checkout date will be ignored if provided)
+     * @return The created booking response
+     */
+    BookingResponse createSingleNightBooking(BookingRequest request);
 }

@@ -57,7 +57,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkInDate < :checkOut 
         AND b.checkOutDate > :checkIn
         """)
@@ -70,7 +70,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkInDate < :checkOut
         AND b.checkOutDate > :checkIn
         """)
@@ -83,7 +83,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkInDate < :checkOut
         AND b.checkOutDate > :checkIn
         """)
@@ -117,7 +117,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkInDate < :checkOut
         AND b.checkOutDate > :checkIn
         AND b.id != :excludeBookingId
@@ -131,7 +131,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkOutDate <= :currentDate
         """)
     List<Booking> findBookingsNeedingAvailabilityUpdate(@Param("roomId") Long roomId,
@@ -141,7 +141,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkInDate < :newCheckOut
         AND b.checkOutDate > :currentCheckOut
         """)
@@ -152,7 +152,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Find all bookings that have ended today and need room availability restoration
     @Query("""
         SELECT b FROM Booking b 
-        WHERE b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        WHERE b.status IN ('CONFIRMED', 'CHECKED_IN')
         AND b.checkOutDate <= :currentDate
         """)
     List<Booking> findEndedBookingsNeedingAvailabilityRestoration(@Param("currentDate") LocalDate currentDate);
@@ -160,7 +160,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Find bookings starting today that need room availability updates
     @Query("""
         SELECT b FROM Booking b 
-        WHERE b.status IN ('PENDING', 'CONFIRMED')
+        WHERE b.status IN ('CONFIRMED')
         AND b.checkInDate = :currentDate
         """)
     List<Booking> findBookingsStartingToday(@Param("currentDate") LocalDate currentDate);

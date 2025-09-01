@@ -25,7 +25,8 @@ import jakarta.persistence.*;
     @Index(name = "idx_booking_dates", columnList = "check_in_date, check_out_date"),
     @Index(name = "idx_booking_created_at", columnList = "created_at"),
     @Index(name = "idx_booking_cid", columnList = "cid"),
-    @Index(name = "idx_booking_destination", columnList = "destination")
+    @Index(name = "idx_booking_destination", columnList = "destination"),
+    @Index(name = "idx_booking_guest_name", columnList = "guest_name")
 })
 @NamedEntityGraphs({
     @NamedEntityGraph(
@@ -98,6 +99,9 @@ public class Booking {
     @Column(name = "origin", length = 255)
     private String origin;
 
+    @Column(name = "guest_name", length = 255)
+    private String guestName;
+
     @Column(name = "check_in_passcode", length = 10)
     private String checkInPasscode;
 
@@ -164,6 +168,26 @@ public class Booking {
         this.cid = cid;
         this.destination = destination;
         this.origin = origin;
+        this.status = BookingStatus.PENDING;
+        this.paymentStatus = PaymentStatus.PENDING;
+    }
+
+    public Booking(User user, Hotel hotel, Room room, LocalDate checkInDate, 
+                   LocalDate checkOutDate, int guests, BigDecimal totalPrice, 
+                   String cid, String destination, String origin, String guestName) {
+        this.user = user;
+        this.hotel = hotel;
+        this.room = room;
+        this.checkInDate = checkInDate;
+        this.checkOutDate = checkOutDate;
+        this.checkInTime = LocalTime.of(0, 0); // Default: 12:00 AM (midnight)
+        this.checkOutTime = LocalTime.of(12, 0); // Default: 12:00 PM (noon)
+        this.guests = guests;
+        this.totalPrice = totalPrice;
+        this.cid = cid;
+        this.destination = destination;
+        this.origin = origin;
+        this.guestName = guestName;
         this.status = BookingStatus.PENDING;
         this.paymentStatus = PaymentStatus.PENDING;
     }
@@ -271,6 +295,14 @@ public class Booking {
 
     public void setOrigin(String origin) {
         this.origin = origin != null ? origin.trim() : null;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public void setGuestName(String guestName) {
+        this.guestName = guestName != null ? guestName.trim() : null;
     }
 
     public String getCheckInPasscode() {
@@ -385,6 +417,7 @@ public class Booking {
                 ", checkInDate=" + checkInDate +
                 ", checkOutDate=" + checkOutDate +
                 ", guests=" + guests +
+                ", guestName='" + guestName + '\'' +
                 ", cid='" + cid + '\'' +
                 ", destination='" + destination + '\'' +
                 ", origin='" + origin + '\'' +

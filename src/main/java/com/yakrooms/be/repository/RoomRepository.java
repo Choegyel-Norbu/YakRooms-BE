@@ -84,7 +84,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
            countQuery = "SELECT count(*) FROM room WHERE hotel_id = :hotelId AND is_available = true",
            nativeQuery = true)
     Page<Room> findActiveAvailableRoomsBasicData(@Param("hotelId") Long hotelId, Pageable pageable);
-
    
     // Helper method: Batch fetch collections for a page of rooms
     @Query(value = "SELECT ra.room_id, ra.amenity FROM room_amenities ra WHERE ra.room_id IN :roomIds", nativeQuery = true)
@@ -105,39 +104,40 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.room_type AS roomType,
                 CASE
                     WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Occupied'
-                    WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed'
+                    WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed (Not Arrived)'
                     WHEN r.is_available = 1 THEN 'Available'
-                    WHEN r.is_available = 0 AND b.status IS NULL THEN 'Under Repair'
-                    ELSE 'Occupied'
+                    ELSE 'Under Repair'
                 END AS roomStatus,
                 CASE
-                    WHEN b.status = 'CHECKED_IN' THEN u.name
-                    WHEN b.status = 'CONFIRMED' THEN CONCAT(u.name, ' (Not Arrived)')
+                    WHEN b.status = 'CHECKED_IN' THEN COALESCE(u.name, b.guest_name, 'Guest')
+                    WHEN b.status = 'CONFIRMED' THEN COALESCE(CONCAT(u.name, ' (Not Arrived)'), CONCAT(b.guest_name, ' (Not Arrived)'), 'Guest (Not Arrived)')
                     ELSE 'No guest'
                 END AS guestName,
                 b.check_out_date AS checkOutDate
             FROM room r
             LEFT JOIN (
-                SELECT b1.room_id, b1.status, b1.user_id, b1.check_out_date
-                FROM booking b1
-                INNER JOIN (
-                    SELECT room_id, status, user_id, check_out_date
-                    FROM (
-                        SELECT room_id, status, user_id, check_out_date,
-                               ROW_NUMBER() OVER (PARTITION BY room_id ORDER BY 
-                                   CASE 
-                                       WHEN status = 'CHECKED_IN' THEN check_in_date
-                                       WHEN status = 'CONFIRMED' THEN check_in_date
-                                       ELSE created_at
-                                   END DESC) as rn
-                        FROM booking 
-                        WHERE status IN ('CHECKED_IN', 'CONFIRMED')
-                    ) ranked_bookings
-                    WHERE rn = 1
-                ) b2 ON b1.room_id = b2.room_id 
-                    AND b1.status = b2.status 
-                    AND b1.user_id = b2.user_id 
-                    AND b1.check_out_date = b2.check_out_date
+                SELECT 
+                    room_id,
+                    status,
+                    user_id,
+                    check_out_date,
+                    guest_name
+                FROM (
+                    SELECT 
+                        room_id,
+                        status,
+                        user_id,
+                        check_out_date,
+                        guest_name,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY room_id 
+                            ORDER BY ABS(DATEDIFF(check_in_date, CURDATE())) ASC,
+                                     check_in_date ASC
+                        ) as rn
+                    FROM booking 
+                    WHERE status IN ('CHECKED_IN', 'CONFIRMED')
+                ) ranked_bookings
+                WHERE rn = 1
             ) b ON r.id = b.room_id
             LEFT JOIN users u ON b.user_id = u.id
             WHERE r.hotel_id = :hotelId
@@ -150,40 +150,42 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.room_number AS roomNumber,
                 r.room_type AS roomType,
                 CASE
-                    WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Booked'
-                    WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed'
+                    WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Occupied'
+                    WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed (Not Arrived)'
                     WHEN r.is_available = 1 THEN 'Available'
                     WHEN r.is_available = 0 AND b.status IS NULL THEN 'Under Repair'
-                    ELSE 'Occupied'
+                    ELSE 'Under Repair'
                 END AS roomStatus,
                 CASE
-                    WHEN b.status = 'CHECKED_IN' THEN u.name
-                    WHEN b.status = 'CONFIRMED' THEN CONCAT(u.name, ' (Not Arrived)')
+                    WHEN b.status = 'CHECKED_IN' THEN COALESCE(u.name, b.guest_name, 'Guest')
+                    WHEN b.status = 'CONFIRMED' THEN COALESCE(CONCAT(u.name, ' (Not Arrived)'), CONCAT(b.guest_name, ' (Not Arrived)'), 'Guest (Not Arrived)')
                     ELSE 'No guest'
                 END AS guestName,
                 b.check_out_date AS checkOutDate
             FROM room r
             LEFT JOIN (
-                SELECT b1.room_id, b1.status, b1.user_id, b1.check_out_date
-                FROM booking b1
-                INNER JOIN (
-                    SELECT room_id, status, user_id, check_out_date
-                    FROM (
-                        SELECT room_id, status, user_id, check_out_date,
-                               ROW_NUMBER() OVER (PARTITION BY room_id ORDER BY 
-                                   CASE 
-                                       WHEN status = 'CHECKED_IN' THEN check_in_date
-                                       WHEN status = 'CONFIRMED' THEN check_in_date
-                                       ELSE created_at
-                                   END DESC) as rn
-                        FROM booking 
-                        WHERE status IN ('CHECKED_IN', 'CONFIRMED')
-                    ) ranked_bookings
-                    WHERE rn = 1
-                ) b2 ON b1.room_id = b2.room_id 
-                    AND b1.status = b2.status 
-                    AND b1.user_id = b2.user_id 
-                    AND b1.check_out_date = b2.check_out_date
+                SELECT 
+                    room_id,
+                    status,
+                    user_id,
+                    check_out_date,
+                    guest_name
+                FROM (
+                    SELECT 
+                        room_id,
+                        status,
+                        user_id,
+                        check_out_date,
+                        guest_name,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY room_id 
+                            ORDER BY ABS(DATEDIFF(check_in_date, CURDATE())) ASC,
+                                     check_in_date ASC
+                        ) as rn
+                    FROM booking 
+                    WHERE status IN ('CHECKED_IN', 'CONFIRMED')
+                ) ranked_bookings
+                WHERE rn = 1
             ) b ON r.id = b.room_id
             LEFT JOIN users u ON b.user_id = u.id
             WHERE r.hotel_id = :hotelId 

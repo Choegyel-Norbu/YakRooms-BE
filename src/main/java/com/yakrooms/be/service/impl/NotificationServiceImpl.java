@@ -2,6 +2,7 @@ package com.yakrooms.be.service.impl;
 
 import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.User;
+import com.yakrooms.be.model.enums.NotificationType;
 import com.yakrooms.be.repository.NotificationRepository;
 import com.yakrooms.be.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,17 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public List<Notification> getAllNotificationsByUserId(Long userId) {
         return notificationRepository.findByUserAndIsReadFalseWithAssociations(userId);
+    }
+
+    @Override
+    @Transactional
+    public Notification createNotification(User user, String message, NotificationType type) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage(message);
+        notification.setType(type.name());
+        notification.setRead(false);
+        return notificationRepository.save(notification);
     }
 
     @Override

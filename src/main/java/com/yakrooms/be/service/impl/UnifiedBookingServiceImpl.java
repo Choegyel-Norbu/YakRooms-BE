@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,14 +29,15 @@ import com.yakrooms.be.repository.BookingRepository;
 import com.yakrooms.be.repository.HotelRepository;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.repository.UserRepository;
-import com.yakrooms.be.service.BookingValidationService;
+
 import com.yakrooms.be.service.MailService;
 import com.yakrooms.be.service.NotificationService;
-import com.yakrooms.be.service.PaymentService;
+
 import com.yakrooms.be.service.RoomAvailabilityService;
 import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.service.BookingWebSocketService;
 import com.yakrooms.be.util.PasscodeGenerator;
+import com.yakrooms.be.model.enums.NotificationType;
 
 /**
  * Implementation of UnifiedBookingService that handles ONLY booking creation with pessimistic locking.
@@ -60,11 +61,8 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     private final BookingMapper bookingMapper;
     private final NotificationService notificationService;
     private final BookingWebSocketService bookingWebSocketService;
-    private final PaymentService paymentService;
-    private final BookingValidationService bookingValidationService;
     private final RoomAvailabilityService roomAvailabilityService;
     
-    @Autowired
     public UnifiedBookingServiceImpl(
             BookingRepository bookingRepository,
             RoomRepository roomRepository,
@@ -74,8 +72,6 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             BookingMapper bookingMapper,
             NotificationService notificationService,
             BookingWebSocketService bookingWebSocketService,
-            PaymentService paymentService,
-            BookingValidationService bookingValidationService,
             RoomAvailabilityService roomAvailabilityService) {
         
         this.bookingRepository = bookingRepository;
@@ -86,8 +82,6 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         this.bookingMapper = bookingMapper;
         this.notificationService = notificationService;
         this.bookingWebSocketService = bookingWebSocketService;
-        this.paymentService = paymentService;
-        this.bookingValidationService = bookingValidationService;
         this.roomAvailabilityService = roomAvailabilityService;
     }
     
@@ -125,6 +119,59 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             
         } catch (Exception e) {
             logger.error("Failed to create booking: {}", e.getMessage());
+            throw e;
+        }
+    }
+    
+    @Override
+    @Transactional
+    public BookingResponse createSingleNightBooking(BookingRequest request) {
+        logger.info("Creating single-night booking for room: {} with automatic checkout date", request.getRoomId());
+        
+        try {
+            // Validate required fields for single-night booking
+            if (request.getCheckInDate() == null) {
+                throw new BusinessException("Check-in date is required for single-night booking");
+            }
+            
+            // Automatically set checkout date to the day after check-in
+            LocalDate autoCheckOutDate = request.getCheckInDate().plusDays(1);
+            logger.info("Auto-setting checkout date to: {} (day after check-in: {})", 
+                       autoCheckOutDate, request.getCheckInDate());
+            
+            // CRITICAL: Check room availability WITH pessimistic locking to prevent race conditions
+            // Use the automatically calculated checkout date for availability check
+            if (!checkRoomAvailabilityWithPessimisticLock(request.getRoomId(), request.getCheckInDate(), autoCheckOutDate)) {
+                throw new BusinessException("Room is not available for the requested dates (check-in: " + 
+                                          request.getCheckInDate() + ", auto checkout: " + autoCheckOutDate + ")");
+            }
+            
+            // Create a modified request with the auto-calculated checkout date
+            BookingRequest modifiedRequest = createModifiedRequestWithAutoCheckout(request, autoCheckOutDate);
+            
+            // Create the booking entity
+            Booking booking = createBookingEntity(modifiedRequest, "SINGLE_NIGHT");
+            booking.setStatus(BookingStatus.CONFIRMED);
+            
+            // Save the booking
+            Booking savedBooking = bookingRepository.save(booking);
+            
+            // Update room availability using the centralized service
+            roomAvailabilityService.updateRoomAvailabilityForNewBooking(
+                savedBooking.getRoom().getId(), 
+                savedBooking.getCheckInDate(), 
+                savedBooking.getCheckInTime()
+            );
+            
+            // Handle notifications asynchronously (outside transaction)
+            handleBookingNotificationsAsync(savedBooking);
+            
+            logger.info("Successfully created single-night booking with ID: {} (check-in: {}, checkout: {})", 
+                       savedBooking.getId(), savedBooking.getCheckInDate(), savedBooking.getCheckOutDate());
+            return bookingMapper.toDto(savedBooking);
+            
+        } catch (Exception e) {
+            logger.error("Failed to create single-night booking: {}", e.getMessage());
             throw e;
         }
     }
@@ -260,33 +307,7 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
     }
     
-    /**
-     * Check if extension is allowed based on time constraints.
-     * 
-     * @param checkoutDate The current checkout date of the booking
-     * @return true if extension is allowed, false otherwise
-     */
-    private boolean isExtensionAllowedByTime(LocalDate checkoutDate) {
-        LocalDate currentDate = LocalDate.now();
-        LocalTime currentTime = LocalTime.now();
-        LocalTime jobScheduleTime = LocalTime.of(12, 0); // Job runs at 12:00 PM
-        
-        // If checkout is today and it's today, check if extension request is made before job schedule
-        if (checkoutDate.equals(currentDate)) {
-            // Allow extension if request is made before 12:00 PM (before job scheduler runs)
-            // This gives guests a chance to extend their stay before the system marks the room as available
-            // After 12:00 PM, we'll still allow extension but will check for conflicts more strictly
-            return true; // Always allow, but conflict checking will happen later
-        }
-        
-        // If checkout date is in the future, extension is allowed
-        if (checkoutDate.isAfter(currentDate)) {
-            return true;
-        }
-        
-        // If checkout date is in the past, extension is not allowed
-        return false;
-    }
+
     
     /**
      * Validate the booking extension request.
@@ -414,31 +435,38 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         booking.setUpdatedAt(java.time.LocalDateTime.now());
     }
     
-    /**
-     * Handle extension notifications asynchronously.
-     * 
-     * @param booking The updated booking
-     * @param originalCheckOut The original check-out date
-     * @param newCheckOut The new check-out date
-     */
-    private void handleExtensionNotificationsAsync(Booking booking, LocalDate originalCheckOut, LocalDate newCheckOut) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                logger.info("Sending extension notifications for booking: {} ({} -> {})", 
-                           booking.getId(), originalCheckOut, newCheckOut);
-                
-                // TODO: Implement specific extension notifications
-                // - Send email to guest about extension
-                // - Update hotel staff about extended stay
-                // - Send WebSocket notification for real-time updates
-                
-            } catch (Exception e) {
-                logger.error("Failed to send extension notifications for booking: {}", booking.getId(), e);
-            }
-        });
-    }
+
     
     // ========== PRIVATE HELPER METHODS ==========
+    
+    /**
+     * Create a modified BookingRequest with auto-calculated checkout date.
+     * This ensures the original request remains unchanged while providing the checkout date.
+     * 
+     * @param originalRequest The original booking request
+     * @param autoCheckOutDate The automatically calculated checkout date
+     * @return A new BookingRequest with the checkout date set
+     */
+    private BookingRequest createModifiedRequestWithAutoCheckout(BookingRequest originalRequest, LocalDate autoCheckOutDate) {
+        BookingRequest modifiedRequest = new BookingRequest();
+        
+        // Copy all fields from original request
+        modifiedRequest.setUserId(originalRequest.getUserId());
+        modifiedRequest.setHotelId(originalRequest.getHotelId());
+        modifiedRequest.setRoomId(originalRequest.getRoomId());
+        modifiedRequest.setCheckInDate(originalRequest.getCheckInDate());
+        modifiedRequest.setCheckOutDate(autoCheckOutDate); // Set the auto-calculated checkout date
+        modifiedRequest.setGuests(originalRequest.getGuests());
+        modifiedRequest.setNumberOfRooms(originalRequest.getNumberOfRooms());
+        modifiedRequest.setTotalPrice(originalRequest.getTotalPrice());
+        modifiedRequest.setPhone(originalRequest.getPhone());
+        modifiedRequest.setCid(originalRequest.getCid());
+        modifiedRequest.setDestination(originalRequest.getDestination());
+        modifiedRequest.setOrigin(originalRequest.getOrigin());
+        modifiedRequest.setGuestName(originalRequest.getGuestName());
+        
+        return modifiedRequest;
+    }
     
     private Booking createBookingEntity(BookingRequest request, String bookingType) {
         // Fetch required entities
@@ -469,6 +497,7 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
         booking.setCid(request.getCid());
         booking.setDestination(request.getDestination());
         booking.setOrigin(request.getOrigin());
+        booking.setGuestName(request.getGuestName());
         booking.setPasscode(PasscodeGenerator.generatePasscode());
         booking.setStatus(BookingStatus.PENDING);
         
@@ -484,8 +513,48 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
     private void handleBookingNotificationsAsync(Booking booking) {
         CompletableFuture.runAsync(() -> {
             try {
-                // Send notifications (implementation depends on your notification service)
                 logger.info("Sending notifications for booking: {}", booking.getId());
+
+                // Create a notification for the user who made the booking
+                if (booking.getUser() != null) {
+                    String message = String.format("Your booking for room %s in %s from %s to %s has been confirmed. Passcode: %s",
+                                                   booking.getRoom().getRoomNumber(),
+                                                   booking.getHotel().getName(),
+                                                   booking.getCheckInDate(),
+                                                   booking.getCheckOutDate(),
+                                                   booking.getPasscode());
+                    
+                    // Create in-app notification
+                    notificationService.createNotification(booking.getUser(), message, NotificationType.BOOKING_CONFIRMATION);
+                    logger.info("Booking confirmation notification created for user: {}", booking.getUser().getId());
+                    
+                    // Send email confirmation if user has email
+                    if (booking.getUser().getEmail() != null && !booking.getUser().getEmail().trim().isEmpty()) {
+                        try {
+                            String guestName = booking.getGuestName() != null ? booking.getGuestName() : 
+                                             (booking.getUser().getName() != null ? booking.getUser().getName() : "Guest");
+                            
+                            mailService.sendPasscodeEmailToGuest(
+                                booking.getUser().getEmail(),
+                                guestName,
+                                booking.getPasscode(),
+                                booking.getHotel().getName(),
+                                booking.getRoom().getRoomNumber(),
+                                booking.getCheckInDate(),
+                                booking.getCheckOutDate(),
+                                booking.getId()
+                            );
+                            logger.info("Booking confirmation email sent to: {}", booking.getUser().getEmail());
+                        } catch (Exception e) {
+                            logger.warn("Failed to send booking confirmation email to {}: {}", 
+                                       booking.getUser().getEmail(), e.getMessage());
+                        }
+                    }
+                }
+
+                // Send WebSocket notification for real-time updates
+                bookingWebSocketService.notifyBookingUpdates(booking.getHotel().getId(), "New booking created: " + booking.getId());
+
             } catch (Exception e) {
                 logger.error("Failed to send notifications for booking: {}", booking.getId(), e);
             }

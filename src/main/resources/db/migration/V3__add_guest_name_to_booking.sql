@@ -2,7 +2,7 @@
 -- Version: V3
 -- Description: Adds guest_name column to store the name of the guest for each booking
 
-ALTER TABLE booking ADD COLUMN guest_name VARCHAR(100);
+ALTER TABLE booking ADD COLUMN guest_name VARCHAR(255);
 
 
 

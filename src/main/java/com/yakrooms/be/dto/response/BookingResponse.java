@@ -4,9 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.yakrooms.be.model.entity.Hotel;
-import com.yakrooms.be.model.entity.Room;
-import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.BookingStatus;
 
 public class BookingResponse {
@@ -34,6 +31,8 @@ public class BookingResponse {
 	private String destination;
 
 	private String origin;
+
+	private String guestName;
 
 	public String getHotelName() {
 		return hotelName;
@@ -201,6 +200,14 @@ public class BookingResponse {
 
 	public void setOrigin(String origin) {
 		this.origin = origin;
+	}
+
+	public String getGuestName() {
+		return guestName;
+	}
+
+	public void setGuestName(String guestName) {
+		this.guestName = guestName;
 	}
 
 }

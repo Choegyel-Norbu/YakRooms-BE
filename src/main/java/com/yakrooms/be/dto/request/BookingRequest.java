@@ -29,6 +29,8 @@ public class BookingRequest {
 
 	private String origin;
 
+	private String guestName;
+
 	public BigDecimal getTotalPrice() {
 		return totalPrice;
 	}
@@ -123,6 +125,14 @@ public class BookingRequest {
 
 	public void setOrigin(String origin) {
 		this.origin = origin;
+	}
+
+	public String getGuestName() {
+		return guestName;
+	}
+
+	public void setGuestName(String guestName) {
+		this.guestName = guestName;
 	}
 
 }

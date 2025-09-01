@@ -6,4 +6,5 @@ public interface BookingWebSocketService {
     void broadcastBookingStatusChange(BookingChangeEvent event);
     void broadcastToHotel(Long hotelId, BookingChangeEvent event);
     void broadcastToUser(Long userId, BookingChangeEvent event);
+    void notifyBookingUpdates(Long hotelId, String message);
 } 

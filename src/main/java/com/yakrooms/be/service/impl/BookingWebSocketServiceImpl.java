@@ -55,4 +55,15 @@ public class BookingWebSocketServiceImpl implements BookingWebSocketService {
             logger.error("Failed to broadcast booking event to user {}: {}", userId, e.getMessage());
         }
     }
+
+    @Override
+    public void notifyBookingUpdates(Long hotelId, String message) {
+        try {
+            String destination = "/topic/hotels/" + hotelId + "/updates";
+            messagingTemplate.convertAndSend(destination, message);
+            logger.info("Broadcasted generic update to hotel {}: {}", hotelId, message);
+        } catch (Exception e) {
+            logger.error("Failed to broadcast generic update to hotel {}: {}", hotelId, e.getMessage());
+        }
+    }
 } 

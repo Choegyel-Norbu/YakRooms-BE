@@ -67,6 +67,40 @@ public class BookingController {
 			throw new RuntimeException("Failed to create booking: " + e.getMessage());
 		}
 	}
+	//Not used anywhere 
+	// Create a single-night booking (checkout date auto-set to next day) - GUEST, HOTEL_ADMIN, and STAFF can create
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
+	@PostMapping("/single-night")
+	public ResponseEntity<BookingResponse> createSingleNightBooking(
+			@Valid @RequestBody BookingRequest request) {
+		
+		try {
+			logger.info("Creating single-night booking for room: {} with auto-checkout", request.getRoomId());
+			
+			// Validate that check-in date is provided
+			if (request.getCheckInDate() == null) {
+				logger.error("Check-in date is required for single-night booking");
+				throw new IllegalArgumentException("Check-in date is required for single-night booking");
+			}
+			
+			// Log the auto-checkout behavior for transparency
+			LocalDate autoCheckoutDate = request.getCheckInDate().plusDays(1);
+			logger.info("Auto-setting checkout date to: {} for check-in: {}", 
+					   autoCheckoutDate, request.getCheckInDate());
+			
+			BookingResponse response = unifiedBookingService.createSingleNightBooking(request);
+			
+			logger.info("Successfully created single-night booking with ID: {}", response.getId());
+			return ResponseEntity.ok(response);
+			
+		} catch (IllegalArgumentException e) {
+			logger.error("Invalid request for single-night booking: {}", e.getMessage());
+			throw new RuntimeException("Invalid request: " + e.getMessage());
+		} catch (Exception e) {
+			logger.error("Failed to create single-night booking: {}", e.getMessage());
+			throw new RuntimeException("Failed to create single-night booking: " + e.getMessage());
+		}
+	}
 	
 	// Get all bookings for hotel - Only HOTEL_ADMIN and STAFF can access
 	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")

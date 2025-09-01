@@ -13,7 +13,7 @@ import com.yakrooms.be.model.enums.BookingStatus;
 @Component
 public class BookingMapper {
 	
-	public Booking toEntity(BookingRequest request) {
+	    public Booking toEntity(BookingRequest request) {
         if (request == null) {
             return null;
         }
@@ -49,6 +49,7 @@ public class BookingMapper {
         booking.setCid(request.getCid());
         booking.setDestination(request.getDestination());
         booking.setOrigin(request.getOrigin());
+        booking.setGuestName(request.getGuestName());
         
         return booking;
     }
@@ -77,12 +78,14 @@ public class BookingMapper {
         response.setGuests(booking.getGuests());
         response.setStatus(booking.getStatus());
         response.setPhone(booking.getPhone());
+        response.setGuestName(booking.getGuestName());
         response.setTotalPrice(booking.getTotalPrice());
         response.setCreatedAt(booking.getCreatedAt());
         response.setPasscode(booking.getPasscode());
         response.setCid(booking.getCid());
         response.setDestination(booking.getDestination());
         response.setOrigin(booking.getOrigin());
+       
         
         // These fields seem to be additional user/room details
         // You may need to populate these from the related entities
@@ -125,6 +128,7 @@ public class BookingMapper {
         booking.setCid(request.getCid());
         booking.setDestination(request.getDestination());
         booking.setOrigin(request.getOrigin());
+        booking.setGuestName(request.getGuestName());
         
         return booking;
     }
@@ -148,6 +152,7 @@ public class BookingMapper {
         booking.setCid(request.getCid());
         booking.setDestination(request.getDestination());
         booking.setOrigin(request.getOrigin());
+        booking.setGuestName(request.getGuestName());
         booking.setStatus(BookingStatus.CONFIRMED); // Default status for new bookings
         
         return booking;
@@ -167,6 +172,7 @@ public class BookingMapper {
         booking.setCid(request.getCid());
         booking.setDestination(request.getDestination());
         booking.setOrigin(request.getOrigin());
+        booking.setGuestName(request.getGuestName());
         // Note: User, Hotel, Room relationships should be handled separately
         // as they require repository lookups
     }
