@@ -22,8 +22,8 @@ public class NotificationMapper {
         }
         
         try {
-            if (n.getRoom() != null) {
-                roomNumber = n.getRoom().getRoomNumber();
+            if (n.getBooking() != null && n.getBooking().getRoom() != null) {
+                roomNumber = n.getBooking().getRoom().getRoomNumber();
             }
         } catch (Exception e) {
             // Handle LazyInitializationException gracefully

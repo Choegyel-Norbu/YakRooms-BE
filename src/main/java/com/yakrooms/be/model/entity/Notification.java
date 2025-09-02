@@ -25,10 +25,6 @@ public class Notification {
     @JoinColumn(name = "booking_id")
     private Booking booking;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "room_id")
-    private Room room;
-
     private String title;
     private String message;
     private String type;
@@ -47,9 +43,6 @@ public class Notification {
 
     public Booking getBooking() { return booking; }
     public void setBooking(Booking booking) { this.booking = booking; }
-
-    public Room getRoom() { return room; }
-    public void setRoom(Room room) { this.room = room; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

@@ -104,9 +104,6 @@ public class Room {
     @BatchSize(size = 20)
     private List<RoomItem> items = new ArrayList<>();
 
-    @OneToOne(mappedBy = "room", fetch = FetchType.LAZY)
-    private Notification notification;
-
     // Constructors
     public Room() {
         super();
@@ -247,14 +244,6 @@ public class Room {
 
     public void setItems(List<RoomItem> items) {
         this.items = items != null ? items : new ArrayList<>();
-    }
-
-    public Notification getNotification() {
-        return notification;
-    }
-
-    public void setNotification(Notification notification) {
-        this.notification = notification;
     }
 
     // Helper methods for collection management

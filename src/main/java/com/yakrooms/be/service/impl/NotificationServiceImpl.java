@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
@@ -66,6 +67,17 @@ public class NotificationServiceImpl implements NotificationService {
             throw new IllegalArgumentException("Booking and user cannot be null");
         }
 
+        // Check if a booking created notification already exists for this booking
+        Optional<Notification> existingNotification = notificationRepository.findByBookingAndType(
+            booking, 
+            NotificationType.BOOKING_CREATED.name()
+        );
+        
+        if (existingNotification.isPresent()) {
+            // Return existing notification instead of creating a duplicate
+            return existingNotification.get();
+        }
+
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         String checkInDate = booking.getCheckInDate().format(dateFormatter);
         String checkOutDate = booking.getCheckOutDate().format(dateFormatter);
@@ -85,7 +97,6 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = new Notification();
         notification.setUser(booking.getUser());
         notification.setBooking(booking);
-        notification.setRoom(booking.getRoom());
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setType(NotificationType.BOOKING_CREATED.name());
@@ -100,6 +111,17 @@ public class NotificationServiceImpl implements NotificationService {
     public Notification createCancellationRequestNotification(Booking booking) {
         if (booking == null || booking.getUser() == null) {
             throw new IllegalArgumentException("Booking and user cannot be null");
+        }
+
+        // Check if a cancellation request notification already exists for this booking
+        Optional<Notification> existingNotification = notificationRepository.findByBookingAndType(
+            booking, 
+            NotificationType.BOOKING_CANCELLATION_REQUEST.name()
+        );
+        
+        if (existingNotification.isPresent()) {
+            // Return existing notification instead of creating a duplicate
+            return existingNotification.get();
         }
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
@@ -121,7 +143,6 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = new Notification();
         notification.setUser(booking.getUser());
         notification.setBooking(booking);
-        notification.setRoom(booking.getRoom());
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setType(NotificationType.BOOKING_CANCELLATION_REQUEST.name());
