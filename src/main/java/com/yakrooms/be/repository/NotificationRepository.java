@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
@@ -25,4 +26,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     
     @Query("SELECT n FROM Notification n LEFT JOIN FETCH n.user LEFT JOIN FETCH n.room WHERE n.user.id = :userId")
     List<Notification> findByUserIdWithAssociations(@Param("userId") Long userId);
+    
+    // Find notification by booking and type
+    @Query("SELECT n FROM Notification n WHERE n.booking = :booking AND n.type = :type")
+    Optional<Notification> findByBookingAndType(@Param("booking") com.yakrooms.be.model.entity.Booking booking, @Param("type") String type);
 } 

@@ -18,6 +18,7 @@ import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.request.BookingExtensionRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.dto.response.BookingExtensionResponse;
+import com.yakrooms.be.dto.response.CancellationRequestResponse;
 import com.yakrooms.be.exception.BusinessException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Booking;
@@ -37,7 +38,6 @@ import com.yakrooms.be.service.RoomAvailabilityService;
 import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.service.BookingWebSocketService;
 import com.yakrooms.be.util.PasscodeGenerator;
-import com.yakrooms.be.model.enums.NotificationType;
 
 /**
  * Implementation of UnifiedBookingService that handles ONLY booking creation with pessimistic locking.
@@ -515,49 +515,137 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             try {
                 logger.info("Sending notifications for booking: {}", booking.getId());
 
-                // Create a notification for the user who made the booking
-                if (booking.getUser() != null) {
-                    String message = String.format("Your booking for room %s in %s from %s to %s has been confirmed. Passcode: %s",
-                                                   booking.getRoom().getRoomNumber(),
-                                                   booking.getHotel().getName(),
-                                                   booking.getCheckInDate(),
-                                                   booking.getCheckOutDate(),
-                                                   booking.getPasscode());
-                    
-                    // Create in-app notification
-                    notificationService.createNotification(booking.getUser(), message, NotificationType.BOOKING_CONFIRMATION);
-                    logger.info("Booking confirmation notification created for user: {}", booking.getUser().getId());
+                // Fetch the booking with all associations to avoid lazy loading issues
+                Booking fullBooking = bookingRepository.findById(booking.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + booking.getId()));
+
+                // Create booking notification
+                if (fullBooking.getUser() != null) {
+                    notificationService.createBookingNotification(fullBooking);
+                    logger.info("Booking notification created for user: {}", fullBooking.getUser().getId());
                     
                     // Send email confirmation if user has email
-                    if (booking.getUser().getEmail() != null && !booking.getUser().getEmail().trim().isEmpty()) {
+                    if (fullBooking.getUser().getEmail() != null && !fullBooking.getUser().getEmail().trim().isEmpty()) {
                         try {
-                            String guestName = booking.getGuestName() != null ? booking.getGuestName() : 
-                                             (booking.getUser().getName() != null ? booking.getUser().getName() : "Guest");
+                            String guestName = fullBooking.getGuestName() != null ? fullBooking.getGuestName() : 
+                                             (fullBooking.getUser().getName() != null ? fullBooking.getUser().getName() : "Guest");
                             
                             mailService.sendPasscodeEmailToGuest(
-                                booking.getUser().getEmail(),
+                                fullBooking.getUser().getEmail(),
                                 guestName,
-                                booking.getPasscode(),
-                                booking.getHotel().getName(),
-                                booking.getRoom().getRoomNumber(),
-                                booking.getCheckInDate(),
-                                booking.getCheckOutDate(),
-                                booking.getId()
+                                fullBooking.getPasscode(),
+                                fullBooking.getHotel().getName(),
+                                fullBooking.getRoom().getRoomNumber(),
+                                fullBooking.getCheckInDate(),
+                                fullBooking.getCheckOutDate(),
+                                fullBooking.getId()
                             );
-                            logger.info("Booking confirmation email sent to: {}", booking.getUser().getEmail());
+                            logger.info("Booking confirmation email sent to: {}", fullBooking.getUser().getEmail());
                         } catch (Exception e) {
                             logger.warn("Failed to send booking confirmation email to {}: {}", 
-                                       booking.getUser().getEmail(), e.getMessage());
+                                       fullBooking.getUser().getEmail(), e.getMessage());
                         }
                     }
                 }
 
                 // Send WebSocket notification for real-time updates
-                bookingWebSocketService.notifyBookingUpdates(booking.getHotel().getId(), "New booking created: " + booking.getId());
+                bookingWebSocketService.notifyBookingUpdates(fullBooking.getHotel().getId(), "New booking created: " + fullBooking.getId());
 
             } catch (Exception e) {
                 logger.error("Failed to send notifications for booking: {}", booking.getId(), e);
             }
         });
+    }
+    
+    @Override
+    @Transactional
+    public boolean requestBookingCancellation(Long bookingId, Long userId) {
+        logger.info("Requesting cancellation for booking: {} by user: {}", bookingId, userId);
+
+        try {
+            // Fetch the booking
+            Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+            
+            // Validate that the user owns this booking
+            if (booking.getUser() == null || !booking.getUser().getId().equals(userId)) {
+                throw new BusinessException("User does not own this booking");
+            }
+            
+            // Check if booking can be cancelled (basic validation)
+            if (booking.getStatus() == BookingStatus.CANCELLED) {
+                throw new BusinessException("Booking is already cancelled");
+            }
+            
+            if (booking.getStatus() == BookingStatus.CHECKED_OUT) {
+                throw new BusinessException("Cannot request cancellation for a checked-out booking");
+            }
+            
+            // Create cancellation request notification
+            notificationService.createCancellationRequestNotification(booking);
+            
+            logger.info("Cancellation request notification created for booking: {}", bookingId);
+            return true;
+            
+        } catch (Exception e) {
+            logger.error("Failed to request cancellation for booking {}: {}", bookingId, e.getMessage());
+            throw e;
+        }
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<CancellationRequestResponse> getCancellationRequestsByHotel(Long hotelId) {
+        logger.info("Fetching cancellation requests for hotel: {}", hotelId);
+        
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+        
+        try {
+            List<Booking> bookings = bookingRepository.findBookingsWithCancellationRequestsByHotel(hotelId);
+            return mapBookingsToCancellationRequests(bookings);
+        } catch (Exception e) {
+            logger.error("Failed to fetch cancellation requests for hotel {}: {}", hotelId, e.getMessage());
+            throw new BusinessException("Failed to fetch cancellation requests for hotel: " + e.getMessage());
+        }
+    }
+    
+
+    
+    /**
+     * Map booking entities to cancellation request responses
+     * @param bookings List of bookings with cancellation request notifications
+     * @return List of cancellation request responses
+     */
+    private List<CancellationRequestResponse> mapBookingsToCancellationRequests(List<Booking> bookings) {
+        return bookings.stream()
+            .map(this::mapBookingToCancellationRequest)
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * Map a single booking entity to cancellation request response
+     * @param booking The booking entity
+     * @return Cancellation request response
+     */
+    private CancellationRequestResponse mapBookingToCancellationRequest(Booking booking) {
+        CancellationRequestResponse response = new CancellationRequestResponse();
+        
+        // Essential booking information
+        response.setBookingId(booking.getId());
+        response.setGuestName(booking.getGuestName());
+        response.setPhone(booking.getPhone());
+        response.setStatus(booking.getStatus().name());
+        response.setBookingCreatedAt(booking.getCreatedAt());
+        response.setCheckInDate(booking.getCheckInDate());
+        response.setCheckOutDate(booking.getCheckOutDate());
+        
+        // User information
+        if (booking.getUser() != null) {
+            response.setUserName(booking.getUser().getName());
+        }
+        
+        return response;
     }
 }

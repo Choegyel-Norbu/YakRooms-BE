@@ -2,7 +2,6 @@ package com.yakrooms.be.repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -192,6 +191,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Modifying
     @Query("DELETE FROM Booking b WHERE b.hotel.id = :hotelId")
     void deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
+    
+    // Fetch bookings with cancellation request notifications for specific hotel
+    @EntityGraph("Booking.withDetails")
+    @Query("SELECT DISTINCT b FROM Booking b " +
+           "INNER JOIN Notification n ON n.booking.id = b.id " +
+           "WHERE n.type = 'BOOKING_CANCELLATION_REQUEST' " +
+           "AND b.hotel.id = :hotelId")
+    List<Booking> findBookingsWithCancellationRequestsByHotel(@Param("hotelId") Long hotelId);
+    
+
 
     // Dashboard and analytics queries
     @Query(value = """

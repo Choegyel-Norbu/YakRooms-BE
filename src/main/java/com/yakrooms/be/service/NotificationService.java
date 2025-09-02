@@ -1,5 +1,6 @@
 package com.yakrooms.be.service;
 
+import com.yakrooms.be.model.entity.Booking;
 import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.NotificationType;
@@ -11,4 +12,18 @@ public interface NotificationService {
     void markAllAsRead(User user);
     void deleteAllNotifications(User user);
     Notification createNotification(User user, String message, NotificationType type);
+    
+    /**
+     * Creates a notification when a new booking is created
+     * @param booking The booking that was created
+     * @return The created notification
+     */
+    Notification createBookingNotification(Booking booking);
+    
+    /**
+     * Creates a notification when a guest requests booking cancellation
+     * @param booking The booking for which cancellation is requested
+     * @return The created notification
+     */
+    Notification createCancellationRequestNotification(Booking booking);
 } 

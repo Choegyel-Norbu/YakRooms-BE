@@ -4,6 +4,7 @@ import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.request.BookingExtensionRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.dto.response.BookingExtensionResponse;
+import com.yakrooms.be.dto.response.CancellationRequestResponse;
 
 /**
  * UnifiedBookingService interface that handles ONLY booking creation with pessimistic locking.
@@ -68,4 +69,19 @@ public interface UnifiedBookingService {
      * @return The created booking response
      */
     BookingResponse createSingleNightBooking(BookingRequest request);
+    
+    /**
+     * Request cancellation for a booking (creates notification for staff to process)
+     * @param bookingId The booking ID to request cancellation for
+     * @param userId The user ID requesting the cancellation
+     * @return true if cancellation request was successful
+     */
+    boolean requestBookingCancellation(Long bookingId, Long userId);
+    
+    /**
+     * Get bookings with cancellation request notifications for a specific hotel
+     * @param hotelId The hotel ID
+     * @return List of cancellation request responses for the hotel
+     */
+    java.util.List<CancellationRequestResponse> getCancellationRequestsByHotel(Long hotelId);
 }

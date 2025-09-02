@@ -80,8 +80,6 @@ public class BookingServiceImpl implements BookingService {
         this.roomAvailabilityService = roomAvailabilityService;
     }
 
-    // createBooking method removed - now handled by UnifiedBookingService
-
     @Override
     public void deleteBookingById(Long bookingId) {
         logger.info("Deleting booking: {}", bookingId);
@@ -209,6 +207,8 @@ public class BookingServiceImpl implements BookingService {
 
         logger.info("Successfully cancelled booking: {}", bookingId);
     }
+
+
 
     @Override
     @Transactional(readOnly = true)

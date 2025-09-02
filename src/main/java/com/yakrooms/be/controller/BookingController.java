@@ -23,11 +23,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
+import java.util.Map;
 
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.request.BookingExtensionRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.dto.response.BookingExtensionResponse;
+import com.yakrooms.be.dto.response.CancellationRequestResponse;
 import com.yakrooms.be.service.BookingService;
 import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.model.entity.Room;
@@ -155,6 +157,39 @@ public class BookingController {
 	public ResponseEntity<?> deleteBooking(@PathVariable Long bookingId) {
 		bookingService.deleteBookingById(bookingId);
 		return ResponseEntity.ok().body("Booking deleted successfully");
+	}
+	
+	// Request booking cancellation - GUEST can request cancellation (creates notification for staff)
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
+	@PostMapping("/{bookingId}/request-cancellation")
+	public ResponseEntity<Map<String, Object>> requestBookingCancellation(
+			@PathVariable Long bookingId,
+			@RequestParam Long userId) {
+		
+		try {
+			logger.info("Requesting cancellation for booking: {} by user: {}", bookingId, userId);
+			
+			boolean success = unifiedBookingService.requestBookingCancellation(bookingId, userId);
+			
+			Map<String, Object> response = new HashMap<>();
+			response.put("success", success);
+			response.put("message", success ? 
+				"Cancellation request submitted successfully. Staff will review and process your request." : 
+				"Failed to submit cancellation request.");
+			response.put("bookingId", bookingId);
+			
+			return ResponseEntity.ok(response);
+			
+		} catch (Exception e) {
+			logger.error("Failed to request cancellation for booking {}: {}", bookingId, e.getMessage());
+			
+			Map<String, Object> errorResponse = new HashMap<>();
+			errorResponse.put("success", false);
+			errorResponse.put("message", "Failed to submit cancellation request: " + e.getMessage());
+			errorResponse.put("bookingId", bookingId);
+			
+			return ResponseEntity.badRequest().body(errorResponse);
+		}
 	}
 	
 	// Extend booking stay - GUEST, HOTEL_ADMIN, and STAFF can extend
@@ -376,5 +411,28 @@ public class BookingController {
             return ResponseEntity.badRequest().build();
         }
     }
+    
+    /**
+     * Get cancellation requests for a specific hotel - Only HOTEL_ADMIN and STAFF can access
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/cancellation-requests/hotel/{hotelId}")
+    public ResponseEntity<?> getCancellationRequestsByHotel(
+            @PathVariable Long hotelId) {
+        try {
+            logger.info("Fetching cancellation requests for hotel: {}", hotelId);
+            List<CancellationRequestResponse> cancellationRequests = unifiedBookingService.getCancellationRequestsByHotel(hotelId);
+            logger.info("Successfully fetched {} cancellation requests for hotel {}", cancellationRequests.size(), hotelId);
+            return ResponseEntity.ok(cancellationRequests);
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid request for hotel {}: {}", hotelId, e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Failed to fetch cancellation requests for hotel {}: {}", hotelId, e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to fetch cancellation requests: " + e.getMessage()));
+        }
+    }
+    
+
 
 }
