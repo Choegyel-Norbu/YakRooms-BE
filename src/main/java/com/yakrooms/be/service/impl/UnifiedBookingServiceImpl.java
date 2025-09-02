@@ -521,6 +521,7 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
 
                 // Create booking notification
                 if (fullBooking.getUser() != null) {
+                    // Create notification for registered user
                     notificationService.createBookingNotification(fullBooking);
                     logger.info("Booking notification created for user: {}", fullBooking.getUser().getId());
                     
@@ -546,6 +547,10 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
                                        fullBooking.getUser().getEmail(), e.getMessage());
                         }
                     }
+                } else {
+                    // Create notification for hotel staff when booking has no user
+                    logger.info("Creating booking notification for hotel staff - booking has no associated user");
+                    notificationService.createBookingNotification(fullBooking);
                 }
 
                 // Send WebSocket notification for real-time updates
@@ -581,6 +586,10 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
                 throw new BusinessException("Cannot request cancellation for a checked-out booking");
             }
             
+            // Update status to CANCELLATION_REQUESTED and persist
+            booking.setStatus(BookingStatus.CANCELLATION_REQUESTED);
+            booking = bookingRepository.save(booking);
+
             // Create cancellation request notification
             notificationService.createCancellationRequestNotification(booking);
             
@@ -610,6 +619,8 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             throw new BusinessException("Failed to fetch cancellation requests for hotel: " + e.getMessage());
         }
     }
+    
+
     
 
     

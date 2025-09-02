@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
-import java.util.Map;
 
 import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.request.BookingExtensionRequest;
@@ -430,6 +429,72 @@ public class BookingController {
         } catch (Exception e) {
             logger.error("Failed to fetch cancellation requests for hotel {}: {}", hotelId, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to fetch cancellation requests: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Approve a cancellation request - Only HOTEL_ADMIN and STAFF can approve
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @PutMapping("/{bookingId}/approve-cancellation")
+    public ResponseEntity<Map<String, Object>> approveCancellationRequest(
+            @PathVariable Long bookingId) {
+        try {
+            logger.info("Approving cancellation request for booking: {}", bookingId);
+            
+            boolean success = bookingService.updateBookingStatus(bookingId, "CANCELLED");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? 
+                "Cancellation request approved successfully. Booking has been cancelled." : 
+                "Failed to approve cancellation request.");
+            response.put("bookingId", bookingId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Failed to approve cancellation request for booking {}: {}", bookingId, e.getMessage());
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to approve cancellation request: " + e.getMessage());
+            errorResponse.put("bookingId", bookingId);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+    
+    /**
+     * Reject a cancellation request - Only HOTEL_ADMIN and STAFF can reject
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @PutMapping("/{bookingId}/reject-cancellation")
+    public ResponseEntity<Map<String, Object>> rejectCancellationRequest(
+            @PathVariable Long bookingId) {
+        try {
+            logger.info("Rejecting cancellation request for booking: {}", bookingId);
+            
+            boolean success = bookingService.updateBookingStatus(bookingId, "CONFIRMED");
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? 
+                "Cancellation request rejected successfully. Booking remains active." : 
+                "Failed to reject cancellation request.");
+            response.put("bookingId", bookingId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Failed to reject cancellation request for booking {}: {}", bookingId, e.getMessage());
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to reject cancellation request: " + e.getMessage());
+            errorResponse.put("bookingId", bookingId);
+            
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
     

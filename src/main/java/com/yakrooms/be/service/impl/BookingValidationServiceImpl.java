@@ -55,17 +55,21 @@ public class BookingValidationServiceImpl implements BookingValidationService {
     private static final Map<BookingStatus, Set<BookingStatus>> VALID_STATUS_TRANSITIONS = new HashMap<>();
     
     static {
-        // PENDING can transition to CONFIRMED, CANCELLED, or CHECKED_IN
+        // PENDING can transition to CONFIRMED, CANCELLED, CANCELLATION_REQUESTED, or CHECKED_IN
         VALID_STATUS_TRANSITIONS.put(BookingStatus.PENDING, 
-            Set.of(BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.CHECKED_IN));
+            Set.of(BookingStatus.CONFIRMED, BookingStatus.CANCELLED, BookingStatus.CANCELLATION_REQUESTED, BookingStatus.CHECKED_IN));
         
-        // CONFIRMED can transition to CHECKED_IN, CANCELLED, or CHECKED_OUT
+        // CONFIRMED can transition to CHECKED_IN, CANCELLED, CANCELLATION_REQUESTED, or CHECKED_OUT
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CONFIRMED, 
-            Set.of(BookingStatus.CHECKED_IN, BookingStatus.CANCELLED, BookingStatus.CHECKED_OUT));
+            Set.of(BookingStatus.CHECKED_IN, BookingStatus.CANCELLED, BookingStatus.CANCELLATION_REQUESTED, BookingStatus.CHECKED_OUT));
         
         // CHECKED_IN can transition to CHECKED_OUT or CANCELLED
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CHECKED_IN, 
             Set.of(BookingStatus.CHECKED_OUT, BookingStatus.CANCELLED));
+        
+        // CANCELLATION_REQUESTED can transition to CANCELLED or CONFIRMED (approve/reject)
+        VALID_STATUS_TRANSITIONS.put(BookingStatus.CANCELLATION_REQUESTED, 
+            Set.of(BookingStatus.CANCELLED, BookingStatus.CONFIRMED));
         
         // CHECKED_OUT is a terminal state
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CHECKED_OUT, Set.of());
@@ -232,12 +236,8 @@ public class BookingValidationServiceImpl implements BookingValidationService {
             throw new BusinessException("Cannot cancel a completed booking");
         }
         
-        // Check if check-in has already started
-        LocalDate today = LocalDate.now();
-        if (booking.getCheckInDate().isEqual(today) || booking.getCheckInDate().isBefore(today)) {
-            throw new BusinessException("Cannot cancel a booking on or after check-in date");
-        }
-        
+        // Allow cancellation requests even if check-in has started (for staff approval)
+        // The business logic will determine if cancellation is appropriate
         logger.debug("Cancellation validation passed");
     }
     

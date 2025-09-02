@@ -365,6 +365,10 @@ public class Booking {
     public boolean isActive() {
         return status != BookingStatus.CANCELLED && status != BookingStatus.CHECKED_OUT;
     }
+    
+    public boolean isPendingCancellation() {
+        return status == BookingStatus.CANCELLATION_REQUESTED;
+    }
 
     public boolean isConfirmed() {
         return status == BookingStatus.CONFIRMED || status == BookingStatus.CHECKED_IN;
@@ -376,6 +380,10 @@ public class Booking {
 
     public boolean canBeCancelled() {
         return status == BookingStatus.PENDING || status == BookingStatus.CONFIRMED;
+    }
+    
+    public boolean hasCancellationRequested() {
+        return status == BookingStatus.CANCELLATION_REQUESTED;
     }
 
     public long getStayDuration() {

@@ -12,7 +12,7 @@
 [INFO] 
 [INFO] --- compiler:3.14.0:compile (default-compile) @ yakrooms ---
 [INFO] Recompiling the module because of changed source code.
-[INFO] Compiling 139 source files with javac [debug parameters release 17] to target/classes
+[INFO] Compiling 138 source files with javac [debug parameters release 17] to target/classes
 [WARNING] /Users/mac/Documents/Projects/YakRooms/yakrooms/src/main/java/com/yakrooms/be/security/SecurityConfig.java:[48,17] frameOptions() in org.springframework.security.config.annotation.web.configurers.HeadersConfigurer has been deprecated and marked for removal
 [WARNING] /Users/mac/Documents/Projects/YakRooms/yakrooms/src/main/java/com/yakrooms/be/security/SecurityConfig.java:[50,17] contentTypeOptions() in org.springframework.security.config.annotation.web.configurers.HeadersConfigurer has been deprecated and marked for removal
 [WARNING] /Users/mac/Documents/Projects/YakRooms/yakrooms/src/main/java/com/yakrooms/be/security/SecurityConfig.java:[50,38] and() in org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.ContentTypeOptionsConfig has been deprecated and marked for removal
@@ -40,24 +40,24 @@
 
  :: Spring Boot ::                (v3.5.3)
 
-2025-09-02T09:31:31.161+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.YakroomsApplication      : Starting YakroomsApplication using Java 23.0.2 with PID 16436 (/Users/mac/Documents/Projects/YakRooms/yakrooms/target/classes started by mac in /Users/mac/Documents/Projects/YakRooms/yakrooms)
-2025-09-02T09:31:31.162+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.YakroomsApplication      : The following 1 profile is active: "dev"
-2025-09-02T09:31:31.710+06:00  INFO 16436 --- [yakrooms] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-09-02T09:31:31.752+06:00  INFO 16436 --- [yakrooms] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 38 ms. Found 10 JPA repository interfaces.
-2025-09-02T09:31:32.064+06:00  INFO 16436 --- [yakrooms] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-09-02T09:31:32.073+06:00  INFO 16436 --- [yakrooms] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-09-02T09:31:32.073+06:00  INFO 16436 --- [yakrooms] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.42]
-2025-09-02T09:31:32.102+06:00  INFO 16436 --- [yakrooms] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-09-02T09:31:32.102+06:00  INFO 16436 --- [yakrooms] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 917 ms
-2025-09-02T09:31:32.189+06:00  INFO 16436 --- [yakrooms] [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name jwtAuthenticationProvider
-2025-09-02T09:31:32.283+06:00  INFO 16436 --- [yakrooms] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2025-09-02T09:31:32.315+06:00  INFO 16436 --- [yakrooms] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.18.Final
-2025-09-02T09:31:32.331+06:00  INFO 16436 --- [yakrooms] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2025-09-02T09:31:32.455+06:00  INFO 16436 --- [yakrooms] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2025-09-02T09:31:32.469+06:00  INFO 16436 --- [yakrooms] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2025-09-02T09:31:32.707+06:00  INFO 16436 --- [yakrooms] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4203529f
-2025-09-02T09:31:32.708+06:00  INFO 16436 --- [yakrooms] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2025-09-02T09:31:32.752+06:00  INFO 16436 --- [yakrooms] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+2025-09-02T11:35:36.000+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.YakroomsApplication      : Starting YakroomsApplication using Java 23.0.2 with PID 77507 (/Users/mac/Documents/Projects/YakRooms/yakrooms/target/classes started by mac in /Users/mac/Documents/Projects/YakRooms/yakrooms)
+2025-09-02T11:35:36.001+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.YakroomsApplication      : The following 1 profile is active: "dev"
+2025-09-02T11:35:36.541+06:00  INFO 77507 --- [yakrooms] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-09-02T11:35:36.591+06:00  INFO 77507 --- [yakrooms] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 44 ms. Found 10 JPA repository interfaces.
+2025-09-02T11:35:36.908+06:00  INFO 77507 --- [yakrooms] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-09-02T11:35:36.916+06:00  INFO 77507 --- [yakrooms] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-09-02T11:35:36.916+06:00  INFO 77507 --- [yakrooms] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.42]
+2025-09-02T11:35:36.946+06:00  INFO 77507 --- [yakrooms] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-09-02T11:35:36.947+06:00  INFO 77507 --- [yakrooms] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 918 ms
+2025-09-02T11:35:37.036+06:00  INFO 77507 --- [yakrooms] [           main] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name jwtAuthenticationProvider
+2025-09-02T11:35:37.129+06:00  INFO 77507 --- [yakrooms] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-09-02T11:35:37.158+06:00  INFO 77507 --- [yakrooms] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.18.Final
+2025-09-02T11:35:37.175+06:00  INFO 77507 --- [yakrooms] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-09-02T11:35:37.294+06:00  INFO 77507 --- [yakrooms] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-09-02T11:35:37.307+06:00  INFO 77507 --- [yakrooms] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-09-02T11:35:37.539+06:00  INFO 77507 --- [yakrooms] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@470f0637
+2025-09-02T11:35:37.540+06:00  INFO 77507 --- [yakrooms] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-09-02T11:35:37.583+06:00  INFO 77507 --- [yakrooms] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
 	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
 	Database driver: undefined/unknown
 	Database version: 9.2
@@ -65,101 +65,201 @@
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2025-09-02T09:31:33.362+06:00  INFO 16436 --- [yakrooms] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-09-02T11:35:38.211+06:00  INFO 77507 --- [yakrooms] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
 Hibernate: alter table hotels modify column hotel_type enum ('BOUTIQUE','BUDGET','FIVE_STAR','FOUR_STAR','HOMESTAY','ONE_STAR','RESORT','THREE_STAR','TWO_STAR')
 Hibernate: alter table room modify column room_type enum ('DELUXE','DOUBLE','FAMILY','KING','QUEEN','SINGLE','SUITE','TWIN') not null
-2025-09-02T09:31:33.754+06:00  INFO 16436 --- [yakrooms] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-09-02T11:35:38.446+06:00  INFO 77507 --- [yakrooms] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
 ✅ Firebase Initialized
-2025-09-02T09:31:33.952+06:00  INFO 16436 --- [yakrooms] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2025-09-02T09:31:35.569+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Configuring WebSocket message broker
-2025-09-02T09:31:35.570+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Enabled simple broker for topics: /topic, /queue
-2025-09-02T09:31:35.570+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Set application destination prefix: /app
-2025-09-02T09:31:35.580+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Configuring WebSocket message converters
-2025-09-02T09:31:35.581+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Added MappingJackson2MessageConverter to WebSocket message converters
-2025-09-02T09:31:35.858+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Registering STOMP endpoints
-2025-09-02T09:31:35.860+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Registered STOMP endpoint: /ws with SockJS support
-2025-09-02T09:31:35.860+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Registered STOMP endpoint: /ws/bookings with SockJS support
-2025-09-02T09:31:35.860+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : WebSocket endpoints registered successfully
-2025-09-02T09:31:35.875+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.w.s.s.s.WebSocketHandlerMapping      : Patterns [/ws/**, /ws/bookings/**] in 'stompWebSocketHandlerMapping'
-2025-09-02T09:31:35.930+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:38.637+06:00  INFO 77507 --- [yakrooms] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-09-02T11:35:40.292+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Configuring WebSocket message broker
+2025-09-02T11:35:40.293+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Enabled simple broker for topics: /topic, /queue
+2025-09-02T11:35:40.293+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Set application destination prefix: /app
+2025-09-02T11:35:40.303+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Configuring WebSocket message converters
+2025-09-02T11:35:40.304+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Added MappingJackson2MessageConverter to WebSocket message converters
+2025-09-02T11:35:40.579+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Registering STOMP endpoints
+2025-09-02T11:35:40.581+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Registered STOMP endpoint: /ws with SockJS support
+2025-09-02T11:35:40.581+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : Registered STOMP endpoint: /ws/bookings with SockJS support
+2025-09-02T11:35:40.581+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.config.WebSocketConfig   : WebSocket endpoints registered successfully
+2025-09-02T11:35:40.594+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.w.s.s.s.WebSocketHandlerMapping      : Patterns [/ws/**, /ws/bookings/**] in 'stompWebSocketHandlerMapping'
+2025-09-02T11:35:40.647+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.AuthController:
 	
-2025-09-02T09:31:35.930+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.647+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.BookingController:
 	
-2025-09-02T09:31:35.930+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.647+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.BookingStatisticsController:
 	
-2025-09-02T09:31:35.932+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.648+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.BookingWebSocketController:
 	{[MESSAGE],[/bookings/status]}: handleBookingStatusMessage(Map)
-2025-09-02T09:31:35.932+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.ContactController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.HotelController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.NotificationController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.PasscodeVerificationController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.ReviewController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.RoomController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.StaffController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.649+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.TestDataController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.650+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.UserRoleController:
 	
-2025-09-02T09:31:35.933+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.650+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	c.y.b.c.WebSocketTestController:
 	{[MESSAGE],[/test]}: handleTestMessage(Map)
-2025-09-02T09:31:35.935+06:00 DEBUG 16436 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
+2025-09-02T11:35:40.651+06:00 DEBUG 77507 --- [yakrooms] [           main] .WebSocketAnnotationMethodMessageHandler : 
 	o.s.b.a.w.s.e.BasicErrorController:
 	
-2025-09-02T09:31:36.121+06:00  INFO 16436 --- [yakrooms] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
-2025-09-02T09:31:36.460+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientOutboundChannel added SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
-2025-09-02T09:31:36.460+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel added WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
-2025-09-02T09:31:36.460+06:00  INFO 16436 --- [yakrooms] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
-2025-09-02T09:31:36.460+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18c47d20]
-2025-09-02T09:31:36.460+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18c47d20]
-2025-09-02T09:31:36.460+06:00  INFO 16436 --- [yakrooms] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18c47d20]]
-2025-09-02T09:31:36.461+06:00  INFO 16436 --- [yakrooms] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
-2025-09-02T09:31:36.461+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
-2025-09-02T09:31:36.461+06:00 DEBUG 16436 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
-2025-09-02T09:31:36.469+06:00  INFO 16436 --- [yakrooms] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
-2025-09-02T09:31:36.479+06:00  INFO 16436 --- [yakrooms] [           main] com.yakrooms.be.YakroomsApplication      : Started YakroomsApplication in 5.505 seconds (process running for 5.717)
-2025-09-02T09:31:52.147+06:00  INFO 16436 --- [yakrooms] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
-2025-09-02T09:31:52.147+06:00  INFO 16436 --- [yakrooms] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
-2025-09-02T09:31:52.152+06:00  INFO 16436 --- [yakrooms] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
-2025-09-02T09:32:18.576+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
-2025-09-02T09:32:18.580+06:00  INFO 16436 --- [yakrooms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
-2025-09-02T09:32:18.582+06:00 DEBUG 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientOutboundChannel removed SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
-2025-09-02T09:32:18.582+06:00 DEBUG 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel removed WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
-2025-09-02T09:32:18.582+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : Stopping...
-2025-09-02T09:32:18.582+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18c47d20]]
-2025-09-02T09:32:18.582+06:00 DEBUG 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18c47d20]
-2025-09-02T09:32:18.582+06:00 DEBUG 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@18c47d20]
-2025-09-02T09:32:18.582+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : Stopped.
-2025-09-02T09:32:18.583+06:00 DEBUG 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
-2025-09-02T09:32:18.583+06:00 DEBUG 16436 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
-2025-09-02T09:32:18.588+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
-2025-09-02T09:32:18.591+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
-2025-09-02T09:32:18.595+06:00  INFO 16436 --- [yakrooms] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2025-09-02T11:35:40.834+06:00  INFO 77507 --- [yakrooms] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoints beneath base path '/actuator'
+2025-09-02T11:35:41.181+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientOutboundChannel added SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-09-02T11:35:41.181+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel added WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-09-02T11:35:41.181+06:00  INFO 77507 --- [yakrooms] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Starting...
+2025-09-02T11:35:41.182+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@31be1586]
+2025-09-02T11:35:41.182+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel added SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@31be1586]
+2025-09-02T11:35:41.182+06:00  INFO 77507 --- [yakrooms] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=true, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@31be1586]]
+2025-09-02T11:35:41.182+06:00  INFO 77507 --- [yakrooms] [           main] o.s.m.s.b.SimpleBrokerMessageHandler     : Started.
+2025-09-02T11:35:41.182+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-09-02T11:35:41.182+06:00 DEBUG 77507 --- [yakrooms] [           main] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel added UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-09-02T11:35:41.190+06:00  INFO 77507 --- [yakrooms] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-09-02T11:35:41.200+06:00  INFO 77507 --- [yakrooms] [           main] com.yakrooms.be.YakroomsApplication      : Started YakroomsApplication in 5.429 seconds (process running for 5.598)
+2025-09-02T11:35:41.911+06:00  INFO 77507 --- [yakrooms] [nio-8080-exec-1] o.apache.tomcat.util.http.parser.Cookie  : A cookie header was received [g_state={"i_l":0};] that contained an invalid cookie. That cookie will be ignored.
+ Note: further occurrences of this error will be logged at DEBUG level.
+2025-09-02T11:35:41.915+06:00  INFO 77507 --- [yakrooms] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-09-02T11:35:41.916+06:00  INFO 77507 --- [yakrooms] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-09-02T11:35:41.917+06:00  INFO 77507 --- [yakrooms] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-09-02T11:35:41.952+06:00 DEBUG 77507 --- [yakrooms] [nio-8080-exec-1] o.s.w.s.s.s.WebSocketHandlerMapping      : Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@2dc39a7c
+2025-09-02T11:35:41.952+06:00 DEBUG 77507 --- [yakrooms] [nio-8080-exec-1] o.s.w.s.s.t.h.DefaultSockJsService       : Processing transport request: GET http://localhost:8080/ws/info?t=1756791341850
+2025-09-02T11:35:41.962+06:00 DEBUG 77507 --- [yakrooms] [nio-8080-exec-2] o.s.w.s.s.s.WebSocketHandlerMapping      : Mapped to org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler@2dc39a7c
+2025-09-02T11:35:41.963+06:00 DEBUG 77507 --- [yakrooms] [nio-8080-exec-2] o.s.w.s.s.t.h.DefaultSockJsService       : Processing transport request: GET http://localhost:8080/ws/669/pxpol2sj/websocket
+2025-09-02T11:35:41.980+06:00 DEBUG 77507 --- [yakrooms] [nio-8080-exec-2] s.w.s.h.LoggingWebSocketHandlerDecorator : New WebSocketServerSockJsSession[id=pxpol2sj]
+2025-09-02T11:35:41.998+06:00 DEBUG 77507 --- [yakrooms] [nboundChannel-2] o.s.m.s.b.SimpleBrokerMessageHandler     : Processing CONNECT session=pxpol2sj
+2025-09-02T11:35:42.004+06:00 DEBUG 77507 --- [yakrooms] [nboundChannel-5] o.s.m.s.b.SimpleBrokerMessageHandler     : Processing SUBSCRIBE /topic/notifications/2 id=sub-2-1756791342002 session=pxpol2sj
+2025-09-02T11:35:43.851+06:00 DEBUG 77507 --- [yakrooms] [nboundChannel-7] .WebSocketAnnotationMethodMessageHandler : Searching methods to handle SEND /app/ping session=pxpol2sj, lookupDestination='/ping'
+2025-09-02T11:35:43.851+06:00 DEBUG 77507 --- [yakrooms] [nboundChannel-7] .WebSocketAnnotationMethodMessageHandler : No matching message handler methods.
+2025-09-02T11:36:41.175+06:00  INFO 77507 --- [yakrooms] [MessageBroker-7] o.s.w.s.c.WebSocketMessageBrokerStats    : WebSocketSession[1 current WS(1)-HttpStream(0)-HttpPoll(0), 1 total, 0 closed abnormally (0 connect failure, 0 send limit, 0 transport error)], stompSubProtocol[processed CONNECT(1)-CONNECTED(1)-DISCONNECT(0)], stompBrokerRelay[null], inboundChannel[pool size = 9, active threads = 0, queued tasks = 0, completed tasks = 9], outboundChannel[pool size = 1, active threads = 0, queued tasks = 0, completed tasks = 1], sockJsScheduler[pool size = 8, active threads = 1, queued tasks = 3, completed tasks = 14]
+2025-09-02T11:39:14.986+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-09-02T11:39:14.997+06:00  INFO 77507 --- [yakrooms] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-09-02T11:39:15.002+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientOutboundChannel removed SubProtocolWebSocketHandler[StompSubProtocolHandler[v10.stomp, v11.stomp, v12.stomp]]
+2025-09-02T11:39:15.003+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] s.w.s.s.t.s.WebSocketServerSockJsSession : Closing SockJS session pxpol2sj with CloseStatus[code=1001, reason=null]
+2025-09-02T11:39:15.004+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] s.w.s.h.LoggingWebSocketHandlerDecorator : Transport error in WebSocketServerSockJsSession[id=pxpol2sj]
+
+java.io.IOException: java.nio.channels.ClosedChannelException
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:326) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:266) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsSession.sendCloseMessage(WsSession.java:778) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsSession.doClose(WsSession.java:575) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:324) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:266) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:250) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendPartialString(WsRemoteEndpointImplBase.java:223) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointBasic.sendText(WsRemoteEndpointBasic.java:48) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.springframework.web.socket.adapter.standard.StandardWebSocketSession.sendTextMessage(StandardWebSocketSession.java:217) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.adapter.AbstractWebSocketSession.sendMessage(AbstractWebSocketSession.java:108) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.sockjs.transport.session.WebSocketServerSockJsSession.writeFrameInternal(WebSocketServerSockJsSession.java:228) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.sockjs.transport.session.AbstractSockJsSession.close(AbstractSockJsSession.java:188) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.handler.WebSocketSessionDecorator.close(WebSocketSessionDecorator.java:164) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator.close(ConcurrentWebSocketSessionDecorator.java:271) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:308) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:321) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStop(DefaultLifecycleProcessor.java:463) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.DefaultLifecycleProcessor$LifecycleGroup.stop(DefaultLifecycleProcessor.java:618) ~[spring-context-6.2.8.jar:6.2.8]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.context.support.DefaultLifecycleProcessor.stopBeans(DefaultLifecycleProcessor.java:432) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.DefaultLifecycleProcessor.onClose(DefaultLifecycleProcessor.java:323) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.AbstractApplicationContext.doClose(AbstractApplicationContext.java:1172) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.doClose(ServletWebServerApplicationContext.java:179) ~[spring-boot-3.5.3.jar:3.5.3]
+	at org.springframework.context.support.AbstractApplicationContext.close(AbstractApplicationContext.java:1126) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.boot.SpringApplicationShutdownHook.closeAndWait(SpringApplicationShutdownHook.java:147) ~[spring-boot-3.5.3.jar:3.5.3]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.boot.SpringApplicationShutdownHook.run(SpringApplicationShutdownHook.java:116) ~[spring-boot-3.5.3.jar:3.5.3]
+	at java.base/java.lang.Thread.run(Thread.java:1575) ~[na:na]
+Caused by: java.nio.channels.ClosedChannelException: null
+	at org.apache.tomcat.util.net.NioChannel$1.write(NioChannel.java:282) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper$NioOperationState.run(NioEndpoint.java:1665) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase$OperationState.start(SocketWrapperBase.java:987) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase.vectoredOperation(SocketWrapperBase.java:1358) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1287) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1262) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.server.WsRemoteEndpointImplServer.doWrite(WsRemoteEndpointImplServer.java:171) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.writeMessagePart(WsRemoteEndpointImplBase.java:521) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:313) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	... 24 common frames omitted
+
+2025-09-02T11:39:15.009+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] s.w.s.s.t.s.WebSocketServerSockJsSession : Failure while sending SockJS close frame
+
+java.io.IOException: java.nio.channels.ClosedChannelException
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:326) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:266) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlock(WsRemoteEndpointImplBase.java:250) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendPartialString(WsRemoteEndpointImplBase.java:223) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointBasic.sendText(WsRemoteEndpointBasic.java:48) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.springframework.web.socket.adapter.standard.StandardWebSocketSession.sendTextMessage(StandardWebSocketSession.java:217) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.adapter.AbstractWebSocketSession.sendMessage(AbstractWebSocketSession.java:108) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.sockjs.transport.session.WebSocketServerSockJsSession.writeFrameInternal(WebSocketServerSockJsSession.java:228) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.sockjs.transport.session.AbstractSockJsSession.close(AbstractSockJsSession.java:188) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.handler.WebSocketSessionDecorator.close(WebSocketSessionDecorator.java:164) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator.close(ConcurrentWebSocketSessionDecorator.java:271) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:308) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.web.socket.messaging.SubProtocolWebSocketHandler.stop(SubProtocolWebSocketHandler.java:321) ~[spring-websocket-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.DefaultLifecycleProcessor.doStop(DefaultLifecycleProcessor.java:463) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.DefaultLifecycleProcessor$LifecycleGroup.stop(DefaultLifecycleProcessor.java:618) ~[spring-context-6.2.8.jar:6.2.8]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.context.support.DefaultLifecycleProcessor.stopBeans(DefaultLifecycleProcessor.java:432) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.DefaultLifecycleProcessor.onClose(DefaultLifecycleProcessor.java:323) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.context.support.AbstractApplicationContext.doClose(AbstractApplicationContext.java:1172) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.doClose(ServletWebServerApplicationContext.java:179) ~[spring-boot-3.5.3.jar:3.5.3]
+	at org.springframework.context.support.AbstractApplicationContext.close(AbstractApplicationContext.java:1126) ~[spring-context-6.2.8.jar:6.2.8]
+	at org.springframework.boot.SpringApplicationShutdownHook.closeAndWait(SpringApplicationShutdownHook.java:147) ~[spring-boot-3.5.3.jar:3.5.3]
+	at java.base/java.lang.Iterable.forEach(Iterable.java:75) ~[na:na]
+	at org.springframework.boot.SpringApplicationShutdownHook.run(SpringApplicationShutdownHook.java:116) ~[spring-boot-3.5.3.jar:3.5.3]
+	at java.base/java.lang.Thread.run(Thread.java:1575) ~[na:na]
+Caused by: java.nio.channels.ClosedChannelException: null
+	at org.apache.tomcat.util.net.NioChannel$1.write(NioChannel.java:282) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper$NioOperationState.run(NioEndpoint.java:1665) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase$OperationState.start(SocketWrapperBase.java:987) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase.vectoredOperation(SocketWrapperBase.java:1358) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1287) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.util.net.SocketWrapperBase.write(SocketWrapperBase.java:1262) ~[tomcat-embed-core-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.server.WsRemoteEndpointImplServer.doWrite(WsRemoteEndpointImplServer.java:171) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.writeMessagePart(WsRemoteEndpointImplBase.java:521) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	at org.apache.tomcat.websocket.WsRemoteEndpointImplBase.sendMessageBlockInternal(WsRemoteEndpointImplBase.java:313) ~[tomcat-embed-websocket-10.1.42.jar:10.1.42]
+	... 24 common frames omitted
+
+2025-09-02T11:39:15.010+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] s.w.s.h.LoggingWebSocketHandlerDecorator : WebSocketServerSockJsSession[id=pxpol2sj] closed with CloseStatus[code=1001, reason=null]
+2025-09-02T11:39:15.010+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.w.s.m.SubProtocolWebSocketHandler    : Clearing session pxpol2sj
+2025-09-02T11:39:15.010+06:00 DEBUG 77507 --- [yakrooms] [boundChannel-11] o.s.m.s.b.SimpleBrokerMessageHandler     : Processing DISCONNECT session=pxpol2sj
+2025-09-02T11:39:15.010+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel removed WebSocketAnnotationMethodMessageHandler[prefixes=[/app/]]
+2025-09-02T11:39:15.011+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : Stopping...
+2025-09-02T11:39:15.011+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : BrokerAvailabilityEvent[available=false, SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@31be1586]]
+2025-09-02T11:39:15.011+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@31be1586]
+2025-09-02T11:39:15.011+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel removed SimpleBrokerMessageHandler [org.springframework.messaging.simp.broker.DefaultSubscriptionRegistry@31be1586]
+2025-09-02T11:39:15.011+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.b.SimpleBrokerMessageHandler     : Stopped.
+2025-09-02T11:39:15.011+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : clientInboundChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-09-02T11:39:15.011+06:00 DEBUG 77507 --- [yakrooms] [ionShutdownHook] o.s.m.s.ExecutorSubscribableChannel      : brokerChannel removed UserDestinationMessageHandler[DefaultUserDestinationResolver[prefix=/user/]]
+2025-09-02T11:39:15.015+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-09-02T11:39:15.019+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-09-02T11:39:15.034+06:00  INFO 77507 --- [yakrooms] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD FAILURE
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  50.561 s
-[INFO] Finished at: 2025-09-02T09:32:18+06:00
+[INFO] Total time:  03:42 min
+[INFO] Finished at: 2025-09-02T11:39:15+06:00
 [INFO] ------------------------------------------------------------------------
 [ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.3:run (default-cli) on project yakrooms: Process terminated with exit code: 143 -> [Help 1]
 [ERROR] 

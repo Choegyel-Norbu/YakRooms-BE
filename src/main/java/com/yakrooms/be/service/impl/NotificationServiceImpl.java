@@ -5,7 +5,12 @@ import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.NotificationType;
 import com.yakrooms.be.repository.NotificationRepository;
+import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.NotificationService;
+import com.yakrooms.be.dto.NotificationMessage;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +22,16 @@ import java.util.Optional;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationServiceImpl.class);
+    
     @Autowired
     private NotificationRepository notificationRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional(readOnly = true)
@@ -30,17 +43,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public List<Notification> getAllNotificationsByUserId(Long userId) {
         return notificationRepository.findByUserAndIsReadFalseWithAssociations(userId);
-    }
-
-    @Override
-    @Transactional
-    public Notification createNotification(User user, String message, NotificationType type) {
-        Notification notification = new Notification();
-        notification.setUser(user);
-        notification.setMessage(message);
-        notification.setType(type.name());
-        notification.setRead(false);
-        return notificationRepository.save(notification);
     }
 
     @Override
@@ -63,8 +65,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public Notification createBookingNotification(Booking booking) {
-        if (booking == null || booking.getUser() == null) {
-            throw new IllegalArgumentException("Booking and user cannot be null");
+        if (booking == null) {
+            throw new IllegalArgumentException("Booking cannot be null");
         }
 
         // Check if a booking created notification already exists for this booking
@@ -95,7 +97,25 @@ public class NotificationServiceImpl implements NotificationService {
         );
 
         Notification notification = new Notification();
-        notification.setUser(booking.getUser());
+        
+        // Handle bookings without users - create notification for hotel staff
+        if (booking.getUser() != null) {
+            notification.setUser(booking.getUser());
+        } else {
+            // For bookings without users, we need to find a hotel staff member to notify
+            // This is a simplified approach - in production, you might want to notify all hotel staff
+            // or have a specific admin user for the hotel
+            User hotelAdmin = findHotelAdminUser(booking.getHotel().getId());
+            if (hotelAdmin != null) {
+                notification.setUser(hotelAdmin);
+            } else {
+                // If no hotel admin found, we can't create the notification
+                logger.warn("No hotel admin found for hotel {} - cannot create notification for booking {}", 
+                           booking.getHotel().getId(), booking.getId());
+                return null;
+            }
+        }
+        
         notification.setBooking(booking);
         notification.setTitle(title);
         notification.setMessage(message);
@@ -150,5 +170,49 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setCreatedAt(LocalDateTime.now());
 
         return notificationRepository.save(notification);
+    }
+    
+    /**
+     * Find a hotel admin user for the given hotel ID.
+     * This is a simplified implementation - in production, you might want to
+     * notify all hotel staff or have a more sophisticated user role system.
+     * 
+     * @param hotelId The hotel ID
+     * @return A hotel admin user, or null if none found
+     */
+    private User findHotelAdminUser(Long hotelId) {
+        try {
+            // Find the first user associated with this hotel
+            // In a more sophisticated system, you'd look for users with ADMIN role
+            List<User> hotelUsers = userRepository.findByHotelId(hotelId);
+            if (!hotelUsers.isEmpty()) {
+                return hotelUsers.get(0); // Return the first user found
+            }
+        } catch (Exception e) {
+            // Log the error but don't fail the notification creation
+            System.err.println("Error finding hotel admin for hotel " + hotelId + ": " + e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Send WebSocket notification to a specific user
+     * 
+     * @param userId The user ID to send notification to
+     * @param payload The notification message payload
+     */
+    public void notifyUser(String userId, NotificationMessage payload) {
+        String destination = "/topic/notifications/" + userId;
+        logger.info("=== SENDING WEBSOCKET MESSAGE ===");
+        logger.info("Destination: {}", destination);
+        logger.info("Payload: {}", payload);
+        
+        try {
+            messagingTemplate.convertAndSend(destination, payload);
+            logger.info("WebSocket message sent successfully to user: {}", userId);
+        } catch (Exception e) {
+            logger.error("Failed to send WebSocket message to user {}: {}", userId, e.getMessage());
+            e.printStackTrace();
+        }
     }
 } 

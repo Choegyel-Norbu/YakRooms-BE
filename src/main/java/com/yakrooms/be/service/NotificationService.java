@@ -3,7 +3,6 @@ package com.yakrooms.be.service;
 import com.yakrooms.be.model.entity.Booking;
 import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.User;
-import com.yakrooms.be.model.enums.NotificationType;
 import java.util.List;
 
 public interface NotificationService {
@@ -11,7 +10,6 @@ public interface NotificationService {
     List<Notification> getAllNotificationsByUserId(Long userId);
     void markAllAsRead(User user);
     void deleteAllNotifications(User user);
-    Notification createNotification(User user, String message, NotificationType type);
     
     /**
      * Creates a notification when a new booking is created
