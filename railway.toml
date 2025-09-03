@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+buildCommand = "./railway-build.sh"
+
+[deploy]
+startCommand = "java -jar target/*.jar"
+healthcheckPath = "/api/v1/uploadthing/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[environments.production]
+variables = { RAILWAY_ENVIRONMENT = "production" }

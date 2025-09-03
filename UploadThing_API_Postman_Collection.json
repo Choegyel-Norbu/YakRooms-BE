@@ -1,0 +1,293 @@
+{
+  "info": {
+    "name": "UploadThing API Collection",
+    "description": "Complete API collection for UploadThing file deletion endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "health"]
+        },
+        "description": "Check if the UploadThing service is healthy"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Single File by File Key",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/files/afbf548f-9ea6-4c33-af30-e99faa902dfc-43rtxt.jpeg",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "files", "afbf548f-9ea6-4c33-af30-e99faa902dfc-43rtxt.jpeg"]
+        },
+        "description": "Delete a single file using its file key"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Multiple Files by File Keys",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  \"afbf548f-9ea6-4c33-af30-e99faa902dfc-43rtxt.jpeg\",\n  \"another-file-key-12345.png\",\n  \"third-file-key-67890.pdf\"\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/files",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "files"]
+        },
+        "description": "Delete multiple files using their file keys"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Single File by URL",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\"https://utfs.io/f/afbf548f-9ea6-4c33-af30-e99faa902dfc-43rtxt.jpeg\""
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/files/url",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "files", "url"]
+        },
+        "description": "Delete a single file using its UploadThing URL"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Multiple Files by URLs",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  \"https://utfs.io/f/afbf548f-9ea6-4c33-af30-e99faa902dfc-43rtxt.jpeg\",\n  \"https://utfs.io/f/another-file-key-12345.png\",\n  \"https://utfs.io/f/third-file-key-67890.pdf\"\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/files/urls",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "files", "urls"]
+        },
+        "description": "Delete multiple files using their UploadThing URLs"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Files Asynchronously (File Keys)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  \"file-key-1.jpeg\",\n  \"file-key-2.png\",\n  \"file-key-3.pdf\"\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/files/async",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "files", "async"]
+        },
+        "description": "Delete multiple files asynchronously using file keys"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Files Asynchronously (URLs)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  \"https://utfs.io/f/async-file1.jpeg\",\n  \"https://utfs.io/f/async-file2.png\"\n]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/uploadthing/files/urls/async",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "uploadthing", "files", "urls", "async"]
+        },
+        "description": "Delete multiple files asynchronously using URLs"
+      },
+      "response": []
+    },
+    {
+      "name": "Error Cases",
+      "item": [
+        {
+          "name": "Empty File List",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/uploadthing/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "uploadthing", "files"]
+            },
+            "description": "Test error case: Empty file list"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid URL",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"https://example.com/invalid-url\""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/uploadthing/files/url",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "uploadthing", "files", "url"]
+            },
+            "description": "Test error case: Invalid UploadThing URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Empty URL List",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[]"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/uploadthing/files/urls",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "uploadthing", "files", "urls"]
+            },
+            "description": "Test error case: Empty URL list"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test various error scenarios"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pre-request script to set up common headers",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Test script to validate responses",
+          "pm.test('Status code is valid', function () {",
+          "    pm.response.to.have.status(200, 202, 400, 500, 503);",
+          "});",
+          "",
+          "pm.test('Response has required fields', function () {",
+          "    const response = pm.response.json();",
+          "    pm.expect(response).to.have.property('success');",
+          "    pm.expect(response).to.have.property('message');",
+          "    pm.expect(response).to.have.property('deletedFiles');",
+          "    pm.expect(response).to.have.property('failedFiles');",
+          "});",
+          "",
+          "pm.test('Response time is less than 30 seconds', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(30000);",
+          "});"
+        ]
+      }
+    }
+  ]
+}

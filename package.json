@@ -1,0 +1,15 @@
+{
+  "name": "uploadthing-delete-script",
+  "version": "1.0.0",
+  "description": "Node.js script for UploadThing file deletion from Java backend",
+  "main": "uploadthing-delete.js",
+  "scripts": {
+    "delete": "node uploadthing-delete.js"
+  },
+  "dependencies": {
+    "uploadthing": "^7.7.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
