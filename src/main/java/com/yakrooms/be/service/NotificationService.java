@@ -24,4 +24,11 @@ public interface NotificationService {
      * @return The created notification
      */
     Notification createCancellationRequestNotification(Booking booking);
+    
+    /**
+     * Creates a notification when a cancellation request is rejected by hotel staff
+     * @param booking The booking for which cancellation was rejected
+     * @return The created notification
+     */
+    Notification createCancellationRejectionNotification(Booking booking);
 } 

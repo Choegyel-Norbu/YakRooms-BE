@@ -69,22 +69,16 @@ public class NotificationServiceImpl implements NotificationService {
             throw new IllegalArgumentException("Booking cannot be null");
         }
 
-        // Check if a booking created notification already exists for this booking
-        Optional<Notification> existingNotification = notificationRepository.findByBookingAndType(
-            booking, 
-            NotificationType.BOOKING_CREATED.name()
-        );
-        
-        if (existingNotification.isPresent()) {
-            // Return existing notification instead of creating a duplicate
-            return existingNotification.get();
+        // If booking has no user, don't create notification
+        if (booking.getUser() == null) {
+            return null;
         }
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
         String checkInDate = booking.getCheckInDate().format(dateFormatter);
         String checkOutDate = booking.getCheckOutDate().format(dateFormatter);
         
-        String title = "New Booking Created";
+        String title = "You have a new booking";
         String message = String.format(
             "A new booking has been created for %s at %s. " +
             "Check-in: %s, Check-out: %s, Guests: %d, Passcode: %s",
@@ -97,24 +91,7 @@ public class NotificationServiceImpl implements NotificationService {
         );
 
         Notification notification = new Notification();
-        
-        // Handle bookings without users - create notification for hotel staff
-        if (booking.getUser() != null) {
-            notification.setUser(booking.getUser());
-        } else {
-            // For bookings without users, we need to find a hotel staff member to notify
-            // This is a simplified approach - in production, you might want to notify all hotel staff
-            // or have a specific admin user for the hotel
-            User hotelAdmin = findHotelAdminUser(booking.getHotel().getId());
-            if (hotelAdmin != null) {
-                notification.setUser(hotelAdmin);
-            } else {
-                // If no hotel admin found, we can't create the notification
-                logger.warn("No hotel admin found for hotel {} - cannot create notification for booking {}", 
-                           booking.getHotel().getId(), booking.getId());
-                return null;
-            }
-        }
+        notification.setUser(booking.getUser());
         
         notification.setBooking(booking);
         notification.setTitle(title);
@@ -171,7 +148,52 @@ public class NotificationServiceImpl implements NotificationService {
 
         return notificationRepository.save(notification);
     }
-    
+
+    @Override
+    @Transactional
+    public Notification createCancellationRejectionNotification(Booking booking) {
+        if (booking == null || booking.getUser() == null) {
+            throw new IllegalArgumentException("Booking and user cannot be null");
+        }
+
+        // Check if a cancellation rejection notification already exists for this booking
+        Optional<Notification> existingNotification = notificationRepository.findByBookingAndType(
+            booking, 
+            NotificationType.BOOKING_CANCELLATION_REJECTED.name()
+        );
+        
+        if (existingNotification.isPresent()) {
+            // Return existing notification instead of creating a duplicate
+            return existingNotification.get();
+        }
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        String checkInDate = booking.getCheckInDate().format(dateFormatter);
+        String checkOutDate = booking.getCheckOutDate().format(dateFormatter);
+        
+        String title = "Cancellation Request Rejected";
+        String message = String.format(
+            "Your cancellation request for booking at %s has been rejected. " +
+            "Your booking remains active. Check-in: %s, Check-out: %s, Passcode: %s. " +
+            "Please contact the hotel directly if you have any questions.",
+            booking.getHotel().getName(),
+            checkInDate,
+            checkOutDate,
+            booking.getPasscode()
+        );
+
+        Notification notification = new Notification();
+        notification.setUser(booking.getUser());
+        notification.setBooking(booking);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setType(NotificationType.BOOKING_CANCELLATION_REJECTED.name());
+        notification.setRead(false);
+        notification.setCreatedAt(LocalDateTime.now());
+
+        return notificationRepository.save(notification);
+    }
+
     /**
      * Find a hotel admin user for the given hotel ID.
      * This is a simplified implementation - in production, you might want to
@@ -190,7 +212,7 @@ public class NotificationServiceImpl implements NotificationService {
             }
         } catch (Exception e) {
             // Log the error but don't fail the notification creation
-            System.err.println("Error finding hotel admin for hotel " + hotelId + ": " + e.getMessage());
+            logger.error("Error finding hotel admin for hotel {}: {}", hotelId, e.getMessage());
         }
         return null;
     }

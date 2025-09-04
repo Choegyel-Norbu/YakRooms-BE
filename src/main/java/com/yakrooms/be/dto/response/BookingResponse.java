@@ -9,6 +9,7 @@ import com.yakrooms.be.model.enums.BookingStatus;
 public class BookingResponse {
 	private Long id;
 	private Long userId;
+	private Long hotelId;
 	private Long roomId;
 	private LocalDate checkInDate;
 	private LocalDate checkOutDate;
@@ -104,6 +105,14 @@ public class BookingResponse {
 
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	public Long getHotelId() {
+		return hotelId;
+	}
+
+	public void setHotelId(Long hotelId) {
+		this.hotelId = hotelId;
 	}
 
 	public String getName() {

@@ -68,6 +68,11 @@ public class BookingMapper {
             response.setUserId(booking.getUser().getId());
         }
         
+        // Extract hotelId from Hotel entity
+        if (booking.getHotel() != null) {
+            response.setHotelId(booking.getHotel().getId());
+        }
+        
         // Extract roomId from Room entity
         if (booking.getRoom() != null) {
             response.setRoomId(booking.getRoom().getId());

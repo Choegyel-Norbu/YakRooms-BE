@@ -56,7 +56,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkInDate < :checkOut 
         AND b.checkOutDate > :checkIn
         """)
@@ -69,7 +69,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkInDate < :checkOut
         AND b.checkOutDate > :checkIn
         """)
@@ -82,7 +82,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkInDate < :checkOut
         AND b.checkOutDate > :checkIn
         """)
@@ -94,7 +94,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED', 'CANCELLATION_REJECTED')
         ORDER BY b.checkInDate ASC
         """)
     List<Booking> findAllActiveBookingsByRoomId(@Param("roomId") Long roomId);
@@ -116,7 +116,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkInDate < :checkOut
         AND b.checkOutDate > :checkIn
         AND b.id != :excludeBookingId
@@ -130,7 +130,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkOutDate <= :currentDate
         """)
     List<Booking> findBookingsNeedingAvailabilityUpdate(@Param("roomId") Long roomId,
@@ -140,7 +140,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status IN ('CONFIRMED', 'CHECKED_IN')
+        AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkInDate < :newCheckOut
         AND b.checkOutDate > :currentCheckOut
         """)
@@ -151,7 +151,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Find all bookings that have ended today and need room availability restoration
     @Query("""
         SELECT b FROM Booking b 
-        WHERE b.status IN ('CONFIRMED', 'CHECKED_IN')
+        WHERE b.status IN ('CONFIRMED', 'CHECKED_IN', 'CANCELLATION_REQUESTED')
         AND b.checkOutDate <= :currentDate
         """)
     List<Booking> findEndedBookingsNeedingAvailabilityRestoration(@Param("currentDate") LocalDate currentDate);
@@ -168,7 +168,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("""
         SELECT b FROM Booking b 
         WHERE b.room.id = :roomId 
-        AND b.status = 'CONFIRMED'
+        AND b.status IN ('CONFIRMED', 'CANCELLATION_REQUESTED')
         AND ( (b.checkInDate < :requestedCheckOut) AND (b.checkOutDate > :requestedCheckIn) )
         """)
     List<Booking> findAdvanceBookingConflicts(@Param("roomId") Long roomId,
@@ -200,7 +200,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.hotel.id = :hotelId")
     List<Booking> findBookingsWithCancellationRequestsByHotel(@Param("hotelId") Long hotelId);
     
-
 
     // Dashboard and analytics queries
     @Query(value = """

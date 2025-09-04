@@ -28,6 +28,15 @@ public interface BookingService {
 	
     public boolean updateBookingStatus(Long bookingId, String newStatus);
     
+    /**
+     * Reject a booking cancellation request.
+     * This method specifically handles cancellation rejection without affecting room availability.
+     * 
+     * @param bookingId The booking ID
+     * @return true if the rejection was successful
+     */
+    public boolean rejectCancellationRequest(Long bookingId);
+    
     public void deleteBookingById(Long bookingId);
 
     Page<BookingResponse> listAllBookingByHotel(Long hotelId, Pageable pageable);

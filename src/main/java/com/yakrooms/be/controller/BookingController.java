@@ -34,6 +34,7 @@ import com.yakrooms.be.service.UnifiedBookingService;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.exception.ResourceNotFoundException;
+import com.yakrooms.be.exception.BusinessException;
 import org.springframework.format.annotation.DateTimeFormat;
 
 
@@ -429,6 +430,75 @@ public class BookingController {
         } catch (Exception e) {
             logger.error("Failed to fetch cancellation requests for hotel {}: {}", hotelId, e.getMessage(), e);
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to fetch cancellation requests: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * Reject a cancellation request for a booking - Only HOTEL_ADMIN and STAFF can reject
+     * Uses the dedicated rejectCancellationRequest method that doesn't affect room availability
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @PutMapping("/cancellation-requests/{bookingId}/reject")
+    public ResponseEntity<Map<String, Object>> rejectCancellationRequest(
+            @PathVariable Long bookingId,
+            @RequestParam(required = false) Long hotelId) {
+        
+        try {
+            logger.info("Rejecting cancellation request for booking: {} in hotel: {}", bookingId, hotelId);
+            
+            // If hotelId is not provided, get it from the booking for logging purposes
+            Long actualHotelId = hotelId;
+            if (actualHotelId == null) {
+                try {
+                    var bookingResponse = bookingService.getBookingDetails(bookingId);
+                    actualHotelId = bookingResponse.getHotelId();
+                    logger.info("Derived hotel ID {} from booking {}", actualHotelId, bookingId);
+                } catch (Exception e) {
+                    logger.error("Failed to get booking details for ID {}: {}", bookingId, e.getMessage());
+                    throw new BusinessException("Booking not found with id: " + bookingId);
+                }
+            }
+            
+            // Use the dedicated rejection method that handles notifications and doesn't affect room availability
+            boolean success = bookingService.rejectCancellationRequest(bookingId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? 
+                "Cancellation request rejected successfully. The booking remains active and room availability is unchanged." : 
+                "Failed to reject cancellation request.");
+            response.put("bookingId", bookingId);
+            response.put("hotelId", actualHotelId);
+            response.put("newStatus", "CANCELLATION_REJECTED");
+            response.put("roomAvailabilityImpact", "none");
+            
+            logger.info("Successfully rejected cancellation request for booking: {} in hotel: {}", bookingId, actualHotelId);
+            return ResponseEntity.ok(response);
+            
+        } catch (BusinessException e) {
+            logger.error("Business error rejecting cancellation request for booking {}: {}", bookingId, e.getMessage());
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Cannot reject cancellation request: " + e.getMessage());
+            errorResponse.put("bookingId", bookingId);
+            errorResponse.put("hotelId", hotelId);
+            errorResponse.put("errorType", "BUSINESS_ERROR");
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+            
+        } catch (Exception e) {
+            logger.error("Failed to reject cancellation request for booking {} in hotel {}: {}", 
+                        bookingId, hotelId, e.getMessage(), e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to reject cancellation request: " + e.getMessage());
+            errorResponse.put("bookingId", bookingId);
+            errorResponse.put("hotelId", hotelId);
+            errorResponse.put("errorType", "SYSTEM_ERROR");
+            
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
     

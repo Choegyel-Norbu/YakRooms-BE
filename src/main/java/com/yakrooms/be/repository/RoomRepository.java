@@ -104,6 +104,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.room_type AS roomType,
                 CASE
                     WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Occupied'
+                    WHEN r.is_available = 0 AND b.status = 'CANCELLATION_REJECTED' THEN 'Confirmed (cancellation rejected)'
+                    WHEN r.is_available = 0 AND b.status = 'CANCELLATION_REQUESTED' THEN 'Cancellation request in process'
                     WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed (Not Arrived)'
                     WHEN r.is_available = 1 THEN 'Available'
                     ELSE 'Under Repair'
@@ -111,6 +113,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 CASE
                     WHEN b.status = 'CHECKED_IN' THEN COALESCE(u.name, b.guest_name, 'Guest')
                     WHEN b.status = 'CONFIRMED' THEN COALESCE(CONCAT(u.name, ' (Not Arrived)'), CONCAT(b.guest_name, ' (Not Arrived)'), 'Guest (Not Arrived)')
+                    WHEN b.status = 'CANCELLATION_REJECTED' THEN COALESCE(CONCAT(u.name, ' (Cancellation Rejected)'), CONCAT(b.guest_name, ' (Cancellation Rejected)'), 'Guest (Cancellation Rejected)')
+                    WHEN b.status = 'CANCELLATION_REQUESTED' THEN COALESCE(CONCAT(u.name, ' (Cancellation Requested)'), CONCAT(b.guest_name, ' (Cancellation Requested)'), 'Guest (Cancellation Requested)')
                     ELSE 'No guest'
                 END AS guestName,
                 b.check_out_date AS checkOutDate
@@ -135,7 +139,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                                      check_in_date ASC
                         ) as rn
                     FROM booking 
-                    WHERE status IN ('CHECKED_IN', 'CONFIRMED')
+                    WHERE status IN ('CHECKED_IN', 'CONFIRMED', 'CANCELLATION_REJECTED', 'CANCELLATION_REQUESTED')
                 ) ranked_bookings
                 WHERE rn = 1
             ) b ON r.id = b.room_id
@@ -151,6 +155,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 r.room_type AS roomType,
                 CASE
                     WHEN r.is_available = 0 AND b.status = 'CHECKED_IN' THEN 'Occupied'
+                    WHEN r.is_available = 0 AND b.status = 'CANCELLATION_REJECTED' THEN 'Confirmed (cancellation rejected)'
+                    WHEN r.is_available = 0 AND b.status = 'CANCELLATION_REQUESTED' THEN 'Cancellation request in process'
                     WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed (Not Arrived)'
                     WHEN r.is_available = 1 THEN 'Available'
                     WHEN r.is_available = 0 AND b.status IS NULL THEN 'Under Repair'
@@ -159,6 +165,8 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                 CASE
                     WHEN b.status = 'CHECKED_IN' THEN COALESCE(u.name, b.guest_name, 'Guest')
                     WHEN b.status = 'CONFIRMED' THEN COALESCE(CONCAT(u.name, ' (Not Arrived)'), CONCAT(b.guest_name, ' (Not Arrived)'), 'Guest (Not Arrived)')
+                    WHEN b.status = 'CANCELLATION_REJECTED' THEN COALESCE(CONCAT(u.name, ' (Cancellation Rejected)'), CONCAT(b.guest_name, ' (Cancellation Rejected)'), 'Guest (Cancellation Rejected)')
+                    WHEN b.status = 'CANCELLATION_REQUESTED' THEN COALESCE(CONCAT(u.name, ' (Cancellation Requested)'), CONCAT(b.guest_name, ' (Cancellation Requested)'), 'Guest (Cancellation Requested)')
                     ELSE 'No guest'
                 END AS guestName,
                 b.check_out_date AS checkOutDate
@@ -183,7 +191,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                                      check_in_date ASC
                         ) as rn
                     FROM booking 
-                    WHERE status IN ('CHECKED_IN', 'CONFIRMED')
+                    WHERE status IN ('CHECKED_IN', 'CONFIRMED', 'CANCELLATION_REJECTED', 'CANCELLATION_REQUESTED')
                 ) ranked_bookings
                 WHERE rn = 1
             ) b ON r.id = b.room_id

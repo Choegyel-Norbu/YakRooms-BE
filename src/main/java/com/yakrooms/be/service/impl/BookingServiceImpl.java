@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -34,10 +34,11 @@ import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.BookingService;
 import com.yakrooms.be.service.BookingWebSocketService;
 import com.yakrooms.be.service.BookingValidationService;
+import com.yakrooms.be.service.NotificationService;
 import com.yakrooms.be.service.RoomAvailabilityService;
 import com.yakrooms.be.util.PasscodeGenerator;
 
-import org.springframework.data.domain.PageRequest;
+
 
 /**
  * Refactored BookingServiceImpl that uses the new unified services.
@@ -61,15 +62,16 @@ public class BookingServiceImpl implements BookingService {
     private final BookingWebSocketService bookingWebSocketService;
     private final BookingValidationService bookingValidationService;
     private final RoomAvailabilityService roomAvailabilityService;
+    private final NotificationService notificationService;
 
-    @Autowired
     public BookingServiceImpl(BookingRepository bookingRepository,
             RoomRepository roomRepository,
             UserRepository userRepository,
             BookingMapper bookingMapper,
             BookingWebSocketService bookingWebSocketService,
             BookingValidationService bookingValidationService,
-            RoomAvailabilityService roomAvailabilityService) {
+            RoomAvailabilityService roomAvailabilityService,
+            NotificationService notificationService) {
         
         this.bookingRepository = bookingRepository;
         this.roomRepository = roomRepository;
@@ -78,6 +80,7 @@ public class BookingServiceImpl implements BookingService {
         this.bookingWebSocketService = bookingWebSocketService;
         this.bookingValidationService = bookingValidationService;
         this.roomAvailabilityService = roomAvailabilityService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -374,6 +377,49 @@ public class BookingServiceImpl implements BookingService {
         broadcastBookingStatusChange(booking, oldStatus, status);
 
         logger.info("Successfully updated booking status: {} to: {}", bookingId, status);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean rejectCancellationRequest(Long bookingId) {
+        logger.info("Rejecting cancellation request for booking: {}", bookingId);
+
+        // Fetch and validate the booking
+        Booking booking = fetchBookingById(bookingId);
+        
+        // Validate that this is a cancellation request that can be rejected
+        if (booking.getStatus() != BookingStatus.CANCELLATION_REQUESTED) {
+            logger.warn("Cannot reject cancellation for booking {} with status: {}", 
+                       bookingId, booking.getStatus());
+            throw new BusinessException("Only bookings with CANCELLATION_REQUESTED status can be rejected");
+        }
+
+        // Store the old status for WebSocket broadcasting
+        BookingStatus oldStatus = booking.getStatus();
+        
+        // Update status to CANCELLATION_REJECTED
+        booking.setStatus(BookingStatus.CANCELLATION_REJECTED);
+        bookingRepository.save(booking);
+
+        // IMPORTANT: Do NOT call RoomAvailabilityService for rejection
+        // The room should remain unavailable as the booking is still active
+        logger.info("Booking {} status updated to CANCELLATION_REJECTED - room availability unchanged", bookingId);
+
+        // Create notification for the guest about rejection
+        try {
+            notificationService.createCancellationRejectionNotification(booking);
+            logger.info("Created cancellation rejection notification for booking: {}", bookingId);
+        } catch (Exception e) {
+            logger.error("Failed to create cancellation rejection notification for booking {}: {}", 
+                        bookingId, e.getMessage());
+            // Don't fail the entire operation if notification creation fails
+        }
+
+        // Broadcast WebSocket event for booking status change
+        broadcastBookingStatusChange(booking, oldStatus, BookingStatus.CANCELLATION_REJECTED);
+
+        logger.info("Successfully rejected cancellation request for booking: {}", bookingId);
         return true;
     }
 

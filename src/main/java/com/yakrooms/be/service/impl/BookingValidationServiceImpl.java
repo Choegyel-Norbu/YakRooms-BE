@@ -67,18 +67,20 @@ public class BookingValidationServiceImpl implements BookingValidationService {
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CHECKED_IN, 
             Set.of(BookingStatus.CHECKED_OUT, BookingStatus.CANCELLED));
         
-        // CANCELLATION_REQUESTED can transition to CANCELLED or CONFIRMED (approve/reject)
+        // CANCELLATION_REQUESTED can transition to CANCELLED, CONFIRMED, or CANCELLATION_REJECTED (approve/reject)
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CANCELLATION_REQUESTED, 
-            Set.of(BookingStatus.CANCELLED, BookingStatus.CONFIRMED));
+            Set.of(BookingStatus.CANCELLED, BookingStatus.CONFIRMED, BookingStatus.CANCELLATION_REJECTED));
         
         // CHECKED_OUT is a terminal state
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CHECKED_OUT, Set.of());
         
         // CANCELLED is a terminal state
         VALID_STATUS_TRANSITIONS.put(BookingStatus.CANCELLED, Set.of());
+        
+        // CANCELLATION_REJECTED is a terminal state
+        VALID_STATUS_TRANSITIONS.put(BookingStatus.CANCELLATION_REJECTED, Set.of());
     }
     
-    @Autowired
     public BookingValidationServiceImpl(RoomRepository roomRepository) {
         this.roomRepository = roomRepository;
     }

@@ -515,42 +515,44 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             try {
                 logger.info("Sending notifications for booking: {}", booking.getId());
 
-                // Fetch the booking with all associations to avoid lazy loading issues
-                Booking fullBooking = bookingRepository.findById(booking.getId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + booking.getId()));
+                // Use the booking object directly - no need to fetch again
+                Booking fullBooking = booking;
 
-                // Create booking notification
-                if (fullBooking.getUser() != null) {
-                    // Create notification for registered user
+                // Create booking notification for all bookings
+                try {
                     notificationService.createBookingNotification(fullBooking);
-                    logger.info("Booking notification created for user: {}", fullBooking.getUser().getId());
-                    
-                    // Send email confirmation if user has email
-                    if (fullBooking.getUser().getEmail() != null && !fullBooking.getUser().getEmail().trim().isEmpty()) {
-                        try {
-                            String guestName = fullBooking.getGuestName() != null ? fullBooking.getGuestName() : 
-                                             (fullBooking.getUser().getName() != null ? fullBooking.getUser().getName() : "Guest");
-                            
-                            mailService.sendPasscodeEmailToGuest(
-                                fullBooking.getUser().getEmail(),
-                                guestName,
-                                fullBooking.getPasscode(),
-                                fullBooking.getHotel().getName(),
-                                fullBooking.getRoom().getRoomNumber(),
-                                fullBooking.getCheckInDate(),
-                                fullBooking.getCheckOutDate(),
-                                fullBooking.getId()
-                            );
-                            logger.info("Booking confirmation email sent to: {}", fullBooking.getUser().getEmail());
-                        } catch (Exception e) {
-                            logger.warn("Failed to send booking confirmation email to {}: {}", 
-                                       fullBooking.getUser().getEmail(), e.getMessage());
-                        }
+                    if (fullBooking.getUser() != null) {
+                        logger.info("Booking notification created for user: {}", fullBooking.getUser().getId());
+                    } else {
+                        logger.info("Booking notification created for anonymous booking: {}", fullBooking.getId());
                     }
-                } else {
-                    // Create notification for hotel staff when booking has no user
-                    logger.info("Creating booking notification for hotel staff - booking has no associated user");
-                    notificationService.createBookingNotification(fullBooking);
+                } catch (Exception e) {
+                    logger.error("Failed to create booking notification for booking {}: {}", fullBooking.getId(), e.getMessage());
+                }
+                
+                // Send email confirmation if user has email
+                if (fullBooking.getUser() != null && 
+                    fullBooking.getUser().getEmail() != null && 
+                    !fullBooking.getUser().getEmail().trim().isEmpty()) {
+                    try {
+                        String guestName = fullBooking.getGuestName() != null ? fullBooking.getGuestName() : 
+                                         (fullBooking.getUser().getName() != null ? fullBooking.getUser().getName() : "Guest");
+                        
+                        mailService.sendPasscodeEmailToGuest(
+                            fullBooking.getUser().getEmail(),
+                            guestName,
+                            fullBooking.getPasscode(),
+                            fullBooking.getHotel().getName(),
+                            fullBooking.getRoom().getRoomNumber(),
+                            fullBooking.getCheckInDate(),
+                            fullBooking.getCheckOutDate(),
+                            fullBooking.getId()
+                        );
+                        logger.info("Booking confirmation email sent to: {}", fullBooking.getUser().getEmail());
+                    } catch (Exception e) {
+                        logger.warn("Failed to send booking confirmation email to {}: {}", 
+                                   fullBooking.getUser().getEmail(), e.getMessage());
+                    }
                 }
 
                 // Send WebSocket notification for real-time updates
@@ -619,10 +621,6 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             throw new BusinessException("Failed to fetch cancellation requests for hotel: " + e.getMessage());
         }
     }
-    
-
-    
-
     
     /**
      * Map booking entities to cancellation request responses
