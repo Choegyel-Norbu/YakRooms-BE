@@ -412,6 +412,27 @@ public class BookingController {
     }
     
     /**
+     * Search bookings by room number - Only HOTEL_ADMIN and STAFF can search
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @GetMapping("/search/room-number")
+    public ResponseEntity<Page<BookingResponse>> searchBookingsByRoomNumber(
+            @RequestParam String roomNumber,
+            @RequestParam Long hotelId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<BookingResponse> results = bookingService.searchBookingsByRoomNumber(roomNumber, hotelId, pageable);
+            return ResponseEntity.ok(results);
+        } catch (Exception e) {
+            logger.error("Failed to search bookings by room number: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    /**
      * Get cancellation requests for a specific hotel - Only HOTEL_ADMIN and STAFF can access
      */
     @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")

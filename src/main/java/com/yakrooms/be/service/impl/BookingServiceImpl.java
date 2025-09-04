@@ -757,6 +757,29 @@ public class BookingServiceImpl implements BookingService {
         }
     }
     
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BookingResponse> searchBookingsByRoomNumber(String roomNumber, Long hotelId, Pageable pageable) {
+        logger.info("Searching bookings by room number: {} for hotel: {}", roomNumber, hotelId);
+        if (hotelId == null) {
+            throw new IllegalArgumentException("Hotel ID cannot be null");
+        }
+        if (roomNumber == null || roomNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Room number cannot be null or empty");
+        }
+        
+        try {
+            // Normalize room number to match database format (uppercase, trimmed)
+            String normalizedRoomNumber = roomNumber.trim().toUpperCase();
+            Page<Booking> bookings = bookingRepository.findByRoomNumberAndHotelId(normalizedRoomNumber, hotelId, pageable);
+            logger.debug("Found {} bookings for room number: {} in hotel: {}", 
+                bookings.getTotalElements(), normalizedRoomNumber, hotelId);
+            return bookings.map(bookingMapper::toDto);
+        } catch (Exception e) {
+            logger.error("Error searching bookings by room number: {} for hotel: {}", roomNumber, hotelId, e);
+            throw new BusinessException("Failed to search bookings by room number: " + e.getMessage());
+        }
+    }
 
 
 }

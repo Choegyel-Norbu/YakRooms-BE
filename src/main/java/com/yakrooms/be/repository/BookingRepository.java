@@ -355,6 +355,20 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
         Pageable pageable
     );
     
+    // Search by room number - optimized with proper indexing
+    @EntityGraph("Booking.withDetails")
+    @Query("""
+        SELECT b FROM Booking b 
+        WHERE b.room.roomNumber = :roomNumber 
+        AND b.hotel.id = :hotelId 
+        ORDER BY b.createdAt DESC
+        """)
+    Page<Booking> findByRoomNumberAndHotelId(
+        @Param("roomNumber") String roomNumber, 
+        @Param("hotelId") Long hotelId, 
+        Pageable pageable
+    );
+    
 
 
 }

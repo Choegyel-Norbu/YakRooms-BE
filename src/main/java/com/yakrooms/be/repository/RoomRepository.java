@@ -108,7 +108,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                     WHEN r.is_available = 0 AND b.status = 'CANCELLATION_REQUESTED' THEN 'Cancellation request in process'
                     WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed (Not Arrived)'
                     WHEN r.is_available = 1 THEN 'Available'
-                    ELSE 'Under Repair'
+                    ELSE 'Available'
                 END AS roomStatus,
                 CASE
                     WHEN b.status = 'CHECKED_IN' THEN COALESCE(u.name, b.guest_name, 'Guest')
@@ -159,8 +159,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                     WHEN r.is_available = 0 AND b.status = 'CANCELLATION_REQUESTED' THEN 'Cancellation request in process'
                     WHEN r.is_available = 0 AND b.status = 'CONFIRMED' THEN 'Confirmed (Not Arrived)'
                     WHEN r.is_available = 1 THEN 'Available'
-                    WHEN r.is_available = 0 AND b.status IS NULL THEN 'Under Repair'
-                    ELSE 'Under Repair'
+                    ELSE 'Available'
                 END AS roomStatus,
                 CASE
                     WHEN b.status = 'CHECKED_IN' THEN COALESCE(u.name, b.guest_name, 'Guest')

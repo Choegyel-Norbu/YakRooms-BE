@@ -24,6 +24,7 @@ import com.yakrooms.be.dto.RoomBookedDatesDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.service.RoomService;
+import com.yakrooms.be.service.RoomAvailabilityScheduler;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -31,6 +32,9 @@ public class RoomController {
 
 	@Autowired
 	private RoomService roomService;
+	
+	@Autowired
+	private RoomAvailabilityScheduler roomAvailabilityScheduler;
 
 	// Create new room - Only HOTEL_ADMIN and STAFF can create
 	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF', 'GUEST')")
@@ -113,5 +117,18 @@ public class RoomController {
 			@RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		return ResponseEntity.ok(roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable));
+	}
+	
+	// Manual trigger for room availability scheduler - Only HOTEL_ADMIN and STAFF can access
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+	@PostMapping("/scheduler/trigger")
+	public ResponseEntity<String> triggerRoomAvailabilityScheduler() {
+		try {
+			roomAvailabilityScheduler.manualRoomAvailabilityUpdate();
+			return ResponseEntity.ok("Room availability scheduler triggered successfully. Check logs for details.");
+		} catch (Exception e) {
+			return ResponseEntity.internalServerError()
+				.body("Failed to trigger room availability scheduler: " + e.getMessage());
+		}
 	}
 }

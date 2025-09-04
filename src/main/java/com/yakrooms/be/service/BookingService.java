@@ -70,6 +70,7 @@ public interface BookingService {
     
     Page<BookingResponse> searchBookingsByDateRange(LocalDate startDate, LocalDate endDate, Long hotelId, Pageable pageable);
     
+    Page<BookingResponse> searchBookingsByRoomNumber(String roomNumber, Long hotelId, Pageable pageable);
 
 
 }
