@@ -124,13 +124,18 @@ public class UploadThingService {
             
             // Start the process
             Process process = processBuilder.start();
-            
-            // Read the output
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            // Capture stdout and stderr
+            BufferedReader stdOutReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader stdErrReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             StringBuilder output = new StringBuilder();
+            StringBuilder errorOutput = new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = stdOutReader.readLine()) != null) {
                 output.append(line).append("\n");
+            }
+            while ((line = stdErrReader.readLine()) != null) {
+                errorOutput.append(line).append("\n");
             }
             
             // Wait for the process to complete (with timeout)
@@ -142,6 +147,7 @@ public class UploadThingService {
             
             int exitCode = process.exitValue();
             String outputString = output.toString().trim();
+            String errorString = errorOutput.toString().trim();
             
             if (exitCode == 0) {
                 logger.info("Hybrid deletion completed successfully for {} files", fileKeys.size());
@@ -149,8 +155,13 @@ public class UploadThingService {
                 return parseNodeJsResponse(outputString, fileKeys);
             } else {
                 logger.error("Node.js script failed with exit code: {}", exitCode);
-                logger.error("Script output: {}", outputString);
-                throw new BusinessException("Failed to delete files via Node.js script: " + outputString);
+                if (!outputString.isEmpty()) {
+                    logger.error("Script stdout: {}", outputString);
+                }
+                if (!errorString.isEmpty()) {
+                    logger.error("Script stderr: {}", errorString);
+                }
+                throw new BusinessException("Failed to delete files via Node.js script: " + (!errorString.isEmpty() ? errorString : outputString));
             }
             
         } catch (IOException | InterruptedException e) {

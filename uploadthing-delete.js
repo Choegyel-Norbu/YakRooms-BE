@@ -32,8 +32,8 @@ if (!token) {
     process.exit(1);
 }
 
-// Initialize UploadThing API
-const utapi = new UTApi();
+// Initialize UploadThing API with token
+const utapi = new UTApi({ token });
 
 async function deleteFiles() {
     try {

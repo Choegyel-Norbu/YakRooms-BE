@@ -30,4 +30,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // Find notification by booking and type
     @Query("SELECT n FROM Notification n WHERE n.booking = :booking AND n.type = :type")
     Optional<Notification> findByBookingAndType(@Param("booking") com.yakrooms.be.model.entity.Booking booking, @Param("type") String type);
+
+    // Delete only BOOKING_CREATED notifications for a user
+    @Modifying
+    @Query(value = "DELETE FROM notifications WHERE user_id = :userId AND type = 'BOOKING_CREATED'", nativeQuery = true)
+    void deleteBookingCreatedByUserId(@Param("userId") Long userId);
 } 

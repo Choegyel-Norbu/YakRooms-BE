@@ -58,8 +58,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void deleteAllNotifications(User user) {
-        List<Notification> all = notificationRepository.findByUser(user);
-        notificationRepository.deleteAll(all);
+        notificationRepository.deleteBookingCreatedByUserId(user.getId());
     }
 
     @Override
