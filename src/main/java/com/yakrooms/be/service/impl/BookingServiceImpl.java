@@ -359,6 +359,10 @@ public class BookingServiceImpl implements BookingService {
                             booking.getCheckInDate()
                         );
                         break;
+                    case CANCELLATION_REJECTED:
+                        // Cancellation rejected - room remains unavailable as booking is still active
+                        logger.debug("Cancellation rejected for booking {} - room availability unchanged", bookingId);
+                        break;
                     default:
                         // Other statuses don't affect room availability
                         logger.debug("No room availability change needed for status: {} for booking {}", status, bookingId);

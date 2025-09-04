@@ -54,7 +54,6 @@ public class BookingController {
 	@Autowired
 	private UnifiedBookingService unifiedBookingService;
 
-	
 	// Create a booking - GUEST, HOTEL_ADMIN, and STAFF can create
 	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
 	@PostMapping
