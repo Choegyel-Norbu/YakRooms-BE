@@ -81,6 +81,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/reviews/averageRating").permitAll()
                 .requestMatchers("/api/getIntouch").permitAll()
                 
+                // Health check endpoints - Public access for monitoring
+                .requestMatchers("/api/v1/uploadthing/health").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
+                
                 // WebSocket endpoints - Public access for SockJS
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/ws").permitAll()

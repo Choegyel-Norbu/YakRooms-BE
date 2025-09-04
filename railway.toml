@@ -4,7 +4,7 @@ buildCommand = "./railway-build.sh"
 
 [deploy]
 startCommand = "java -jar target/*.jar"
-healthcheckPath = "/api/v1/uploadthing/health"
+healthcheckPath = "/actuator/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
