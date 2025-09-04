@@ -84,6 +84,9 @@ public class SecurityConfig {
                 // Health check endpoints - Public access for monitoring
                 .requestMatchers("/api/v1/uploadthing/health").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/health").permitAll()
+                .requestMatchers("/health/ping").permitAll()
+                .requestMatchers("/health/db").permitAll()
                 
                 // WebSocket endpoints - Public access for SockJS
                 .requestMatchers("/ws/**").permitAll()
