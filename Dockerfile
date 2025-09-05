@@ -74,5 +74,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Start application
-CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Start application with production profile
+CMD ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=production -jar app.jar"]

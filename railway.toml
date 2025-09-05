@@ -7,4 +7,7 @@ healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 
 [environments.production]
-variables = { RAILWAY_ENVIRONMENT = "production" }
+variables = { 
+  RAILWAY_ENVIRONMENT = "production",
+  SPRING_PROFILES_ACTIVE = "production"
+}
