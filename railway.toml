@@ -2,7 +2,6 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "java -Dspring.profiles.active=docker -jar target/*.jar"
 healthcheckPath = "/health/ping"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
