@@ -2,7 +2,7 @@
 # This explicitly defines our build process to avoid nixpacks auto-detection issues
 
 # Stage 1: Build environment with both Java and Node.js
-FROM openjdk:17-jdk-slim AS builder
+FROM eclipse-temurin:17-jdk AS builder
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -48,7 +48,7 @@ RUN chmod +x railway-build.sh
 RUN ./railway-build.sh
 
 # Stage 2: Runtime environment
-FROM openjdk:17-jre-slim AS runtime
+FROM eclipse-temurin:17-jre AS runtime
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
