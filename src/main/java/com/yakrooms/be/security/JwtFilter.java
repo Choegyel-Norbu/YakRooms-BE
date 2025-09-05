@@ -39,6 +39,7 @@ public class JwtFilter extends OncePerRequestFilter {
         "/actuator/health",
         "/health",
         "/health/ping",
+        "/health/ready",
         "/health/db",
         
         // WebSocket endpoints - Public access for SockJS

@@ -86,6 +86,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/health").permitAll()
                 .requestMatchers("/health/ping").permitAll()
+                .requestMatchers("/health/ready").permitAll()
                 .requestMatchers("/health/db").permitAll()
                 
                 // WebSocket endpoints - Public access for SockJS
