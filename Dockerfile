@@ -50,7 +50,7 @@ RUN apk add --no-cache \
         npm
 
 # Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN addgroup -S appuser && adduser -S -G appuser appuser
 
 # Set working directory
 WORKDIR /app
