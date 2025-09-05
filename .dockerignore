@@ -1,0 +1,58 @@
+# Docker ignore file for YakRooms application
+# This optimizes build performance by excluding unnecessary files
+
+# Development files
+.git
+.gitignore
+README.md
+*.md
+.env
+.env.local
+.env.development
+.env.test
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Dependency directories
+node_modules/
+target/
+
+# Build artifacts
+build/
+dist/
+
+# Test files
+test/
+tests/
+*_test.js
+*.test.js
+
+# Documentation
+docs/
+*.md
+
+# Scripts (except essential ones)
+test_*.sh
+comprehensive_*.sh

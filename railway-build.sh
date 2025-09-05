@@ -5,6 +5,9 @@ set -e  # Exit on any error
 
 echo "🚀 Starting Railway build process..."
 
+# Configure IPv4 fallback for network issues
+echo "Acquire::ForceIPv4 \"true\";" | sudo tee /etc/apt/apt.conf.d/99force-ipv4
+
 # Check if Node.js is available
 if ! command -v node &> /dev/null; then
     echo "❌ Node.js is not installed. Installing Node.js..."

@@ -1,6 +1,5 @@
 [build]
-builder = "nixpacks"
-buildCommand = "./railway-build.sh"
+builder = "dockerfile"
 
 [deploy]
 startCommand = "java -jar target/*.jar"
