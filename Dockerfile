@@ -2,31 +2,20 @@
 # This explicitly defines our build process to avoid nixpacks auto-detection issues
 
 # Stage 1: Build environment with both Java and Node.js
-FROM eclipse-temurin:17-jdk AS builder
+FROM eclipse-temurin:17-jdk-alpine AS builder
 
 # Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
 ENV MAVEN_OPTS="-Xmx1024m"
 
-# Install system dependencies with IPv6 fallback
-RUN echo "Acquire::ForceIPv4 \"true\";" > /etc/apt/apt.conf.d/99force-ipv4 && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+# Install system dependencies (Alpine uses apk instead of apt)
+RUN apk add --no-cache \
         curl \
         ca-certificates \
-        gnupg \
-        lsb-release && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Node.js 18.x (LTS)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Maven
-RUN apt-get update && \
-    apt-get install -y maven && \
-    rm -rf /var/lib/apt/lists/*
+        bash \
+        git \
+        maven \
+        nodejs \
+        npm
 
 # Set working directory
 WORKDIR /app
@@ -48,21 +37,17 @@ RUN chmod +x railway-build.sh
 RUN ./railway-build.sh
 
 # Stage 2: Runtime environment
-FROM eclipse-temurin:17-jre AS runtime
+FROM eclipse-temurin:17-jre-alpine AS runtime
 
 # Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
 
 # Install Node.js runtime (for UploadThing scripts)
-RUN echo "Acquire::ForceIPv4 \"true\";" > /etc/apt/apt.conf.d/99force-ipv4 && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
         curl \
-        ca-certificates && \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    rm -rf /var/lib/apt/lists/*
+        ca-certificates \
+        nodejs \
+        npm
 
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
