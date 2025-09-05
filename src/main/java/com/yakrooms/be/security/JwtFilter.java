@@ -10,20 +10,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.yakrooms.be.util.CookieUtil;
+
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
+    private CookieUtil cookieUtil;
+    
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // List of public endpoints that don't require JWT processing (MORE SPECIFIC FIRST)
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-        "/auth/firebase",
+        "/api/auth/firebase",
+        "/api/auth/refresh-token",
+        "/api/auth/logout",
         "/api/hotels/list",
         "/api/hotels/topThree",
         "/api/hotels/details",
@@ -95,20 +101,29 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String authorizationHeader = request.getHeader("Authorization");
+        // Try to get access token from cookie first (preferred method)
+        String token = cookieUtil.getAccessTokenFromCookie(request);
+        
+        // Fallback to Authorization header for backward compatibility
+        if (token == null) {
+            String authorizationHeader = request.getHeader("Authorization");
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                token = authorizationHeader.substring(7);
+            }
+        }
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            String token = authorizationHeader.substring(7);
-            if (JwtUtil.validateToken(token)) {
+            // Validate access token
+            if (jwtUtil.validateAccessToken(token)) {
                 // Extract user information from JWT
-                String email = JwtUtil.extractEmail(token);
-                Long userId = JwtUtil.extractUserId(token);
-                String rolesString = JwtUtil.extractRoles(token);
+                String email = jwtUtil.extractEmail(token);
+                Long userId = jwtUtil.extractUserId(token);
+                String rolesString = jwtUtil.extractRoles(token);
                 
                 // Convert roles string to authorities
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
@@ -128,6 +143,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 
                 // Set authentication in security context
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                
+                logger.debug("Successfully authenticated user: " + email);
+            } else {
+                logger.debug("Invalid or expired access token");
             }
         } catch (Exception e) {
             // Log the exception but don't fail the request

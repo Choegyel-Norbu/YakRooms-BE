@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,15 +40,18 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers("/api/auth/firebase", "/api/auth/refresh-token", "/api/auth/logout")
+            )
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(jwtAuthenticationProvider)
             .headers(headers -> headers
                 // Prevent clickjacking attacks
-                .frameOptions().deny()
+                .frameOptions(frameOptions -> frameOptions.deny())
                 // Prevent MIME type sniffing
-                .contentTypeOptions().and()
+                .contentTypeOptions(contentTypeOptions -> {})
                 // Force HTTPS for 1 year (including subdomains)
                 .httpStrictTransportSecurity(hstsConfig -> hstsConfig
                     .maxAgeInSeconds(31536000) // 1 year
@@ -69,6 +73,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints - No authentication required (MORE SPECIFIC FIRST)
                 .requestMatchers("/auth/firebase").permitAll()
+                .requestMatchers("/auth/refresh-token").permitAll()
+                .requestMatchers("/auth/logout").permitAll()
                 .requestMatchers("/api/hotels/list").permitAll()
                 .requestMatchers("/api/hotels/topThree").permitAll()
                 .requestMatchers("/api/hotels/details/**").permitAll()
@@ -119,7 +125,7 @@ public class SecurityConfig {
         // Allow specific HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         
-        // Allow specific headers
+        // Allow specific headers (including CSRF tokens)
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization",
             "Content-Type",
@@ -127,7 +133,9 @@ public class SecurityConfig {
             "Accept",
             "Origin",
             "Access-Control-Request-Method",
-            "Access-Control-Request-Headers"
+            "Access-Control-Request-Headers",
+            "X-XSRF-TOKEN",  // Spring Security CSRF token header
+            "X-CSRF-TOKEN"  // Alternative CSRF token header
         ));
         
         // Allow credentials (cookies, authorization headers)

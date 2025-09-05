@@ -75,10 +75,12 @@ public class HealthController {
                 healthStatus.put("firebase_note", "FIREBASE_CONFIG_BASE64 not set");
             }
             
-            // Check Redis configuration
-            String redisHost = environment.getProperty("REDIS_HOST");
+            // Check Redis configuration - check Spring properties instead of env vars
+            String redisHost = environment.getProperty("spring.data.redis.host");
             if (redisHost != null && !redisHost.isEmpty()) {
                 healthStatus.put("redis", "CONFIGURED");
+                healthStatus.put("redis_host", redisHost);
+                healthStatus.put("redis_port", environment.getProperty("spring.data.redis.port", "6379"));
             } else {
                 healthStatus.put("redis", "NOT_CONFIGURED");
                 healthStatus.put("redis_note", "Redis not configured");

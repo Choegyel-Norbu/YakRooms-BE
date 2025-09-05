@@ -1,0 +1,28 @@
+# ===========================================
+# YakRooms Secure Cookie Authentication
+# Critical Environment Variables Only
+# ===========================================
+
+# ================== JWT SECURITY ==================
+# JWT Secret Key - CHANGE THIS IN PRODUCTION!
+JWT_SECRET=dev-secret-key-change-this-in-production-123456789abcdefghijklmnopqrstuvwxyz
+
+# ================== COOKIE SECURITY ==================
+# Cookie Security Settings
+COOKIE_SECURE=false
+COOKIE_DOMAIN=
+
+# ================== DATABASE CONFIGURATION ==================
+# MySQL Database Settings
+MYSQLHOST=localhost
+MYSQLPORT=3306
+MYSQLDATABASE=yakrooms
+MYSQLUSER=root
+MYSQLPASSWORD=ChogyalWp
+
+# ================== REDIS CONFIGURATION ==================
+# Redis Cache Settings
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DATABASE=0
