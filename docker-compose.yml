@@ -1,0 +1,87 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: yakrooms-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ChogyalWp
+      MYSQL_DATABASE: yakrooms
+      MYSQL_USER: yakrooms
+      MYSQL_PASSWORD: ChogyalWp
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pChogyalWp"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - yakrooms-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: yakrooms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - yakrooms-network
+
+  yakrooms-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yakrooms-app
+    environment:
+      # Database Configuration
+      MYSQLHOST: mysql
+      MYSQLPORT: 3306
+      MYSQLDATABASE: yakrooms
+      MYSQLUSER: root
+      MYSQLPASSWORD: ChogyalWp
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DATABASE: 0
+      
+      # Application Configuration
+      SPRING_PROFILES_ACTIVE: docker
+      JAVA_OPTS: "-Xmx512m -Xms256m"
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ping"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 120s
+    networks:
+      - yakrooms-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  yakrooms-network:
+    driver: bridge

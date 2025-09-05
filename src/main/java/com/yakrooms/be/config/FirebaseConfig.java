@@ -20,33 +20,61 @@ public class FirebaseConfig {
     }
 
     @PostConstruct
-public void init() {
-    try {
-        FirebaseOptions options;
+    public void init() {
+        try {
+            FirebaseOptions options;
+            String activeProfile = getActiveProfile();
 
-        if (env.matchesProfiles("prod")) {
-            String encodedCredentials = env.getRequiredProperty("FIREBASE_CONFIG_BASE64");
-            byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials);
-            InputStream credentialsStream = new ByteArrayInputStream(decodedBytes);
-            options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(credentialsStream))
-                .build();
-        } else {
-            InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
-            options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .build();
+            if (env.matchesProfiles("production", "prod")) {
+                // Production environment: Use Base64 encoded credentials
+                String encodedCredentials = env.getProperty("FIREBASE_CONFIG_BASE64");
+                if (encodedCredentials != null && !encodedCredentials.isEmpty()) {
+                    System.out.println("🔥 Initializing Firebase for PRODUCTION with Base64 credentials");
+                    byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials);
+                    InputStream credentialsStream = new ByteArrayInputStream(decodedBytes);
+                    options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(credentialsStream))
+                        .build();
+                } else {
+                    System.out.println("⚠️  FIREBASE_CONFIG_BASE64 not found, falling back to service account file");
+                    InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
+                    options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                        .build();
+                }
+            } else {
+                // Development environment: Use local service account file
+                System.out.println("🔥 Initializing Firebase for DEVELOPMENT with service account file");
+                InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
+                if (serviceAccount == null) {
+                    throw new RuntimeException("Firebase service account file not found. Please ensure firebase-service-account.json exists in src/main/resources/");
+                }
+                options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
+            }
+
+            if (FirebaseApp.getApps().isEmpty()) {
+                FirebaseApp.initializeApp(options);
+                System.out.println("✅ Firebase Initialized successfully for profile: " + activeProfile);
+            } else {
+                System.out.println("ℹ️  Firebase already initialized");
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Firebase initialization failed: " + e.getMessage());
+            e.printStackTrace();
+            // Don't throw exception to prevent application startup failure
+            // Firebase might not be critical for all environments
         }
-
-        if (FirebaseApp.getApps().isEmpty()) {
-            FirebaseApp.initializeApp(options);
-            System.out.println("✅ Firebase Initialized");
-        }
-
-    } catch (Exception e) {
-        System.err.println("❌ Firebase init failed: " + e.getMessage());
-        e.printStackTrace();
     }
-}
+
+    private String getActiveProfile() {
+        String[] activeProfiles = env.getActiveProfiles();
+        if (activeProfiles.length > 0) {
+            return String.join(",", activeProfiles);
+        }
+        return "default";
+    }
 
 }

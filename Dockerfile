@@ -70,9 +70,9 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
-# Health check with improved configuration
-HEALTHCHECK --interval=30s --timeout=15s --start-period=120s --retries=5 \
-    CMD curl -f http://localhost:8080/health/ping || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
 
-# Start application with proper profile activation
-CMD ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=docker -jar app.jar"]
+# Start application
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

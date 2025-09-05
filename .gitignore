@@ -35,3 +35,90 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Development Scripts and Documentation ###
+# Local development scripts
+run-docker-local.sh
+run-app-local.sh
+
+# Development documentation
+DOCKER_LOCAL_SETUP.md
+
+# Docker development data
+docker-data/
+.docker/
+
+# Local environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Application logs
+*.log
+logs/
+app.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js (for UploadThing scripts)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE specific files
+*.sublime-project
+*.sublime-workspace
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Test files
+test-results/
+coverage/
+.nyc_output/
+
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties
+
+# Spring Boot
+spring-boot-starter-parent/
+spring-boot-starter-web/
+spring-boot-starter-data-jpa/
+spring-boot-starter-security/
+spring-boot-starter-cache/
+spring-boot-starter-data-redis/
+spring-boot-starter-actuator/
+spring-boot-starter-websocket/
+spring-boot-starter-webflux/
+
+# Application specific
+application-local.properties
+application-dev.properties
+application-test.properties
