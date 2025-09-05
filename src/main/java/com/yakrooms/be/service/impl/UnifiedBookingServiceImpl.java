@@ -23,6 +23,7 @@ import com.yakrooms.be.exception.BusinessException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Booking;
 import com.yakrooms.be.model.entity.Hotel;
+import com.yakrooms.be.model.entity.Notification;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.model.enums.BookingStatus;
@@ -518,16 +519,12 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
                 // Use the booking object directly - no need to fetch again
                 Booking fullBooking = booking;
 
-                // Create booking notification for all bookings
+                // Create notifications for both guest and hotel owner
                 try {
-                    notificationService.createBookingNotification(fullBooking);
-                    if (fullBooking.getUser() != null) {
-                        logger.info("Booking notification created for user: {}", fullBooking.getUser().getId());
-                    } else {
-                        logger.info("Booking notification created for anonymous booking: {}", fullBooking.getId());
-                    }
+                    List<Notification> notifications = notificationService.createBookingNotifications(fullBooking);
+                    logger.info("Created {} booking notifications for booking: {}", notifications.size(), fullBooking.getId());
                 } catch (Exception e) {
-                    logger.error("Failed to create booking notification for booking {}: {}", fullBooking.getId(), e.getMessage());
+                    logger.error("Failed to create booking notifications for booking {}: {}", fullBooking.getId(), e.getMessage());
                 }
                 
                 // Send email confirmation if user has email
@@ -555,8 +552,7 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
                     }
                 }
 
-                // Send WebSocket notification for real-time updates
-                bookingWebSocketService.notifyBookingUpdates(fullBooking.getHotel().getId(), "New booking created: " + fullBooking.getId());
+                // WebSocket notifications removed as per requirements
 
             } catch (Exception e) {
                 logger.error("Failed to send notifications for booking: {}", booking.getId(), e);
@@ -592,8 +588,13 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             booking.setStatus(BookingStatus.CANCELLATION_REQUESTED);
             booking = bookingRepository.save(booking);
 
-            // Create cancellation request notification
-            notificationService.createCancellationRequestNotification(booking);
+            // Create notifications for both guest and hotel owner
+            try {
+                List<Notification> notifications = notificationService.createCancellationRequestNotifications(booking);
+                logger.info("Created {} cancellation request notifications for booking: {}", notifications.size(), bookingId);
+            } catch (Exception e) {
+                logger.error("Failed to create cancellation request notifications for booking {}: {}", bookingId, e.getMessage());
+            }
             
             logger.info("Cancellation request notification created for booking: {}", bookingId);
             return true;

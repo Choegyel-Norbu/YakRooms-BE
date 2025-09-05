@@ -37,6 +37,15 @@ public interface BookingService {
      */
     public boolean rejectCancellationRequest(Long bookingId);
     
+    /**
+     * Approve a booking cancellation request.
+     * This method handles cancellation approval and updates room availability.
+     * 
+     * @param bookingId The booking ID
+     * @return true if the approval was successful
+     */
+    public boolean approveCancellationRequest(Long bookingId);
+    
     public void deleteBookingById(Long bookingId);
 
     Page<BookingResponse> listAllBookingByHotel(Long hotelId, Pageable pageable);

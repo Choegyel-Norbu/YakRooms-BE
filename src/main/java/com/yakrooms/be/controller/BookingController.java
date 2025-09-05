@@ -522,6 +522,75 @@ public class BookingController {
         }
     }
     
+    /**
+     * Approve a cancellation request for a booking - Only HOTEL_ADMIN and STAFF can approve
+     * This method approves the cancellation and updates room availability
+     */
+    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @PutMapping("/cancellation-requests/{bookingId}/approve")
+    public ResponseEntity<Map<String, Object>> approveCancellationRequest(
+            @PathVariable Long bookingId,
+            @RequestParam(required = false) Long hotelId) {
+        
+        try {
+            logger.info("Approving cancellation request for booking: {} in hotel: {}", bookingId, hotelId);
+            
+            // If hotelId is not provided, get it from the booking for logging purposes
+            Long actualHotelId = hotelId;
+            if (actualHotelId == null) {
+                try {
+                    var bookingResponse = bookingService.getBookingDetails(bookingId);
+                    actualHotelId = bookingResponse.getHotelId();
+                    logger.info("Derived hotel ID {} from booking {}", actualHotelId, bookingId);
+                } catch (Exception e) {
+                    logger.error("Failed to get booking details for ID {}: {}", bookingId, e.getMessage());
+                    throw new BusinessException("Booking not found with id: " + bookingId);
+                }
+            }
+            
+            // Use the dedicated approval method that handles notifications and updates room availability
+            boolean success = bookingService.approveCancellationRequest(bookingId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? 
+                "Cancellation request approved successfully. The booking has been cancelled and room availability has been updated." : 
+                "Failed to approve cancellation request.");
+            response.put("bookingId", bookingId);
+            response.put("hotelId", actualHotelId);
+            response.put("newStatus", "CANCELLED");
+            response.put("roomAvailabilityImpact", "updated");
+            
+            logger.info("Successfully approved cancellation request for booking: {} in hotel: {}", bookingId, actualHotelId);
+            return ResponseEntity.ok(response);
+            
+        } catch (BusinessException e) {
+            logger.error("Business error approving cancellation request for booking {}: {}", bookingId, e.getMessage());
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Cannot approve cancellation request: " + e.getMessage());
+            errorResponse.put("bookingId", bookingId);
+            errorResponse.put("hotelId", hotelId);
+            errorResponse.put("errorType", "BUSINESS_ERROR");
+            
+            return ResponseEntity.badRequest().body(errorResponse);
+            
+        } catch (Exception e) {
+            logger.error("Failed to approve cancellation request for booking {} in hotel {}: {}", 
+                        bookingId, hotelId, e.getMessage(), e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Failed to approve cancellation request: " + e.getMessage());
+            errorResponse.put("bookingId", bookingId);
+            errorResponse.put("hotelId", hotelId);
+            errorResponse.put("errorType", "SYSTEM_ERROR");
+            
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+    
 
 
 }

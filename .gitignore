@@ -21,6 +21,7 @@ target/
 
 **/resources/firebase-service-account.json
 mvnw.cmd
+mcp.json
 
 ### NetBeans ###
 /nbproject/private/

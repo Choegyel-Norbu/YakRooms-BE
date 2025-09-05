@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -399,12 +398,13 @@ public class BookingServiceImpl implements BookingService {
             throw new BusinessException("Only bookings with CANCELLATION_REQUESTED status can be rejected");
         }
 
-        // Store the old status for WebSocket broadcasting
+        // Store the old status for logging
         BookingStatus oldStatus = booking.getStatus();
         
         // Update status to CANCELLATION_REJECTED
         booking.setStatus(BookingStatus.CANCELLATION_REJECTED);
         bookingRepository.save(booking);
+        logger.info("Booking {} status changed from {} to CANCELLATION_REJECTED", bookingId, oldStatus);
 
         // IMPORTANT: Do NOT call RoomAvailabilityService for rejection
         // The room should remain unavailable as the booking is still active
@@ -420,10 +420,61 @@ public class BookingServiceImpl implements BookingService {
             // Don't fail the entire operation if notification creation fails
         }
 
-        // Broadcast WebSocket event for booking status change
-        broadcastBookingStatusChange(booking, oldStatus, BookingStatus.CANCELLATION_REJECTED);
+        // WebSocket notifications removed as per requirements
 
         logger.info("Successfully rejected cancellation request for booking: {}", bookingId);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean approveCancellationRequest(Long bookingId) {
+        logger.info("Approving cancellation request for booking: {}", bookingId);
+
+        // Fetch and validate the booking
+        Booking booking = fetchBookingById(bookingId);
+        
+        // Validate that this is a cancellation request that can be approved
+        if (booking.getStatus() != BookingStatus.CANCELLATION_REQUESTED) {
+            logger.warn("Cannot approve cancellation for booking {} with status: {}", 
+                       bookingId, booking.getStatus());
+            throw new BusinessException("Only bookings with CANCELLATION_REQUESTED status can be approved");
+        }
+
+        // Store the old status for logging
+        BookingStatus oldStatus = booking.getStatus();
+        
+        // Update status to CANCELLED
+        booking.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(booking);
+        logger.info("Booking {} status changed from {} to CANCELLED", bookingId, oldStatus);
+
+        // Update room availability for the cancelled booking
+        try {
+            roomAvailabilityService.updateRoomAvailabilityForCancelledBooking(
+                booking.getRoom().getId(), 
+                booking.getCheckInDate()
+            );
+            logger.info("Updated room availability for cancelled booking: {}", bookingId);
+        } catch (Exception e) {
+            logger.error("Failed to update room availability for cancelled booking {}: {}", 
+                        bookingId, e.getMessage());
+            // Don't fail the approval if room availability update fails
+        }
+
+        // Create notification for the guest about approval
+        try {
+            notificationService.createCancellationApprovalNotification(booking);
+            logger.info("Created cancellation approval notification for booking: {}", bookingId);
+        } catch (Exception e) {
+            logger.error("Failed to create cancellation approval notification for booking {}: {}", 
+                        bookingId, e.getMessage());
+            // Don't fail the entire operation if notification creation fails
+        }
+
+        // WebSocket notifications removed as per requirements
+
+        logger.info("Successfully approved cancellation request for booking: {}", bookingId);
         return true;
     }
 
