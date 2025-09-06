@@ -5,11 +5,15 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -30,6 +34,9 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfig {
 
+    @Autowired
+    private Environment environment;
+
     @Value("${app.cache.hotel-details.ttl:1800000}")
     private long hotelDetailsTtl;
 
@@ -44,8 +51,10 @@ public class RedisConfig {
 
     /**
      * Configure Redis template with Jackson serialization for optimal performance
+     * Only created when Redis connection is available
      */
     @Bean
+    @ConditionalOnProperty(name = "spring.data.redis.host")
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);

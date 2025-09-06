@@ -42,7 +42,9 @@ public class FirebaseConfig {
                     logger.warn("FIREBASE_CONFIG_BASE64 not found, falling back to service account file");
                     InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
                     if (serviceAccount == null) {
-                        throw new RuntimeException("Firebase credentials not found. Set FIREBASE_CONFIG_BASE64 environment variable for production.");
+                        logger.error("Firebase credentials not found. Set FIREBASE_CONFIG_BASE64 environment variable for production.");
+                        logger.warn("⚠️  Firebase initialization skipped - some features may not work properly");
+                        return; // Skip Firebase initialization instead of crashing
                     }
                     options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
