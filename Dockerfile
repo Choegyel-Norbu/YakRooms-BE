@@ -22,8 +22,9 @@ RUN apk add --no-cache \
 # Create build user for security
 RUN addgroup -S builduser && adduser -S -G builduser builduser
 
-# Set working directory
+# Set working directory and fix ownership
 WORKDIR /app
+RUN chown builduser:builduser /app
 
 # Copy package files first for better layer caching
 COPY --chown=builduser:builduser package*.json pom.xml ./
@@ -32,7 +33,7 @@ COPY --chown=builduser:builduser package*.json pom.xml ./
 USER builduser
 
 # Install Node.js dependencies with security audit
-RUN npm ci --only=production --no-audit --no-fund --ignore-scripts
+RUN npm ci --omit=dev --no-audit --no-fund --ignore-scripts
 
 # Switch back to root for copying source code
 USER root
