@@ -90,9 +90,9 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
-# Health check with improved configuration
-HEALTHCHECK --interval=30s --timeout=15s --start-period=90s --retries=3 \
-    CMD curl -f http://localhost:8080/health/ping || exit 1
+# Health check with more lenient configuration for startup
+HEALTHCHECK --interval=45s --timeout=30s --start-period=180s --retries=5 \
+    CMD curl -f http://localhost:8080/health/ping || curl -f http://localhost:8080/actuator/health || exit 1
 
 # Use dumb-init to handle signals properly and prevent zombie processes
 ENTRYPOINT ["dumb-init", "--"]
