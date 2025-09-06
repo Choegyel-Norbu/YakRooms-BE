@@ -7,7 +7,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -88,6 +90,7 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"hotelListings", "searchResults", "topHotels"}, allEntries = true)
     public HotelResponse createHotel(HotelRequest request, Long userId) {
         validateCreateHotelRequest(request, userId);
 
@@ -114,6 +117,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @Cacheable(value = "userHotels", key = "#userId")
     public HotelListingDto getListingForUser(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID cannot be null");
@@ -127,6 +131,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
+    @Cacheable(value = "hotelListings", key = "#pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
     public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
         log.debug("Fetching all hotels from database with pagination: {}", pageable);
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
@@ -140,6 +145,10 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "hotelDetails", key = "#id"),
+        @CacheEvict(value = {"hotelListings", "searchResults", "topHotels"}, allEntries = true)
+    })
     public HotelResponse updateHotel(Long id, HotelRequest request) {
         validateUpdateHotelRequest(id, request);
 
@@ -282,8 +291,7 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    
-
+    @Cacheable(value = "hotelDetails", key = "#hotelId")
     public HotelResponse getHotelById(Long hotelId) {
         if (hotelId == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
@@ -297,8 +305,7 @@ public class HotelServiceImpl implements HotelService {
     }
     
     @Override
-    
-
+    @Cacheable(value = "searchResults", key = "'search_' + #district + '_' + #locality + '_' + #hotelType + '_' + #page + '_' + #size")
     public Page<HotelWithLowestPriceProjection> searchHotels(String district, String locality, String hotelType, int page, int size) {
         validatePagination(page, size);
 
@@ -311,20 +318,21 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    
-
+    @Cacheable(value = "topHotels", key = "'top3'")
     public List<HotelWithPriceProjection> getTopThreeHotels() {
         log.debug("Fetching top three hotels from database");
         return hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
     }
 
     @Override
+    @Cacheable(value = "hotelListings", key = "'lowest_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
         log.debug("Fetching hotels sorted by lowest price from database with pagination: {}", pageable);
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
     }
 
     @Override
+    @Cacheable(value = "hotelListings", key = "'highest_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
     public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
         log.debug("Fetching hotels sorted by highest price from database with pagination: {}", pageable);
         return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);

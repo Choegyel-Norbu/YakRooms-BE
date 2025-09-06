@@ -598,17 +598,6 @@ public class BookingServiceImpl implements BookingService {
                 + " attempts. Please try again later.");
     }
 
-    // Validation helper methods
-    private User fetchUserById(Long userId) {
-        return userRepository.findByIdWithCollections(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-    }
-
-    private Room fetchRoomById(Long roomId) {
-        return roomRepository.findById(roomId)
-                .orElseThrow(() -> new ResourceNotFoundException("Room not found with id: " + roomId));
-    }
-
     private Booking fetchBookingById(Long bookingId) {
         return bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
