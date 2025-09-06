@@ -15,8 +15,8 @@ public class UserResponse {
 	private String profilePicUrl;
 	private List<Role> roles;
 	private Long hotelId;
+	private boolean detailSet;
 
-	
 	public UserResponse() {
 		super();
 	}
@@ -74,6 +74,14 @@ public class UserResponse {
 
 	public void setHotelId(Long hotelId) {
 		this.hotelId = hotelId;
+	}
+
+	public boolean isDetailSet() {
+		return detailSet;
+	}
+
+	public void setDetailSet(boolean detailSet) {
+		this.detailSet = detailSet;
 	}
 
 }

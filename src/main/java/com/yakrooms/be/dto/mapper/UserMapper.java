@@ -16,6 +16,10 @@ public class UserMapper {
 		response.setProfilePicUrl(user.getProfilePicUrl());
 		response.setRoles(new ArrayList<>(user.getRoles()));
 		response.setHotelId(user.getHotel() != null ? user.getHotel().getId() : null);
+		
+		// Check if user has complete profile details
+		response.setDetailSet(user.getName() != null && !user.getName().trim().isEmpty() 
+		                     && user.getPhone() != null && !user.getPhone().trim().isEmpty());
 
 		return response;
 
