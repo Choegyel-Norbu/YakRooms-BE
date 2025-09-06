@@ -73,14 +73,41 @@ RUN addgroup -S -g 1001 appuser && \
 # Set working directory
 WORKDIR /app
 
-# Copy built application from builder stage with proper ownership
-COPY --from=builder --chown=appuser:appuser /app/target/*.jar ./app.jar
+# Copy built application and handle JAR file naming
+COPY --from=builder /app/target/ ./target/
+
+# Find and copy the JAR file to app.jar
+RUN echo "=== DEBUGGING JAR FILE COPY ===" && \
+    echo "Contents of target directory:" && \
+    ls -la ./target/ && \
+    echo "Looking for main JAR file..." && \
+    if [ -f "./target/yakrooms-0.0.1-SNAPSHOT.jar" ]; then \
+        echo "✅ Found expected JAR: yakrooms-0.0.1-SNAPSHOT.jar"; \
+        cp "./target/yakrooms-0.0.1-SNAPSHOT.jar" "./app.jar"; \
+    else \
+        echo "❌ Expected JAR not found, searching for alternatives..."; \
+        JAR_FILE=$(find ./target -name "*.jar" -not -name "*-sources.jar" -not -name "*-javadoc.jar" | head -n 1); \
+        if [ -n "$JAR_FILE" ]; then \
+            echo "✅ Using alternative JAR file: $JAR_FILE"; \
+            cp "$JAR_FILE" "./app.jar"; \
+        else \
+            echo "❌ ERROR: No suitable JAR file found!"; \
+            echo "All files in target:"; \
+            find ./target -type f; \
+            exit 1; \
+        fi \
+    fi && \
+    echo "✅ Final app.jar created:" && \
+    ls -la ./app.jar
+
+# Copy Node.js components
 COPY --from=builder --chown=appuser:appuser /app/node_modules ./node_modules
 COPY --from=builder --chown=appuser:appuser /app/uploadthing-delete.js ./
 COPY --from=builder --chown=appuser:appuser /app/package*.json ./
 
-# Set secure file permissions
-RUN chmod 550 /app && \
+# Set ownership and permissions
+RUN chown -R appuser:appuser /app && \
+    chmod 550 /app && \
     chmod 440 /app/app.jar && \
     chmod 550 /app/uploadthing-delete.js
 

@@ -45,9 +45,20 @@ mvn clean package -DskipTests
 echo "🔍 Verifying Java build..."
 if ls target/*.jar 1> /dev/null 2>&1; then
     echo "✅ Java application built successfully"
+    echo "📦 JAR files found:"
     ls -la target/*.jar
+    
+    # Ensure the expected JAR file exists
+    if [ -f "target/yakrooms-0.0.1-SNAPSHOT.jar" ]; then
+        echo "✅ Main JAR file found: yakrooms-0.0.1-SNAPSHOT.jar"
+    else
+        echo "⚠️  Expected JAR name not found, but other JARs exist:"
+        ls target/*.jar
+    fi
 else
-    echo "❌ Java application build failed"
+    echo "❌ Java application build failed - no JAR files found"
+    echo "Target directory contents:"
+    ls -la target/ || echo "Target directory not found"
     exit 1
 fi
 
