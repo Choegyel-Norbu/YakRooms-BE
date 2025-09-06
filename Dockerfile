@@ -53,8 +53,8 @@ RUN ./railway-build.sh
 # Stage 2: Runtime environment
 FROM eclipse-temurin:17-jre-alpine AS runtime
 
-# Set production-optimized JVM parameters
-ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -Djava.security.egd=file:/dev/./urandom"
+# Set production-optimized JVM parameters for faster startup
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -Djava.security.egd=file:/dev/./urandom -XX:+TieredCompilation -XX:TieredStopAtLevel=1 -Dspring.jmx.enabled=false"
 
 # Install runtime dependencies (remove version pinning for compatibility)
 RUN apk add --no-cache \
@@ -90,9 +90,9 @@ USER appuser
 # Expose port
 EXPOSE 8080
 
-# Health check with more lenient configuration for startup
-HEALTHCHECK --interval=45s --timeout=30s --start-period=180s --retries=5 \
-    CMD curl -f http://localhost:8080/health/ping || curl -f http://localhost:8080/actuator/health || exit 1
+# Health check with lenient configuration for startup - Railway will override this
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:8080/health/ping || exit 1
 
 # Use dumb-init to handle signals properly and prevent zombie processes
 ENTRYPOINT ["dumb-init", "--"]

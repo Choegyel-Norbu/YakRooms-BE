@@ -25,8 +25,20 @@ public class FirebaseConfig {
     @PostConstruct
     public void init() {
         try {
-            FirebaseOptions options;
-            String activeProfile = getActiveProfile();
+            // Allow application to start even if Firebase configuration is missing
+            if (FirebaseApp.getApps().isEmpty()) {
+                initializeFirebase();
+            } else {
+                logger.info("Firebase already initialized");
+            }
+        } catch (Exception e) {
+            logger.warn("Firebase initialization failed - application will continue without Firebase: {}", e.getMessage());
+        }
+    }
+
+    private void initializeFirebase() throws Exception {
+        FirebaseOptions options;
+        String activeProfile = getActiveProfile();
 
             if (env.matchesProfiles("production", "prod")) {
                 // Production environment: Use Base64 encoded credentials
@@ -42,7 +54,7 @@ public class FirebaseConfig {
                     logger.warn("FIREBASE_CONFIG_BASE64 not found, falling back to service account file");
                     InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
                     if (serviceAccount == null) {
-                        logger.error("Firebase credentials not found. Set FIREBASE_CONFIG_BASE64 environment variable for production.");
+                        logger.warn("Firebase credentials not found. Set FIREBASE_CONFIG_BASE64 environment variable for production.");
                         logger.warn("⚠️  Firebase initialization skipped - some features may not work properly");
                         return; // Skip Firebase initialization instead of crashing
                     }
@@ -55,24 +67,20 @@ public class FirebaseConfig {
                 logger.info("Initializing Firebase for DEVELOPMENT with service account file");
                 InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
                 if (serviceAccount == null) {
-                    throw new RuntimeException("Firebase service account file not found. Please ensure firebase-service-account.json exists in src/main/resources/");
+                    logger.warn("Firebase service account file not found. Please ensure firebase-service-account.json exists in src/main/resources/");
+                    logger.warn("⚠️  Firebase initialization skipped - some features may not work properly");
+                    return; // Skip Firebase initialization instead of crashing
                 }
                 options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
             }
 
-            if (FirebaseApp.getApps().isEmpty()) {
-                FirebaseApp.initializeApp(options);
-                logger.info("Firebase initialized successfully for profile: {}", activeProfile);
-            } else {
-                logger.debug("Firebase already initialized");
-            }
-
-        } catch (Exception e) {
-            logger.error("Firebase initialization failed: {}", e.getMessage(), e);
-            // Don't throw exception to prevent application startup failure
-            // Firebase might not be critical for all environments
+        if (FirebaseApp.getApps().isEmpty()) {
+            FirebaseApp.initializeApp(options);
+            logger.info("Firebase initialized successfully for profile: {}", activeProfile);
+        } else {
+            logger.debug("Firebase already initialized");
         }
     }
 

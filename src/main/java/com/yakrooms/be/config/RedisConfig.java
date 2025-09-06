@@ -5,15 +5,13 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -34,8 +32,6 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfig {
 
-    @Autowired
-    private Environment environment;
 
     @Value("${app.cache.hotel-details.ttl:1800000}")
     private long hotelDetailsTtl;
@@ -51,10 +47,11 @@ public class RedisConfig {
 
     /**
      * Configure Redis template with Jackson serialization for optimal performance
-     * Only created when Redis connection is available
+     * Only when Redis classes are available
      */
     @Bean
-    @ConditionalOnProperty(name = "spring.data.redis.host")
+    @ConditionalOnClass(RedisConnectionFactory.class)
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = false)
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -79,10 +76,13 @@ public class RedisConfig {
     }
 
     /**
-     * Configure cache manager with custom TTL for different cache types
+     * Configure Redis cache manager with custom TTL for different cache types
+     * Only when Redis is configured and available
      */
-    @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    @Bean("redisCacheManager")
+    @ConditionalOnClass(RedisConnectionFactory.class)
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = false)
+    public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
         // Create ObjectMapper for cache serialization
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
@@ -128,4 +128,5 @@ public class RedisConfig {
                 .transactionAware()
                 .build();
     }
+
 }
