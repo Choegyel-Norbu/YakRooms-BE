@@ -1,5 +1,6 @@
 package com.yakrooms.be.service;
 
+import com.yakrooms.be.dto.response.RefreshTokenResponse;
 import com.yakrooms.be.model.entity.RefreshToken;
 import com.yakrooms.be.model.entity.User;
 
@@ -13,19 +14,19 @@ public interface RefreshTokenService {
      * @param user The user to create token for
      * @param deviceInfo Device information for security tracking
      * @param ipAddress IP address for security tracking
-     * @return The created refresh token
+     * @return The refresh token response with actual JWT token
      */
-    RefreshToken createRefreshToken(User user, String deviceInfo, String ipAddress);
+    RefreshTokenResponse createRefreshToken(User user, String deviceInfo, String ipAddress);
     
     /**
      * Validate and rotate refresh token
      * @param token The refresh token to validate
      * @param deviceInfo Current device information
      * @param ipAddress Current IP address
-     * @return New refresh token if validation succeeds
+     * @return New refresh token response if validation succeeds
      * @throws SecurityException if token is invalid or expired
      */
-    RefreshToken validateAndRotateToken(String token, String deviceInfo, String ipAddress);
+    RefreshTokenResponse validateAndRotateToken(String token, String deviceInfo, String ipAddress);
     
     /**
      * Revoke all refresh tokens for a user

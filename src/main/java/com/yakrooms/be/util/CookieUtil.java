@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 /**
@@ -35,41 +36,41 @@ public class CookieUtil {
     
     /**
      * Create a secure HttpOnly cookie for access token
-     * Path: "/", Max-Age: 15 minutes, SameSite: Strict
+     * Path: "/", Max-Age: 15 minutes, SameSite: Lax (for development)
      */
     public void setAccessTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
-        Cookie cookie = createSecureCookie(ACCESS_TOKEN_COOKIE, token, maxAgeSeconds);
-        cookie.setPath("/");
-        response.addCookie(cookie);
+        ResponseCookie cookie = createSecureResponseCookie(ACCESS_TOKEN_COOKIE, token, maxAgeSeconds);
+        response.addHeader("Set-Cookie", cookie.toString());
     }
     
     /**
      * Create a secure HttpOnly cookie for refresh token
-     * Path: "/refresh-token", Max-Age: 7 days, SameSite: Strict
+     * Path: "/", Max-Age: 7 days, SameSite: Lax (for development)
      */
     public void setRefreshTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
-        Cookie cookie = createSecureCookie(REFRESH_TOKEN_COOKIE, token, maxAgeSeconds);
-        cookie.setPath("/refresh-token");
-        response.addCookie(cookie);
+        ResponseCookie cookie = createSecureResponseCookie(REFRESH_TOKEN_COOKIE, token, maxAgeSeconds);
+        response.addHeader("Set-Cookie", cookie.toString());
     }
     
     /**
-     * Create a secure cookie with proper security attributes
+     * Create a secure ResponseCookie with proper security attributes including SameSite
      */
-    private Cookie createSecureCookie(String name, String value, int maxAgeSeconds) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true); // Prevent XSS attacks
-        cookie.setSecure(secureCookies); // HTTPS only in production
-        cookie.setMaxAge(maxAgeSeconds);
+    private ResponseCookie createSecureResponseCookie(String name, String value, int maxAgeSeconds) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
+            .path("/")
+            .maxAge(maxAgeSeconds)
+            .httpOnly(true) // Prevent XSS attacks
+            .secure(secureCookies) // HTTPS only in production
+            .sameSite("Lax"); // Lax for development, allows cross-site requests
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
-            cookie.setDomain(cookieDomain);
+            builder.domain(cookieDomain);
         }
         
-        // SameSite attribute is handled by Spring Security configuration
-        return cookie;
+        return builder.build();
     }
+    
     
     /**
      * Extract access token from request cookies
@@ -103,14 +104,14 @@ public class CookieUtil {
      * Clear access token cookie
      */
     public void clearAccessTokenCookie(HttpServletResponse response) {
-        clearCookie(response, ACCESS_TOKEN_COOKIE, "/");
+        clearResponseCookie(response, ACCESS_TOKEN_COOKIE);
     }
     
     /**
      * Clear refresh token cookie
      */
     public void clearRefreshTokenCookie(HttpServletResponse response) {
-        clearCookie(response, REFRESH_TOKEN_COOKIE, "/refresh-token");
+        clearResponseCookie(response, REFRESH_TOKEN_COOKIE);
     }
     
     /**
@@ -122,21 +123,25 @@ public class CookieUtil {
     }
     
     /**
-     * Clear a specific cookie by setting max-age to 0
+     * Clear a specific cookie using ResponseCookie (expires immediately)
      */
-    private void clearCookie(HttpServletResponse response, String cookieName, String path) {
-        Cookie cookie = new Cookie(cookieName, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(secureCookies);
-        cookie.setMaxAge(0); // Expire immediately
-        cookie.setPath(path);
+    private void clearResponseCookie(HttpServletResponse response, String cookieName) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
+            .path("/")
+            .maxAge(0) // Expire immediately
+            .httpOnly(true)
+            .secure(secureCookies)
+            .sameSite("Lax");
         
+        // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
-            cookie.setDomain(cookieDomain);
+            builder.domain(cookieDomain);
         }
         
-        response.addCookie(cookie);
+        ResponseCookie cookie = builder.build();
+        response.addHeader("Set-Cookie", cookie.toString());
     }
+    
     
     /**
      * Check if request has access token cookie

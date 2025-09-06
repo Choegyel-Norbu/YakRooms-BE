@@ -433,9 +433,10 @@ public class BookingController {
     }
     
     /**
-     * Get cancellation requests for a specific hotel - Only HOTEL_ADMIN and STAFF can access
+     * Get cancellation requests for a specific hotel - GUEST, HOTEL_ADMIN and STAFF can access
+     * Note: GUEST access allowed for development/testing purposes
      */
-    @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/cancellation-requests/hotel/{hotelId}")
     public ResponseEntity<?> getCancellationRequestsByHotel(
             @PathVariable Long hotelId) {

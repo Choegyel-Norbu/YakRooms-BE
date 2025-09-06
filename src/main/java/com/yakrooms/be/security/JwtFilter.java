@@ -27,9 +27,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
     // List of public endpoints that don't require JWT processing (MORE SPECIFIC FIRST)
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-        "/api/auth/firebase",
-        "/api/auth/refresh-token",
-        "/api/auth/logout",
+        "/auth/firebase",
+        "/auth/refresh-token",
+        "/auth/logout",
         "/api/hotels/list",
         "/api/hotels/topThree",
         "/api/hotels/details",
@@ -103,12 +103,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // Try to get access token from cookie first (preferred method)
         String token = cookieUtil.getAccessTokenFromCookie(request);
+        System.out.println("DEBUG: JwtFilter - Token from cookie: " + (token != null ? "Found (length: " + token.length() + ")" : "Not found"));
         
         // Fallback to Authorization header for backward compatibility
         if (token == null) {
             String authorizationHeader = request.getHeader("Authorization");
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 token = authorizationHeader.substring(7);
+                System.out.println("DEBUG: JwtFilter - Token from header: " + (token != null ? "Found (length: " + token.length() + ")" : "Not found"));
             }
         }
 

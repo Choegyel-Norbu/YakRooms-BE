@@ -1,5 +1,6 @@
 package com.yakrooms.be.service.impl;
 
+import com.yakrooms.be.dto.response.RefreshTokenResponse;
 import com.yakrooms.be.model.entity.RefreshToken;
 import com.yakrooms.be.model.entity.User;
 import com.yakrooms.be.repository.RefreshTokenRepository;
@@ -45,7 +46,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private int cleanupBatchSize;
     
     @Override
-    public RefreshToken createRefreshToken(User user, String deviceInfo, String ipAddress) {
+    public RefreshTokenResponse createRefreshToken(User user, String deviceInfo, String ipAddress) {
         // Check if user has too many active tokens
         long activeTokenCount = getActiveTokenCount(user.getId());
         if (activeTokenCount >= maxTokensPerUser) {
@@ -62,7 +63,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         
         // Create refresh token entity
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setTokenHash(tokenHash);
+        refreshToken.setTokenHash(tokenHash); // Store only the hash, never the actual token
         refreshToken.setUserId(user.getId());
         refreshToken.setExpiresAt(expiresAt);
         refreshToken.setDeviceInfo(deviceInfo);
@@ -72,14 +73,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         // Save to database
         RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
         
-        // Set the actual token value for return (not stored in DB)
-        savedToken.setTokenHash(token); // Temporarily store actual token for return
-        
-        return savedToken;
+        // Return response with actual JWT token (not stored in DB)
+        return new RefreshTokenResponse(
+            token, // Actual JWT token for client
+            savedToken.getUserId(),
+            savedToken.getExpiresAt(),
+            savedToken.getDeviceInfo(),
+            savedToken.getIpAddress(),
+            savedToken.getCreatedAt()
+        );
     }
     
     @Override
-    public RefreshToken validateAndRotateToken(String token, String deviceInfo, String ipAddress) {
+    public RefreshTokenResponse validateAndRotateToken(String token, String deviceInfo, String ipAddress) {
         // Validate JWT token
         if (!jwtUtil.validateRefreshToken(token)) {
             throw new SecurityException("Invalid refresh token");
@@ -117,7 +123,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         refreshTokenRepository.save(existingToken);
         
         // Create new refresh token (token rotation)
-        RefreshToken newToken = createRefreshToken(user, deviceInfo, ipAddress);
+        RefreshTokenResponse newToken = createRefreshToken(user, deviceInfo, ipAddress);
         
         return newToken;
     }

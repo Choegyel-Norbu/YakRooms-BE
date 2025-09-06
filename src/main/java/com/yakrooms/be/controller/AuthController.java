@@ -68,7 +68,7 @@ public class AuthController {
 			
 			// Set new tokens as secure cookies
 			cookieUtil.setAccessTokenCookie(response, newAccessToken, 900); // 15 minutes
-			cookieUtil.setRefreshTokenCookie(response, newRefreshToken.getTokenHash(), 604800); // 7 days
+			cookieUtil.setRefreshTokenCookie(response, newRefreshToken.getToken(), 604800); // 7 days
 			
 			return ResponseEntity.ok(Map.of(
 				"message", "Token refreshed successfully",

@@ -42,7 +42,16 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/api/auth/firebase", "/api/auth/refresh-token", "/api/auth/logout")
+                .ignoringRequestMatchers(
+                    // Authentication endpoints
+                    "/auth/firebase", "/auth/refresh-token", "/auth/logout",
+                    // API endpoints - CSRF disabled for stateless JWT API
+                    "/api/**",
+                    // Health check endpoints
+                    "/health/**", "/actuator/**",
+                    // WebSocket endpoints
+                    "/ws/**"
+                )
             )
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

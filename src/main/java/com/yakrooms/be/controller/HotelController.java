@@ -35,8 +35,8 @@ public class HotelController {
 	@Autowired
 	private HotelService hotelService;
 
-	// Create new hotel - Only HOTEL_ADMIN can create
-	@PreAuthorize("hasRole('HOTEL_ADMIN')")
+	// Create new hotel - GUEST users can create hotels (promotes to HOTEL_ADMIN)
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN')")
 	@PostMapping("/{userId}")
 	public ResponseEntity<HotelResponse> createHotel(@RequestBody HotelRequest request, @PathVariable Long userId) {
 		HotelResponse response = hotelService.createHotel(request, userId);

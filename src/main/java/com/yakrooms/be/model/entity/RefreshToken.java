@@ -80,7 +80,6 @@ public class RefreshToken {
     public void setId(Long id) { this.id = id; }
     
     public String getTokenHash() { return tokenHash; }
-    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -126,5 +125,33 @@ public class RefreshToken {
     public void revoke() {
         this.isRevoked = true;
         this.revokedAt = LocalDateTime.now();
+    }
+    
+    /**
+     * Validate token hash format (must be exactly 64 hex characters for SHA-256)
+     * @param tokenHash The hash to validate
+     * @throws IllegalArgumentException if hash format is invalid
+     */
+    public static void validateTokenHash(String tokenHash) {
+        if (tokenHash == null) {
+            throw new IllegalArgumentException("Token hash cannot be null");
+        }
+        if (tokenHash.length() != 64) {
+            throw new IllegalArgumentException(
+                String.format("Token hash must be exactly 64 characters (SHA-256), got: %d", tokenHash.length())
+            );
+        }
+        if (!tokenHash.matches("^[a-fA-F0-9]{64}$")) {
+            throw new IllegalArgumentException("Token hash must contain only hexadecimal characters");
+        }
+    }
+    
+    /**
+     * Set token hash with validation
+     * @param tokenHash The SHA-256 hash (64 hex characters)
+     */
+    public void setTokenHash(String tokenHash) {
+        validateTokenHash(tokenHash);
+        this.tokenHash = tokenHash;
     }
 }

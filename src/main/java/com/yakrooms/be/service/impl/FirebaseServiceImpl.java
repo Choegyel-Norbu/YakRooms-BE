@@ -125,6 +125,8 @@ public class FirebaseServiceImpl implements FirebaseService {
 	        user = userRepo.save(user);
 	    }
 
+	    // Note: This method is deprecated - use handleUserWithCookies for secure token handling
+	    // Tokens should not be exposed in response body for security reasons
 	    String token = jwtUtil.generateAccessToken(user);
 
 	    return new JwtLoginResponse(token, UserMapper.toUserResponse(user));
@@ -175,10 +177,11 @@ public class FirebaseServiceImpl implements FirebaseService {
 	    
 	    // Set secure cookies
 	    cookieUtil.setAccessTokenCookie(response, accessToken, 900); // 15 minutes
-	    cookieUtil.setRefreshTokenCookie(response, refreshToken.getTokenHash(), 604800); // 7 days
-	    
-	    // Return response with access token (for backward compatibility)
-	    return new JwtLoginResponse(accessToken, UserMapper.toUserResponse(user));
+	    cookieUtil.setRefreshTokenCookie(response, refreshToken.getToken(), 604800); // 7 days
+	 
+	    // Return response WITHOUT access token for security
+	    // Token is now only available via secure HTTP-only cookie
+	    return new JwtLoginResponse(UserMapper.toUserResponse(user));
 	}
 	
 	/**

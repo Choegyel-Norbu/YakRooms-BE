@@ -106,12 +106,22 @@ public class JwtUtil {
 	/**
 	 * Generate hash for refresh token storage
 	 * Uses SHA-256 for secure hashing
+	 * 
+	 * @param token The JWT refresh token to hash
+	 * @return A 64-character hexadecimal string (SHA-256 hash)
+	 * @throws RuntimeException if SHA-256 algorithm is not available
 	 */
 	public String generateTokenHash(String token) {
+		if (token == null || token.trim().isEmpty()) {
+			throw new IllegalArgumentException("Token cannot be null or empty");
+		}
+		
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-256");
 			byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-			StringBuilder hexString = new StringBuilder();
+			
+			// Convert to hexadecimal string (always 64 characters for SHA-256)
+			StringBuilder hexString = new StringBuilder(64);
 			for (byte b : hash) {
 				String hex = Integer.toHexString(0xff & b);
 				if (hex.length() == 1) {
@@ -119,7 +129,15 @@ public class JwtUtil {
 				}
 				hexString.append(hex);
 			}
-			return hexString.toString();
+			
+			String result = hexString.toString();
+			
+			// Validate that we always produce exactly 64 characters
+			if (result.length() != 64) {
+				throw new RuntimeException("SHA-256 hash should always be 64 characters, got: " + result.length());
+			}
+			
+			return result;
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException("SHA-256 algorithm not available", e);
 		}
