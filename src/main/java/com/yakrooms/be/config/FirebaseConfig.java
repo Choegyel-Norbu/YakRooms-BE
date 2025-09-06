@@ -9,10 +9,13 @@ import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 public class FirebaseConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(FirebaseConfig.class);
     private final Environment env;
 
     public FirebaseConfig(Environment env) {
@@ -29,22 +32,25 @@ public class FirebaseConfig {
                 // Production environment: Use Base64 encoded credentials
                 String encodedCredentials = env.getProperty("FIREBASE_CONFIG_BASE64");
                 if (encodedCredentials != null && !encodedCredentials.isEmpty()) {
-                    System.out.println("🔥 Initializing Firebase for PRODUCTION with Base64 credentials");
+                    logger.info("Initializing Firebase for PRODUCTION with Base64 credentials");
                     byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials);
                     InputStream credentialsStream = new ByteArrayInputStream(decodedBytes);
                     options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(credentialsStream))
                         .build();
                 } else {
-                    System.out.println("⚠️  FIREBASE_CONFIG_BASE64 not found, falling back to service account file");
+                    logger.warn("FIREBASE_CONFIG_BASE64 not found, falling back to service account file");
                     InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
+                    if (serviceAccount == null) {
+                        throw new RuntimeException("Firebase credentials not found. Set FIREBASE_CONFIG_BASE64 environment variable for production.");
+                    }
                     options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                         .build();
                 }
             } else {
                 // Development environment: Use local service account file
-                System.out.println("🔥 Initializing Firebase for DEVELOPMENT with service account file");
+                logger.info("Initializing Firebase for DEVELOPMENT with service account file");
                 InputStream serviceAccount = getClass().getResourceAsStream("/firebase-service-account.json");
                 if (serviceAccount == null) {
                     throw new RuntimeException("Firebase service account file not found. Please ensure firebase-service-account.json exists in src/main/resources/");
@@ -56,14 +62,13 @@ public class FirebaseConfig {
 
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                System.out.println("✅ Firebase Initialized successfully for profile: " + activeProfile);
+                logger.info("Firebase initialized successfully for profile: {}", activeProfile);
             } else {
-                System.out.println("ℹ️  Firebase already initialized");
+                logger.debug("Firebase already initialized");
             }
 
         } catch (Exception e) {
-            System.err.println("❌ Firebase initialization failed: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Firebase initialization failed: {}", e.getMessage(), e);
             // Don't throw exception to prevent application startup failure
             // Firebase might not be critical for all environments
         }

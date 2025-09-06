@@ -120,16 +120,27 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow specific origins (your frontend domains)
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:*",         // Local development servers
-            "https://localhost:*",        // Local HTTPS development
-            "http://127.0.0.1:*",        // Local IP development
-            "https://yak-rooms-fe.vercel.app",        // Vercel main deployment
-            "https://yak-rooms-fe-main.vercel.app",   // Vercel branch deployment
-            "https://*.vercel.app",                   // Pattern for any Vercel deployment
-            "https://*.ngrok-free.app"                // Pattern for any ngrok subdomain
-        ));
+        // Environment-aware CORS configuration
+        String activeProfile = System.getProperty("spring.profiles.active", "development");
+        
+        if ("production".equals(activeProfile)) {
+            // Production: Strict CORS - only allow specific production domains
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "https://yak-rooms-fe.vercel.app",        // Production frontend
+                "https://www.yakrooms.com",               // Production domain (if you have one)
+                "https://yakrooms.com"                    // Production domain without www
+            ));
+        } else {
+            // Development: Permissive CORS for local development
+            configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:*",                     // Local development servers
+                "https://localhost:*",                    // Local HTTPS development  
+                "http://127.0.0.1:*",                    // Local IP development
+                "https://yak-rooms-fe.vercel.app",        // Production frontend for testing
+                "https://*.vercel.app",                   // Vercel preview deployments
+                "https://*.ngrok-free.app"                // Ngrok tunneling for testing
+            ));
+        }
         
         // Allow specific HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

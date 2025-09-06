@@ -1,7 +1,6 @@
 package com.yakrooms.be.service;
 
 import com.yakrooms.be.dto.response.RefreshTokenResponse;
-import com.yakrooms.be.model.entity.RefreshToken;
 import com.yakrooms.be.model.entity.User;
 
 /**

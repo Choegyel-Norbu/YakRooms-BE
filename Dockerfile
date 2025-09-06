@@ -1,37 +1,50 @@
 # Multi-stage Dockerfile for Java + Node.js hybrid application
-# This explicitly defines our build process to avoid nixpacks auto-detection issues
+# Production-optimized with security best practices
 
 # Stage 1: Build environment with both Java and Node.js
 FROM eclipse-temurin:17-jdk-alpine AS builder
 
-# Set environment variables
-ENV MAVEN_OPTS="-Xmx1024m"
+# Set build environment variables
+ENV MAVEN_OPTS="-Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication"
+ENV NODE_ENV=production
 
-# Install system dependencies (Alpine uses apk instead of apt)
+# Install system dependencies with specific versions for security
 RUN apk add --no-cache \
-        curl \
+        curl=8.5.0-r0 \
         ca-certificates \
         bash \
         git \
         maven \
         nodejs \
-        npm
+        npm \
+    && apk upgrade --no-cache
+
+# Create build user for security
+RUN addgroup -S builduser && adduser -S -G builduser builduser
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files first for better layer caching
-COPY package*.json ./
-COPY pom.xml ./
+COPY --chown=builduser:builduser package*.json pom.xml ./
 
-# Install Node.js dependencies
-RUN npm ci --only=production --no-audit --no-fund
+# Switch to build user
+USER builduser
+
+# Install Node.js dependencies with security audit
+RUN npm ci --only=production --no-audit --no-fund --ignore-scripts
+
+# Switch back to root for copying source code
+USER root
 
 # Copy source code
-COPY . .
+COPY --chown=builduser:builduser . .
 
 # Make build script executable
 RUN chmod +x railway-build.sh
+
+# Switch to build user for building
+USER builduser
 
 # Run custom build script
 RUN ./railway-build.sh
@@ -39,40 +52,49 @@ RUN ./railway-build.sh
 # Stage 2: Runtime environment
 FROM eclipse-temurin:17-jre-alpine AS runtime
 
-# Set environment variables
-ENV JAVA_OPTS="-Xmx512m -Xms256m"
+# Set production-optimized JVM parameters
+ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -Djava.security.egd=file:/dev/./urandom"
 
-# Install Node.js runtime (for UploadThing scripts)
+# Install runtime dependencies with specific versions for security
 RUN apk add --no-cache \
-        curl \
+        curl=8.5.0-r0 \
         ca-certificates \
         nodejs \
-        npm
+        npm \
+        dumb-init \
+    && apk upgrade --no-cache \
+    && rm -rf /var/cache/apk/*
 
 # Create non-root user for security
-RUN addgroup -S appuser && adduser -S -G appuser appuser
+RUN addgroup -S -g 1001 appuser && \
+    adduser -S -u 1001 -G appuser appuser
 
 # Set working directory
 WORKDIR /app
 
-# Copy built application from builder stage
-COPY --from=builder /app/target/*.jar ./app.jar
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/uploadthing-delete.js ./
-COPY --from=builder /app/package*.json ./
+# Copy built application from builder stage with proper ownership
+COPY --from=builder --chown=appuser:appuser /app/target/*.jar ./app.jar
+COPY --from=builder --chown=appuser:appuser /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appuser /app/uploadthing-delete.js ./
+COPY --from=builder --chown=appuser:appuser /app/package*.json ./
 
-# Change ownership to non-root user
-RUN chown -R appuser:appuser /app
+# Set secure file permissions
+RUN chmod 550 /app && \
+    chmod 440 /app/app.jar && \
+    chmod 550 /app/uploadthing-delete.js
 
-# Switch to non-root user
+# Switch to non-root user early for security
 USER appuser
 
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# Health check with improved configuration
+HEALTHCHECK --interval=30s --timeout=15s --start-period=90s --retries=3 \
+    CMD curl -f http://localhost:8080/health/ping || exit 1
 
-# Start application with production profile
-CMD ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=production -jar app.jar"]
+# Use dumb-init to handle signals properly and prevent zombie processes
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start application with environment-based profile selection
+CMD ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-production} -jar app.jar"]

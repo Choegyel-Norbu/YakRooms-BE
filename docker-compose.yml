@@ -3,41 +3,73 @@ services:
     image: mysql:8.0
     container_name: yakrooms-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ChogyalWp
-      MYSQL_DATABASE: yakrooms
-      MYSQL_USER: yakrooms
-      MYSQL_PASSWORD: ChogyalWp
+      # Use environment variables for security - set these in .env file
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-SecureRootPassword123!}
+      MYSQL_DATABASE: ${MYSQLDATABASE:-yakrooms}
+      MYSQL_USER: ${MYSQL_APP_USER:-yakrooms_user}
+      MYSQL_PASSWORD: ${MYSQL_APP_PASSWORD:-SecureAppPassword123!}
     ports:
-      - "3306:3306"
+      - "${MYSQL_EXTERNAL_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
-    command: --default-authentication-plugin=mysql_native_password
+    command: 
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
+      - --max-connections=200
+      - --innodb-buffer-pool-size=256M
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pChogyalWp"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 60s
     networks:
       - yakrooms-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
   redis:
     image: redis:7-alpine
     container_name: yakrooms-redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     ports:
-      - "6379:6379"
+      - "${REDIS_EXTERNAL_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: >
+      sh -c "
+      if [ -n \"$$REDIS_PASSWORD\" ]; then
+        redis-server /usr/local/etc/redis/redis.conf --requirepass $$REDIS_PASSWORD --appendonly yes
+      else
+        redis-server --appendonly yes
+      fi
+      "
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: 
+        - CMD
+        - sh
+        - -c
+        - |
+          if [ -n "$${REDIS_PASSWORD}" ]; then
+            redis-cli -a "$${REDIS_PASSWORD}" ping
+          else
+            redis-cli ping
+          fi
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     networks:
       - yakrooms-network
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
   yakrooms-app:
     build:
@@ -45,24 +77,39 @@ services:
       dockerfile: Dockerfile
     container_name: yakrooms-app
     environment:
-      # Database Configuration
+      # Database Configuration - Use environment variables
       MYSQLHOST: mysql
       MYSQLPORT: 3306
-      MYSQLDATABASE: yakrooms
-      MYSQLUSER: root
-      MYSQLPASSWORD: ChogyalWp
+      MYSQLDATABASE: ${MYSQLDATABASE:-yakrooms}
+      MYSQLUSER: ${MYSQL_APP_USER:-yakrooms_user}
+      MYSQLPASSWORD: ${MYSQL_APP_PASSWORD:-SecureAppPassword123!}
       
-      # Redis Configuration
+      # Redis Configuration - Use environment variables
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
-      REDIS_DATABASE: 0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      
+      # JWT Security - Use environment variables
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-only-for-docker-compose}
+      
+      # Cookie Security - Use environment variables
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      
+      # Email Configuration - Use environment variables
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      
+      # UploadThing Configuration - Use environment variables
+      UPLOADTHING_API_SECRET: ${UPLOADTHING_API_SECRET:-}
+      
+      # Firebase Configuration - Use environment variables
+      FIREBASE_CONFIG_BASE64: ${FIREBASE_CONFIG_BASE64:-}
       
       # Application Configuration
-      SPRING_PROFILES_ACTIVE: docker
-      JAVA_OPTS: "-Xmx512m -Xms256m"
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
     ports:
-      - "8080:8080"
+      - "${APP_EXTERNAL_PORT:-8080}:8080"
     depends_on:
       mysql:
         condition: service_healthy
@@ -77,6 +124,8 @@ services:
     networks:
       - yakrooms-network
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   mysql_data:

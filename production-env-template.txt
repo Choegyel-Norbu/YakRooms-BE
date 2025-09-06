@@ -1,0 +1,74 @@
+# ===========================================
+# YakRooms Production Environment Variables
+# CRITICAL: Set all these variables in your deployment platform
+# ===========================================
+
+# ================== SPRING PROFILE ==================
+# Set the active profile to production
+SPRING_PROFILES_ACTIVE=production
+
+# ================== JWT SECURITY ==================
+# JWT Secret Key - MUST BE 256-bit secure random string
+# Generate using: openssl rand -base64 32
+# Example: JWT_SECRET=YOUR_SECURE_256_BIT_SECRET_HERE
+JWT_SECRET=<GENERATE-SECURE-256-BIT-SECRET>
+
+# ================== DATABASE CONFIGURATION ==================
+# MySQL Production Database Settings
+# Replace with your actual production database credentials
+MYSQLHOST=<PRODUCTION-DB-HOST>
+MYSQLPORT=3306
+MYSQLDATABASE=yakrooms
+MYSQLUSER=<PRODUCTION-DB-USER>
+MYSQLPASSWORD=<PRODUCTION-DB-PASSWORD>
+
+# ================== REDIS CONFIGURATION ==================
+# Redis Cache Production Settings
+# Replace with your actual production Redis credentials
+REDIS_HOST=<PRODUCTION-REDIS-HOST>
+REDIS_PORT=6379
+REDIS_PASSWORD=<PRODUCTION-REDIS-PASSWORD>
+
+# ================== EMAIL CONFIGURATION ==================
+# Production Email Service Settings
+# Replace with your actual production email credentials
+SPRING_MAIL_USERNAME=<PRODUCTION-EMAIL>
+SPRING_MAIL_PASSWORD=<PRODUCTION-EMAIL-PASSWORD>
+
+# ================== UPLOADTHING CONFIGURATION ==================
+# Production UploadThing API Settings
+# Replace with your actual production UploadThing secret
+UPLOADTHING_API_SECRET=<PRODUCTION-UPLOADTHING-SECRET>
+
+# ================== FIREBASE CONFIGURATION ==================
+# Firebase Production Configuration
+# Base64 encoded Firebase service account JSON
+# Generate by: base64 -i firebase-service-account.json
+FIREBASE_CONFIG_BASE64=<BASE64-ENCODED-FIREBASE-CONFIG>
+
+# ================== COOKIE SECURITY ==================
+# Production Cookie Security Settings
+COOKIE_SECURE=true
+COOKIE_DOMAIN=.yourdomain.com
+
+# ===========================================
+# DEPLOYMENT PLATFORM SPECIFIC VARIABLES
+# ===========================================
+
+# For Railway deployment
+RAILWAY_ENVIRONMENT=production
+
+# For other platforms, add their specific variables here
+
+# ===========================================
+# SECURITY NOTES
+# ===========================================
+# 
+# 1. NEVER commit these values to version control
+# 2. Use your deployment platform's environment variable system
+# 3. Rotate secrets regularly
+# 4. Use strong, unique passwords for all services
+# 5. Enable 2FA on all service accounts
+# 6. Monitor for unauthorized access
+#
+# ===========================================

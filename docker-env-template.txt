@@ -1,0 +1,58 @@
+# ===========================================
+# Docker Compose Environment Variables
+# Copy this file to .env and set your values
+# ===========================================
+
+# ================== DATABASE CONFIGURATION ==================
+# MySQL Database Settings for Docker Compose
+MYSQL_ROOT_PASSWORD=YourSecureRootPassword123!
+MYSQLDATABASE=yakrooms
+MYSQL_APP_USER=yakrooms_user
+MYSQL_APP_PASSWORD=YourSecureAppPassword123!
+MYSQL_EXTERNAL_PORT=3306
+
+# ================== REDIS CONFIGURATION ==================
+# Redis Cache Settings for Docker Compose
+REDIS_PASSWORD=YourSecureRedisPassword123!
+REDIS_EXTERNAL_PORT=6379
+
+# ================== APPLICATION CONFIGURATION ==================
+# Spring Profile for Docker Compose
+SPRING_PROFILES_ACTIVE=docker
+
+# Application External Port
+APP_EXTERNAL_PORT=8080
+
+# ================== JWT SECURITY ==================
+# JWT Secret for Docker Compose (generate secure one for production)
+JWT_SECRET=your-secure-jwt-secret-for-docker-compose-256-bit
+
+# ================== COOKIE SECURITY ==================
+# Cookie Security Settings for Docker Compose
+COOKIE_SECURE=false
+COOKIE_DOMAIN=
+
+# ================== EMAIL CONFIGURATION ==================
+# Email Service Settings (optional for Docker Compose)
+SPRING_MAIL_USERNAME=
+SPRING_MAIL_PASSWORD=
+
+# ================== UPLOADTHING CONFIGURATION ==================
+# UploadThing API Settings (optional for Docker Compose)
+UPLOADTHING_API_SECRET=
+
+# ================== FIREBASE CONFIGURATION ==================
+# Firebase Configuration (optional for Docker Compose)
+FIREBASE_CONFIG_BASE64=
+
+# ===========================================
+# SECURITY NOTES FOR DOCKER COMPOSE
+# ===========================================
+# 
+# 1. This is for LOCAL DEVELOPMENT with Docker Compose
+# 2. Never use these values in production
+# 3. Always use strong, unique passwords
+# 4. Generate secure JWT secret for production
+# 5. Set COOKIE_SECURE=true for production HTTPS
+#
+# ===========================================

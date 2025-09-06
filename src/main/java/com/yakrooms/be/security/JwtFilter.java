@@ -14,10 +14,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.yakrooms.be.util.CookieUtil;
 
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
 
     @Autowired
     private CookieUtil cookieUtil;
@@ -103,14 +107,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // Try to get access token from cookie first (preferred method)
         String token = cookieUtil.getAccessTokenFromCookie(request);
-        System.out.println("DEBUG: JwtFilter - Token from cookie: " + (token != null ? "Found (length: " + token.length() + ")" : "Not found"));
+        logger.debug("JWT token extracted from cookie: {}", token != null ? "Present" : "Not found");
         
         // Fallback to Authorization header for backward compatibility
         if (token == null) {
             String authorizationHeader = request.getHeader("Authorization");
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 token = authorizationHeader.substring(7);
-                System.out.println("DEBUG: JwtFilter - Token from header: " + (token != null ? "Found (length: " + token.length() + ")" : "Not found"));
+                logger.debug("JWT token extracted from Authorization header: {}", token != null ? "Present" : "Not found");
             }
         }
 

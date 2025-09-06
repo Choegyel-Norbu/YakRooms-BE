@@ -43,9 +43,39 @@ public class JwtUtil {
 	public JwtUtil(@Value("${jwt.secret:default-secret-key-change-in-production}") String jwtSecret,
 	               @Value("${jwt.access-token-expiration:900000}") long accessTokenExpirationMs,
 	               @Value("${jwt.refresh-token-expiration:604800000}") long refreshTokenExpirationMs) {
+		
+		// Validate JWT secret for production security
+		validateJwtSecret(jwtSecret);
+		
 		this.jwtSecret = jwtSecret;
 		this.accessTokenExpirationMs = accessTokenExpirationMs; // 15 minutes default
 		this.refreshTokenExpirationMs = refreshTokenExpirationMs; // 7 days default
+	}
+	
+	/**
+	 * Validate JWT secret to ensure production security
+	 * Prevents deployment with insecure default secrets
+	 */
+	private void validateJwtSecret(String jwtSecret) {
+		// Check for null or empty secret
+		if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
+			throw new IllegalArgumentException("JWT secret cannot be null or empty. Set JWT_SECRET environment variable.");
+		}
+		
+		// Check for insecure default values
+		if (jwtSecret.contains("default") || 
+		    jwtSecret.contains("change-in-production") || 
+		    jwtSecret.contains("dev-secret") ||
+		    jwtSecret.length() < 32) {
+			throw new IllegalArgumentException(
+				"Insecure JWT secret detected. Please set a secure JWT_SECRET environment variable " +
+				"(minimum 32 characters, cryptographically secure). " +
+				"Generate one with: openssl rand -base64 32"
+			);
+		}
+		
+		// Log successful validation (without exposing the secret)
+		System.out.println("✅ JWT secret validation passed - using secure " + jwtSecret.length() + "-character secret");
 	}
 	
 	/**

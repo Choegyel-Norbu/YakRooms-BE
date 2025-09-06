@@ -12,7 +12,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import com.yakrooms.be.model.enums.Role;
 
 @Component
 public class JwtAuthenticationProvider implements AuthenticationProvider {
