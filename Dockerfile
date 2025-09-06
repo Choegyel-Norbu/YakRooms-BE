@@ -8,9 +8,9 @@ FROM eclipse-temurin:17-jdk-alpine AS builder
 ENV MAVEN_OPTS="-Xmx1024m -XX:+UseG1GC -XX:+UseStringDeduplication"
 ENV NODE_ENV=production
 
-# Install system dependencies with specific versions for security
+# Install system dependencies (remove version pinning for compatibility)
 RUN apk add --no-cache \
-        curl=8.5.0-r0 \
+        curl \
         ca-certificates \
         bash \
         git \
@@ -55,9 +55,9 @@ FROM eclipse-temurin:17-jre-alpine AS runtime
 # Set production-optimized JVM parameters
 ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:+UseStringDeduplication -XX:+OptimizeStringConcat -Djava.security.egd=file:/dev/./urandom"
 
-# Install runtime dependencies with specific versions for security
+# Install runtime dependencies (remove version pinning for compatibility)
 RUN apk add --no-cache \
-        curl=8.5.0-r0 \
+        curl \
         ca-certificates \
         nodejs \
         npm \
