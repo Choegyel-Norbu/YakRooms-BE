@@ -28,9 +28,11 @@ import com.yakrooms.be.dto.request.BookingRequest;
 import com.yakrooms.be.dto.request.BookingExtensionRequest;
 import com.yakrooms.be.dto.response.BookingResponse;
 import com.yakrooms.be.dto.response.BookingExtensionResponse;
+import com.yakrooms.be.dto.response.PagedResponse;
 import com.yakrooms.be.dto.response.CancellationRequestResponse;
 import com.yakrooms.be.service.BookingService;
 import com.yakrooms.be.service.UnifiedBookingService;
+import com.yakrooms.be.util.PageUtils;
 import com.yakrooms.be.model.entity.Room;
 import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.exception.ResourceNotFoundException;
@@ -227,12 +229,13 @@ public class BookingController {
 	// Get all bookings for a user with pagination - Only GUEST can access their own bookings
 	@PreAuthorize("hasRole('GUEST')")
 	@GetMapping("/user/{userId}/page")
-	public ResponseEntity<Page<BookingResponse>> getUserBookingsPaginated(
+	public ResponseEntity<PagedResponse<BookingResponse>> getUserBookingsPaginated(
 			@PathVariable Long userId,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
-		return ResponseEntity.ok(bookingService.getAllBookingsByUserId(userId, pageable));
+		Page<BookingResponse> bookingsPage = bookingService.getAllBookingsByUserId(userId, pageable);
+		return ResponseEntity.ok(PageUtils.toPagedResponse(bookingsPage));
 	}
 
 	// Get all bookings for a user by status - Only GUEST can access their own bookings

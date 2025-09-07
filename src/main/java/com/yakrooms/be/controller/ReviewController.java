@@ -2,16 +2,17 @@ package com.yakrooms.be.controller;
 
 import com.yakrooms.be.dto.request.ReviewRequest;
 import com.yakrooms.be.dto.response.ReviewResponse;
+import com.yakrooms.be.dto.response.PagedResponse;
 import com.yakrooms.be.exception.ResourceConflictException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.service.ReviewService;
+import com.yakrooms.be.util.PageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import org.springframework.data.domain.Page;
@@ -106,7 +107,8 @@ public class ReviewController {
 		try {
 			Pageable pageable = PageRequest.of(page, size);
 			Page<ReviewResponse> reviewsPage = reviewService.getReviewsForHotelPaginated(hotelId, pageable);
-			return ResponseEntity.ok(reviewsPage);
+			PagedResponse<ReviewResponse> pagedResponse = PageUtils.toPagedResponse(reviewsPage);
+			return ResponseEntity.ok(pagedResponse);
 		} catch (ResourceNotFoundException e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
 		} catch (Exception e) {

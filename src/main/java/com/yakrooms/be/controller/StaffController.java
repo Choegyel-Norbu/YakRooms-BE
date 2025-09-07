@@ -2,7 +2,9 @@ package com.yakrooms.be.controller;
 
 import com.yakrooms.be.dto.StaffRequestDTO;
 import com.yakrooms.be.dto.StaffResponseDTO;
+import com.yakrooms.be.dto.response.PagedResponse;
 import com.yakrooms.be.service.StaffService;
+import com.yakrooms.be.util.PageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,7 +34,7 @@ public class StaffController {
     // Get staff by hotel ID with pagination - HOTEL_ADMIN and STAFF can access
     @PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
     @GetMapping("/hotel/{hotelId}/page")
-    public ResponseEntity<Page<StaffResponseDTO>> getStaffByHotelIdPaginated(
+    public ResponseEntity<PagedResponse<StaffResponseDTO>> getStaffByHotelIdPaginated(
             @PathVariable Long hotelId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -44,7 +46,7 @@ public class StaffController {
         Pageable pageable = PageRequest.of(page, size, sort);
         
         Page<StaffResponseDTO> staffPage = staffService.getStaffByHotelId(hotelId, pageable);
-        return ResponseEntity.ok(staffPage);
+        return ResponseEntity.ok(PageUtils.toPagedResponse(staffPage));
     }
 
     // Get staff by hotel ID - HOTEL_ADMIN and STAFF can access

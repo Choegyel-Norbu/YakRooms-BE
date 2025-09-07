@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yakrooms.be.dto.RoomResponseDTO;
 import com.yakrooms.be.dto.RoomBookedDatesDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
+import com.yakrooms.be.dto.response.PagedResponse;
 import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.service.RoomService;
 import com.yakrooms.be.service.RoomAvailabilityScheduler;
+import com.yakrooms.be.util.PageUtils;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -64,10 +66,11 @@ public class RoomController {
 
 	// Get available rooms for booking - Public access
 	@GetMapping("/available/{hotelId}")
-	public ResponseEntity<Page<RoomResponseDTO>> getAvailable(@PathVariable Long hotelId,
+	public ResponseEntity<PagedResponse<RoomResponseDTO>> getAvailable(@PathVariable Long hotelId,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
-		return ResponseEntity.ok(roomService.getAvailableRooms(hotelId, pageable));
+		Page<RoomResponseDTO> roomPage = roomService.getAvailableRooms(hotelId, pageable);
+		return ResponseEntity.ok(PageUtils.toPagedResponse(roomPage));
 	}
 	
 	// Get booked dates for a room - Public access (no authentication required)
@@ -103,20 +106,22 @@ public class RoomController {
 	// Get room status for hotel management - Only HOTEL_ADMIN and STAFF can access
 	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/status/{hotelId}")
-	public ResponseEntity<Page<RoomStatusProjection>> getRoomStatus(@PathVariable Long hotelId, Pageable pageable) {
-		return ResponseEntity.ok(roomService.getRoomStatusByHotelId(hotelId, pageable));
+	public ResponseEntity<PagedResponse<RoomStatusProjection>> getRoomStatus(@PathVariable Long hotelId, Pageable pageable) {
+		Page<RoomStatusProjection> statusPage = roomService.getRoomStatusByHotelId(hotelId, pageable);
+		return ResponseEntity.ok(PageUtils.toPagedResponse(statusPage));
 	}
 
 	// Search rooms by room number - Only HOTEL_ADMIN and STAFF can access
 	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/status/{hotelId}/search")
-	public ResponseEntity<Page<RoomStatusProjection>> getRoomStatusByRoomNumber(
+	public ResponseEntity<PagedResponse<RoomStatusProjection>> getRoomStatusByRoomNumber(
 			@PathVariable Long hotelId,
 			@RequestParam String roomNumber,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
-		return ResponseEntity.ok(roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable));
+		Page<RoomStatusProjection> statusPage = roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable);
+		return ResponseEntity.ok(PageUtils.toPagedResponse(statusPage));
 	}
 	
 	// Manual trigger for room availability scheduler - Only HOTEL_ADMIN and STAFF can access
