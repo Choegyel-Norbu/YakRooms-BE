@@ -13,9 +13,11 @@ import org.springframework.stereotype.Component;
  * Security considerations:
  * - HttpOnly cookies prevent XSS attacks
  * - Secure flag ensures HTTPS-only transmission
- * - SameSite=Strict prevents CSRF attacks
+ * - SameSite=None allows cross-site requests (required for frontend-backend separation)
  * - Proper path and domain settings
  * - Automatic expiration handling
+ * 
+ * Note: SameSite=None requires Secure=true (HTTPS) for production safety
  */
 @Component
 public class CookieUtil {
@@ -36,7 +38,7 @@ public class CookieUtil {
     
     /**
      * Create a secure HttpOnly cookie for access token
-     * Path: "/", Max-Age: 15 minutes, SameSite: Lax (for development)
+     * Path: "/", Max-Age: 15 minutes, SameSite: None (for cross-domain requests)
      */
     public void setAccessTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
         ResponseCookie cookie = createSecureResponseCookie(ACCESS_TOKEN_COOKIE, token, maxAgeSeconds);
@@ -45,7 +47,7 @@ public class CookieUtil {
     
     /**
      * Create a secure HttpOnly cookie for refresh token
-     * Path: "/", Max-Age: 7 days, SameSite: Lax (for development)
+     * Path: "/", Max-Age: 7 days, SameSite: None (for cross-domain requests)
      */
     public void setRefreshTokenCookie(HttpServletResponse response, String token, int maxAgeSeconds) {
         ResponseCookie cookie = createSecureResponseCookie(REFRESH_TOKEN_COOKIE, token, maxAgeSeconds);
@@ -61,7 +63,7 @@ public class CookieUtil {
             .maxAge(maxAgeSeconds)
             .httpOnly(true) // Prevent XSS attacks
             .secure(secureCookies) // HTTPS only in production
-            .sameSite("Lax"); // Lax for development, allows cross-site requests
+            .sameSite("None"); // None for cross-domain requests (requires Secure=true)
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
@@ -131,7 +133,7 @@ public class CookieUtil {
             .maxAge(0) // Expire immediately
             .httpOnly(true)
             .secure(secureCookies)
-            .sameSite("Lax");
+            .sameSite("None"); // None for cross-domain requests (requires Secure=true)
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
