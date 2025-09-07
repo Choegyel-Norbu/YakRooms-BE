@@ -32,7 +32,6 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfig {
 
-
     @Value("${app.cache.hotel-details.ttl:1800000}")
     private long hotelDetailsTtl;
 
