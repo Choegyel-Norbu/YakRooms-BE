@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,14 +42,42 @@ public class AuthController {
 	UserRepository userRepository;
 
 	@PostMapping("/firebase")
-	public ResponseEntity<JwtLoginResponse> firebaseLogin(@RequestBody Map<String, String> request,
-	                                                     HttpServletRequest httpRequest,
-	                                                     HttpServletResponse httpResponse) {
-		String googleToken = request.get("idToken");
+	public ResponseEntity<?> firebaseLogin(@RequestBody Map<String, String> request,
+	                                       HttpServletRequest httpRequest,
+	                                       HttpServletResponse httpResponse) {
+		try {
+			String googleToken = request.get("idToken");
+			
+			if (googleToken == null || googleToken.trim().isEmpty()) {
+				return ResponseEntity.badRequest().body(Map.of(
+					"error", "Missing Google token",
+					"message", "idToken is required"
+				));
+			}
 
-		JwtLoginResponse firebaseUser = firebaseService.verifyTokenAndGetUser(googleToken, httpRequest, httpResponse);
-
-		return ResponseEntity.ok(firebaseUser);
+			JwtLoginResponse firebaseUser = firebaseService.verifyTokenAndGetUser(googleToken, httpRequest, httpResponse);
+			return ResponseEntity.ok(firebaseUser);
+			
+		} catch (SecurityException e) {
+			System.err.println("Security error in firebaseLogin: " + e.getMessage());
+			return ResponseEntity.status(401).body(Map.of(
+				"error", "Authentication failed",
+				"message", e.getMessage()
+			));
+		} catch (IllegalArgumentException e) {
+			System.err.println("Invalid argument in firebaseLogin: " + e.getMessage());
+			return ResponseEntity.status(400).body(Map.of(
+				"error", "Invalid request",
+				"message", e.getMessage()
+			));
+		} catch (Exception e) {
+			System.err.println("Unexpected error in firebaseLogin: " + e.getMessage());
+			e.printStackTrace();
+			return ResponseEntity.status(500).body(Map.of(
+				"error", "Login failed",
+				"message", "An error occurred during login. Please try again."
+			));
+		}
 	}
 	
 	/**
@@ -62,10 +91,12 @@ public class AuthController {
 	 * - JWT token validation with expiration checking
 	 * - No token exposure in response body
 	 * - Automatic token refresh suggestion for expired tokens
+	 * - Requires authentication (accessible to all authenticated users)
 	 * 
 	 * @param authentication Spring Security authentication context (populated by JwtFilter)
 	 * @return Authentication status with user information or error response
 	 */
+	@PreAuthorize("hasAnyRole('GUEST', 'HOTEL_ADMIN', 'STAFF', 'SUPER_ADMIN')")
 	@GetMapping("/status")
 	public ResponseEntity<Map<String, Object>> getAuthenticationStatus(Authentication authentication) {
 		try {
@@ -105,6 +136,15 @@ public class AuthController {
 			// Convert to response DTO
 			UserResponse userResponse = UserMapper.toUserResponse(user);
 			
+			// Additional safety check for userResponse
+			if (userResponse == null) {
+				return ResponseEntity.status(401).body(Map.of(
+					"success", false,
+					"message", "User data conversion failed",
+					"user", (Object) null
+				));
+			}
+			
 			// Return successful authentication status
 			return ResponseEntity.ok(Map.of(
 				"success", true,
@@ -113,7 +153,11 @@ public class AuthController {
 			));
 			
 		} catch (Exception e) {
-			// Log error and return generic error response
+			// Log error for debugging
+			System.err.println("Error in getAuthenticationStatus: " + e.getMessage());
+			e.printStackTrace();
+			
+			// Return generic error response
 			return ResponseEntity.status(500).body(Map.of(
 				"success", false,
 				"message", "Authentication check failed",
@@ -125,6 +169,9 @@ public class AuthController {
 	/**
 	 * Refresh access token using refresh token cookie
 	 * Implements token rotation for enhanced security
+	 * 
+	 * This endpoint should be accessible without authentication since the access token
+	 * might be expired. The refresh token validation happens within the method.
 	 */
 	@PostMapping("/refresh-token")
 	public ResponseEntity<Map<String, Object>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -156,11 +203,28 @@ public class AuthController {
 			));
 			
 		} catch (SecurityException e) {
-			// Clear invalid cookies
+			// Clear invalid cookies on security violations
 			cookieUtil.clearAllTokenCookies(response);
-			return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
+			System.err.println("Security error in refreshToken: " + e.getMessage());
+			return ResponseEntity.status(401).body(Map.of(
+				"error", "Invalid refresh token",
+				"message", e.getMessage()
+			));
+		} catch (IllegalArgumentException e) {
+			// Handle invalid token format or missing data
+			System.err.println("Invalid argument in refreshToken: " + e.getMessage());
+			return ResponseEntity.status(400).body(Map.of(
+				"error", "Invalid request",
+				"message", e.getMessage()
+			));
 		} catch (Exception e) {
-			return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+			// Log unexpected errors for debugging
+			System.err.println("Unexpected error in refreshToken: " + e.getMessage());
+			e.printStackTrace();
+			return ResponseEntity.status(500).body(Map.of(
+				"error", "Internal server error",
+				"message", "Token refresh failed. Please try again."
+			));
 		}
 	}
 	
@@ -193,7 +257,12 @@ public class AuthController {
 		} catch (Exception e) {
 			// Always clear cookies on logout attempt
 			cookieUtil.clearAllTokenCookies(response);
-			return ResponseEntity.status(500).body(Map.of("error", "Logout failed"));
+			System.err.println("Error during logout: " + e.getMessage());
+			e.printStackTrace();
+			return ResponseEntity.status(500).body(Map.of(
+				"error", "Logout failed",
+				"message", "An error occurred during logout, but cookies have been cleared"
+			));
 		}
 	}
 	

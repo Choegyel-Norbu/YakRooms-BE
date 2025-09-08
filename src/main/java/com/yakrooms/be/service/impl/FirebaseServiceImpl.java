@@ -82,12 +82,24 @@ public class FirebaseServiceImpl implements FirebaseService {
 	}
 	
 	@Override
+	@Transactional(readOnly = true)
 	public String generateAccessTokenForUser(Long userId) {
-		Optional<User> userOpt = userRepo.findById(userId);
-		if (userOpt.isEmpty()) {
-			throw new RuntimeException("User not found");
+		if (userId == null) {
+			throw new IllegalArgumentException("User ID cannot be null");
 		}
-		return jwtUtil.generateAccessToken(userOpt.get());
+		
+		// Use findByIdWithCollections to eagerly load roles
+		Optional<User> userOpt = userRepo.findByIdWithCollections(userId);
+		if (userOpt.isEmpty()) {
+			throw new SecurityException("User not found with ID: " + userId);
+		}
+		
+		User user = userOpt.get();
+		if (!user.isActive()) {
+			throw new SecurityException("User account is inactive");
+		}
+		
+		return jwtUtil.generateAccessToken(user);
 	}
 
 	@Transactional
