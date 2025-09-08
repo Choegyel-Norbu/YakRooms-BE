@@ -8,16 +8,21 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 /**
- * Utility class for secure cookie management
+ * Utility class for secure cookie management with smart SameSite strategy
  * 
  * Security considerations:
  * - HttpOnly cookies prevent XSS attacks
- * - Secure flag ensures HTTPS-only transmission
- * - SameSite=None allows cross-site requests (required for frontend-backend separation)
+ * - Secure flag ensures HTTPS-only transmission in production
+ * - Smart SameSite strategy:
+ *   * Production (HTTPS): SameSite=None for cross-domain requests
+ *   * Development (HTTP): SameSite=Lax for same-domain requests
  * - Proper path and domain settings
  * - Automatic expiration handling
  * 
- * Note: SameSite=None requires Secure=true (HTTPS) for production safety
+ * SameSite Strategy:
+ * - SameSite=None requires Secure=true (HTTPS) to work in modern browsers
+ * - In development (HTTP), we use SameSite=Lax which still allows cookies to work
+ * - In production (HTTPS), we use SameSite=None for full cross-domain support
  */
 @Component
 public class CookieUtil {
@@ -56,14 +61,29 @@ public class CookieUtil {
     
     /**
      * Create a secure ResponseCookie with proper security attributes including SameSite
+     * 
+     * SameSite Strategy:
+     * - If Secure=true (HTTPS): Use SameSite=None for cross-domain requests
+     * - If Secure=false (HTTP): Use SameSite=Lax for same-domain requests
+     * 
+     * This ensures cookies work in both development (HTTP) and production (HTTPS)
      */
     private ResponseCookie createSecureResponseCookie(String name, String value, int maxAgeSeconds) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
             .path("/")
             .maxAge(maxAgeSeconds)
             .httpOnly(true) // Prevent XSS attacks
-            .secure(secureCookies) // HTTPS only in production
-            .sameSite("None"); // None for cross-domain requests (requires Secure=true)
+            .secure(secureCookies); // HTTPS only in production
+        
+        // Smart SameSite strategy based on security context
+        if (secureCookies) {
+            // Production (HTTPS): Use SameSite=None for cross-domain requests
+            builder.sameSite("None");
+        } else {
+            // Development (HTTP): Use SameSite=Lax for same-domain requests
+            // This allows cookies to work in development while maintaining security
+            builder.sameSite("Lax");
+        }
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
@@ -126,14 +146,23 @@ public class CookieUtil {
     
     /**
      * Clear a specific cookie using ResponseCookie (expires immediately)
+     * Uses the same smart SameSite strategy as cookie creation
      */
     private void clearResponseCookie(HttpServletResponse response, String cookieName) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
             .path("/")
             .maxAge(0) // Expire immediately
             .httpOnly(true)
-            .secure(secureCookies)
-            .sameSite("None"); // None for cross-domain requests (requires Secure=true)
+            .secure(secureCookies);
+        
+        // Smart SameSite strategy based on security context
+        if (secureCookies) {
+            // Production (HTTPS): Use SameSite=None for cross-domain requests
+            builder.sameSite("None");
+        } else {
+            // Development (HTTP): Use SameSite=Lax for same-domain requests
+            builder.sameSite("Lax");
+        }
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
