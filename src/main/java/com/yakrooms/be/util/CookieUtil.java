@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for secure cookie management with smart SameSite strategy
@@ -27,6 +29,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CookieUtil {
     
+    private static final Logger logger = LoggerFactory.getLogger(CookieUtil.class);
+    
     // Cookie names
     public static final String ACCESS_TOKEN_COOKIE = "access_token";
     public static final String REFRESH_TOKEN_COOKIE = "refresh_token";
@@ -39,6 +43,10 @@ public class CookieUtil {
                      @Value("${app.cookies.domain:}") String cookieDomain) {
         this.secureCookies = secureCookies;
         this.cookieDomain = cookieDomain;
+        
+        // Log cookie configuration for debugging
+        logger.info("CookieUtil initialized - secureCookies: {}, domain: '{}'", 
+                   secureCookies, cookieDomain);
     }
     
     /**
@@ -76,14 +84,18 @@ public class CookieUtil {
             .secure(secureCookies); // HTTPS only in production
         
         // Smart SameSite strategy based on security context
+        String sameSiteValue;
         if (secureCookies) {
             // Production (HTTPS): Use SameSite=None for cross-domain requests
-            builder.sameSite("None");
+            sameSiteValue = "None";
+            logger.debug("Using SameSite=None for production (HTTPS) - cookie: {}", name);
         } else {
             // Development (HTTP): Use SameSite=Lax for same-domain requests
             // This allows cookies to work in development while maintaining security
-            builder.sameSite("Lax");
+            sameSiteValue = "Lax";
+            logger.debug("Using SameSite=Lax for development (HTTP) - cookie: {}", name);
         }
+        builder.sameSite(sameSiteValue);
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
@@ -156,13 +168,17 @@ public class CookieUtil {
             .secure(secureCookies);
         
         // Smart SameSite strategy based on security context
+        String sameSiteValue;
         if (secureCookies) {
             // Production (HTTPS): Use SameSite=None for cross-domain requests
-            builder.sameSite("None");
+            sameSiteValue = "None";
+            logger.debug("Clearing cookie with SameSite=None for production (HTTPS) - cookie: {}", cookieName);
         } else {
             // Development (HTTP): Use SameSite=Lax for same-domain requests
-            builder.sameSite("Lax");
+            sameSiteValue = "Lax";
+            logger.debug("Clearing cookie with SameSite=Lax for development (HTTP) - cookie: {}", cookieName);
         }
+        builder.sameSite(sameSiteValue);
         
         // Set domain if configured
         if (cookieDomain != null && !cookieDomain.isEmpty()) {
