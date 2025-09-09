@@ -3,22 +3,28 @@ package com.yakrooms.be.service.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.yakrooms.be.dto.HotelListingDto;
+import com.yakrooms.be.dto.cache.HotelListingPageCacheDto;
+import com.yakrooms.be.dto.cache.HotelSearchPageCacheDto;
+import com.yakrooms.be.dto.cache.HotelTopCacheDto;
+import com.yakrooms.be.dto.mapper.CacheMapper;
 import com.yakrooms.be.dto.mapper.HotelMapper;
 import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
@@ -26,7 +32,6 @@ import com.yakrooms.be.exception.ResourceConflictException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.Hotel;
 import com.yakrooms.be.model.entity.User;
-import com.yakrooms.be.model.enums.HotelType;
 import com.yakrooms.be.model.enums.Role;
 import com.yakrooms.be.projection.HotelListingProjection;
 import com.yakrooms.be.projection.HotelWithCollectionsAndRatingProjection;
@@ -41,6 +46,7 @@ import com.yakrooms.be.repository.RoomRepository;
 import com.yakrooms.be.repository.StaffRepository;
 import com.yakrooms.be.repository.UserRepository;
 
+import com.yakrooms.be.service.CacheService;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.service.MailService;
 
@@ -48,6 +54,7 @@ import com.yakrooms.be.service.MailService;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
+@Primary
 @Transactional(readOnly = true)
 public class HotelServiceImpl implements HotelService {
 
@@ -63,9 +70,9 @@ public class HotelServiceImpl implements HotelService {
     private final RestaurantRepository restaurantRepository;
     private final HotelMapper hotelMapper;
     private final MailService mailService;
+    private final CacheService cacheService;
+    private final CacheMapper cacheMapper;
 
-
-    @Autowired
     public HotelServiceImpl(HotelRepository hotelRepository,
                            UserRepository userRepository,
                            BookingRepository bookingRepository,
@@ -75,7 +82,9 @@ public class HotelServiceImpl implements HotelService {
                            ReviewRepository reviewRepository,
                            RestaurantRepository restaurantRepository,
                            HotelMapper hotelMapper,
-                           MailService mailService) {
+                           MailService mailService,
+                           CacheService cacheService,
+                           CacheMapper cacheMapper) {
         this.hotelRepository = hotelRepository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
@@ -86,6 +95,8 @@ public class HotelServiceImpl implements HotelService {
         this.restaurantRepository = restaurantRepository;
         this.hotelMapper = hotelMapper;
         this.mailService = mailService;
+        this.cacheService = cacheService;
+        this.cacheMapper = cacheMapper;
     }
 
     @Override
@@ -131,10 +142,37 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = "hotelListings", key = "#pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
-    public Page<HotelWithLowestPriceProjection> getAllHotels(Pageable pageable) {
+    public Page<HotelListingPageCacheDto> getAllHotels(Pageable pageable) {
         log.debug("Fetching all hotels from database with pagination: {}", pageable);
-        return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
+
+        // Try to get from cache first
+        Optional<HotelListingPageCacheDto> cached = cacheService.getHotelListingsPageFromCache("all_hotels", pageable.getPageNumber(), pageable.getPageSize());
+        if (cached.isPresent()) {
+            log.debug("Retrieved all hotels from cache - returning paginated cache DTO");
+            // Create a Page containing the single page DTO
+            return new org.springframework.data.domain.PageImpl<>(
+                List.of(cached.get()),
+                org.springframework.data.domain.PageRequest.of(cached.get().getPageNumber(), cached.get().getPageSize()),
+                cached.get().getTotalElements()
+            );
+        }
+
+        // If not in cache, fetch from database and convert to cache DTO
+        log.debug("Fetching all hotels from database with pagination: {}", pageable);
+        Page<HotelWithLowestPriceProjection> hotels = hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
+
+        // Convert to cache DTO and store
+        HotelListingPageCacheDto cacheDto = cacheMapper.toHotelListingPageCacheDto(hotels, "all_hotels");
+        cacheService.putHotelListingsPageInCache("all_hotels", pageable.getPageNumber(), pageable.getPageSize(), cacheDto);
+
+        log.debug("Found {} hotels (converted to cache DTO)", hotels.getTotalElements());
+        
+        // Return the cache DTO as a paginated response
+        return new org.springframework.data.domain.PageImpl<>(
+            List.of(cacheDto),
+            pageable,
+            hotels.getTotalElements()
+        );
     }
     
     @Override
@@ -257,6 +295,10 @@ public class HotelServiceImpl implements HotelService {
         result.put("hotelName", hotel.getName());
         result.put("alreadyVerified", false);
         
+        // Evict DTO-based caches as well
+        cacheService.evictHotelDetailsFromCache(id);
+        cacheService.evictAllHotelCaches();
+        
         // Try to send email synchronously for immediate feedback
         if (StringUtils.hasText(hotel.getEmail())) {
             try {
@@ -305,37 +347,125 @@ public class HotelServiceImpl implements HotelService {
     }
     
     @Override
-    @Cacheable(value = "searchResults", key = "'search_' + #district + '_' + #locality + '_' + #hotelType + '_' + #page + '_' + #size")
-    public Page<HotelWithLowestPriceProjection> searchHotels(String district, String locality, String hotelType, int page, int size) {
+    public Page<HotelSearchPageCacheDto> searchHotels(String district, String locality, String hotelType, int page, int size) {
+        log.debug("Searching hotels with district: {}, locality: {}, hotelType: {}, page: {}, size: {}", 
+                district, locality, hotelType, page, size);
+
         validatePagination(page, size);
 
-        Pageable pageable = PageRequest.of(page, size);
+        // Try to get from cache first
+        Optional<HotelSearchPageCacheDto> cached = cacheService.getHotelSearchPageFromCache(district, locality, hotelType, page, size);
+        if (cached.isPresent()) {
+            log.debug("Retrieved hotel search results from cache - returning cache DTO directly");
+            return new PageImpl<>(
+                List.of(cached.get()),
+                PageRequest.of(cached.get().getPageNumber(), cached.get().getPageSize()),
+                cached.get().getTotalElements()
+            );
+        }
 
+        // If not in cache, fetch from database and convert to cache DTO
+        Pageable pageable = PageRequest.of(page, size);
         log.debug("Searching hotels from database with filters - district: {}, locality: {}, type: {}, page: {}, size: {}", 
                  district, locality, hotelType, page, size);
         Page<HotelWithLowestPriceProjection> hotelPage = hotelRepository.findAllVerifiedHotelsWithLowestPriceSortedAndFiltered(district, locality, hotelType, pageable);
-        return hotelPage;
+
+        // Convert to cache DTO and store
+        HotelSearchPageCacheDto cacheDto = cacheMapper.toHotelSearchPageCacheDto(hotelPage, district, locality, hotelType);
+        cacheService.putHotelSearchPageInCache(district, locality, hotelType, page, size, cacheDto);
+
+        log.debug("Found {} hotels for search criteria (converted to cache DTO)", hotelPage.getTotalElements());
+        return new PageImpl<>(
+            List.of(cacheDto),
+            PageRequest.of(cacheDto.getPageNumber(), cacheDto.getPageSize()),
+            cacheDto.getTotalElements()
+        );
     }
 
     @Override
-    @Cacheable(value = "topHotels", key = "'top3'")
     public List<HotelWithPriceProjection> getTopThreeHotels() {
-        log.debug("Fetching top three hotels from database");
-        return hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
+        log.info("🔍 Checking cache for top three hotels...");
+
+        // Try to get from cache first
+        Optional<List<HotelTopCacheDto>> cached = cacheService.getTopHotelsFromCache();
+        if (cached.isPresent()) {
+            log.info("✅ CACHE HIT: Retrieved top hotels from Redis cache");
+            return convertTopCacheDtoListToProjectionList(cached.get());
+        }
+
+        log.info("❌ CACHE MISS: Fetching top hotels from database");
+        // If not in cache, fetch from database
+        List<HotelWithPriceProjection> topHotels = hotelRepository.findTop3VerifiedHotelsWithPhotosAndPrice();
+
+        // Convert to cache DTO and store
+        List<HotelTopCacheDto> cacheDtoList = cacheMapper.toHotelTopCacheDtoList(topHotels);
+        cacheService.putTopHotelsInCache(cacheDtoList);
+        log.info("💾 CACHE STORE: Stored top hotels in Redis cache");
+
+        // Convert to DTOs to avoid JPA proxy serialization issues
+        return convertTopCacheDtoListToProjectionList(cacheDtoList);
     }
 
     @Override
-    @Cacheable(value = "hotelListings", key = "'lowest_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
-    public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByLowestPrice(Pageable pageable) {
+    public Page<HotelListingPageCacheDto> getAllHotelsSortedByLowestPrice(Pageable pageable) {
+        log.debug("Fetching hotels sorted by lowest price with pagination: {}", pageable);
+
+        // Try to get from cache first
+        Optional<HotelListingPageCacheDto> cached = cacheService.getHotelListingsPageFromCache("lowest_price", pageable.getPageNumber(), pageable.getPageSize());
+        if (cached.isPresent()) {
+            log.debug("Retrieved hotel listings from cache - returning cache DTO directly");
+            return new PageImpl<>(
+                List.of(cached.get()),
+                PageRequest.of(cached.get().getPageNumber(), cached.get().getPageSize()),
+                cached.get().getTotalElements()
+            );
+        }
+
+        // If not in cache, fetch from database and convert to cache DTO
         log.debug("Fetching hotels sorted by lowest price from database with pagination: {}", pageable);
-        return hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
+        Page<HotelWithLowestPriceProjection> hotels = hotelRepository.findAllVerifiedHotelsWithLowestPriceSorted(pageable);
+
+        // Convert to cache DTO and store
+        HotelListingPageCacheDto cacheDto = cacheMapper.toHotelListingPageCacheDto(hotels, "lowest_price");
+        cacheService.putHotelListingsPageInCache("lowest_price", pageable.getPageNumber(), pageable.getPageSize(), cacheDto);
+
+        log.debug("Found {} hotels sorted by lowest price (converted to cache DTO)", hotels.getTotalElements());
+        return new PageImpl<>(
+            List.of(cacheDto),
+            PageRequest.of(cacheDto.getPageNumber(), cacheDto.getPageSize()),
+            cacheDto.getTotalElements()
+        );
     }
 
     @Override
-    @Cacheable(value = "hotelListings", key = "'highest_' + #pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
-    public Page<HotelWithLowestPriceProjection> getAllHotelsSortedByHighestPrice(Pageable pageable) {
+    public Page<HotelListingPageCacheDto> getAllHotelsSortedByHighestPrice(Pageable pageable) {
+        log.debug("Fetching hotels sorted by highest price with pagination: {}", pageable);
+
+        // Try to get from cache first
+        Optional<HotelListingPageCacheDto> cached = cacheService.getHotelListingsPageFromCache("highest_price", pageable.getPageNumber(), pageable.getPageSize());
+        if (cached.isPresent()) {
+            log.debug("Retrieved hotel listings from cache - returning cache DTO directly");
+            return new PageImpl<>(
+                List.of(cached.get()),
+                PageRequest.of(cached.get().getPageNumber(), cached.get().getPageSize()),
+                cached.get().getTotalElements()
+            );
+        }
+
+        // If not in cache, fetch from database and convert to cache DTO
         log.debug("Fetching hotels sorted by highest price from database with pagination: {}", pageable);
-        return hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
+        Page<HotelWithLowestPriceProjection> hotels = hotelRepository.findAllVerifiedHotelsWithLowestPriceDesc(pageable);
+
+        // Convert to cache DTO and store
+        HotelListingPageCacheDto cacheDto = cacheMapper.toHotelListingPageCacheDto(hotels, "highest_price");
+        cacheService.putHotelListingsPageInCache("highest_price", pageable.getPageNumber(), pageable.getPageSize(), cacheDto);
+
+        log.debug("Found {} hotels sorted by highest price (converted to cache DTO)", hotels.getTotalElements());
+        return new PageImpl<>(
+            List.of(cacheDto),
+            PageRequest.of(cacheDto.getPageNumber(), cacheDto.getPageSize()),
+            cacheDto.getTotalElements()
+        );
     }
 
     // Validation methods
@@ -371,20 +501,68 @@ public class HotelServiceImpl implements HotelService {
             throw new IllegalArgumentException("Page size must be between 1 and 100");
         }
     }
+    /**
+     * Convert HotelTopCacheDto list back to HotelWithPriceProjection list
+     * Creates proper projection implementations to avoid JPA proxy serialization issues
+     */
+    private List<HotelWithPriceProjection> convertTopCacheDtoListToProjectionList(List<HotelTopCacheDto> cacheDtoList) {
+        if (cacheDtoList == null || cacheDtoList.isEmpty()) {
+            return List.of();
+        }
 
-    private String normalizeSearchParam(String param) {
-        return StringUtils.hasText(param) ? param.trim() : null;
+        return cacheDtoList.stream()
+            .map(this::convertTopCacheDtoToProjection)
+            .collect(java.util.stream.Collectors.toList());
     }
 
-    private HotelType parseHotelType(String hotelType) {
-        if (!StringUtils.hasText(hotelType)) {
+    /**
+     * Convert HotelTopCacheDto to HotelWithPriceProjection
+     * Creates a simple implementation to avoid JPA proxy serialization issues
+     */
+    private HotelWithPriceProjection convertTopCacheDtoToProjection(HotelTopCacheDto dto) {
+        if (dto == null) {
             return null;
         }
-        try {
-            return HotelType.valueOf(hotelType.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid hotel type: {}", hotelType);
-            return null;
-        }
+
+        return new HotelWithPriceProjection() {
+            @Override
+            public Long getId() { return dto.getId(); }
+            @Override
+            public String getName() { return dto.getName(); }
+            @Override
+            public String getEmail() { return dto.getEmail(); }
+            @Override
+            public String getPhone() { return dto.getPhone(); }
+            @Override
+            public String getAddress() { return dto.getAddress(); }
+            @Override
+            public String getDistrict() { return dto.getDistrict(); }
+            @Override
+            public String getLocality() { return dto.getLocality(); }
+            @Override
+            public String getLogoUrl() { return dto.getLogoUrl(); }
+            @Override
+            public String getDescription() { return dto.getDescription(); }
+            @Override
+            public Boolean getIsVerified() { return dto.isVerified(); }
+            @Override
+            public String getWebsiteUrl() { return dto.getWebsiteUrl(); }
+            @Override
+            public java.time.LocalDateTime getCreatedAt() { return dto.getCreatedAt(); }
+            @Override
+            public String getLicenseUrl() { return dto.getLicenseUrl(); }
+            @Override
+            public String getIdProofUrl() { return dto.getIdProofUrl(); }
+            @Override
+            public Double getLowestPrice() { return dto.getLowestPrice(); }
+            @Override
+            public String getPhotoUrls() { return dto.getPhotoUrls(); }
+            @Override
+            public String getPhotoUrl() { return dto.getPhotoUrl(); }
+            @Override
+            public Double getAvgRating() { return dto.getAvgRating(); }
+        };
     }
+
+
 }

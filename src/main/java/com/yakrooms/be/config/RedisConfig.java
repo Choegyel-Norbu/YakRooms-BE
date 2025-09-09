@@ -3,7 +3,8 @@ package com.yakrooms.be.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,7 +17,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -25,13 +26,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Redis configuration for caching hotel data with custom TTL settings
- * Provides optimized serialization and cache management for the YakRooms application
+ * Redis configuration for caching DTOs with custom TTL settings
+ * Simplified configuration since we're caching DTOs instead of JPA entities
  */
 @Configuration
 @EnableCaching
 public class RedisConfig {
-
 
     @Value("${app.cache.hotel-details.ttl:1800000}")
     private long hotelDetailsTtl;
@@ -46,7 +46,44 @@ public class RedisConfig {
     private long topHotelsTtl;
 
     /**
-     * Configure Redis template with Jackson serialization for optimal performance
+     * Create ObjectMapper optimized for DTO serialization
+     * Much simpler since we're not dealing with JPA entities and proxies
+     */
+    private ObjectMapper createCacheObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        
+        // Configure visibility and features for DTOs
+        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        
+        // Register Java 8 time module for LocalDateTime support
+        objectMapper.registerModule(new JavaTimeModule());
+        
+        // Configure date/time serialization
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        
+        // Configure to handle collections and arrays properly
+        objectMapper.configure(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED, false);
+        objectMapper.configure(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS, false);
+        
+        // Handle null values gracefully
+        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true);
+
+        return objectMapper;
+    }
+
+    /**
+     * Expose the cache ObjectMapper as a bean for reuse (e.g., manual cache conversions)
+     */
+    @Bean(name = "cacheObjectMapper")
+    public ObjectMapper cacheObjectMapper() {
+        return createCacheObjectMapper();
+    }
+
+    /**
+     * Configure Redis template with GenericJackson2JsonRedisSerializer for optimal performance
      * Only when Redis classes are available
      */
     @Bean
@@ -56,20 +93,19 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
 
-        // Create ObjectMapper with Java 8 time support
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
-        objectMapper.registerModule(new JavaTimeModule());
+        // Use the configured ObjectMapper
+        ObjectMapper objectMapper = createCacheObjectMapper();
 
-        // Configure Jackson serializer
-        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
+        // Configure GenericJackson2JsonRedisSerializer - handles proxies better
+        // Use our configured ObjectMapper with JavaTimeModule support
+        GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer = 
+            new GenericJackson2JsonRedisSerializer(objectMapper);
 
         // Set serializers
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(jackson2JsonRedisSerializer);
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        template.setValueSerializer(genericJackson2JsonRedisSerializer);
+        template.setHashValueSerializer(genericJackson2JsonRedisSerializer);
 
         template.afterPropertiesSet();
         return template;
@@ -83,20 +119,19 @@ public class RedisConfig {
     @ConditionalOnClass(RedisConnectionFactory.class)
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = false)
     public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
-        // Create ObjectMapper for cache serialization
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.activateDefaultTyping(LaissezFaireSubTypeValidator.instance, ObjectMapper.DefaultTyping.NON_FINAL);
-        objectMapper.registerModule(new JavaTimeModule());
+        // Use the configured ObjectMapper
+        ObjectMapper objectMapper = createCacheObjectMapper();
 
-        // Configure Jackson serializer for cache
-        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
+        // Configure GenericJackson2JsonRedisSerializer for cache - handles proxies better
+        // Use our configured ObjectMapper with JavaTimeModule support
+        GenericJackson2JsonRedisSerializer genericJackson2JsonRedisSerializer = 
+            new GenericJackson2JsonRedisSerializer(objectMapper);
 
         // Default cache configuration
         RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMillis(300000)) // 5 minutes default
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jackson2JsonRedisSerializer))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(genericJackson2JsonRedisSerializer))
                 .disableCachingNullValues();
 
         // Custom cache configurations with specific TTLs
@@ -128,5 +163,4 @@ public class RedisConfig {
                 .transactionAware()
                 .build();
     }
-
 }

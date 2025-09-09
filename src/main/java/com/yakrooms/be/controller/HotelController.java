@@ -26,6 +26,8 @@ import com.yakrooms.be.dto.request.HotelRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.dto.response.PagedResponse;
 import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
+import com.yakrooms.be.dto.cache.HotelListingPageCacheDto;
+import com.yakrooms.be.dto.cache.HotelSearchPageCacheDto;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.util.PageUtils;
@@ -62,9 +64,9 @@ public class HotelController {
 	// Get all hotels with pagination - Public access
 	@PreAuthorize("permitAll()")
 	@GetMapping("/list")
-	public ResponseEntity<PagedResponse<HotelWithLowestPriceProjection>> getAllHotels(
+	public ResponseEntity<PagedResponse<HotelListingPageCacheDto>> getAllHotels(
 			@PageableDefault(size = 10) Pageable pageable) {
-		Page<HotelWithLowestPriceProjection> page = hotelService.getAllHotels(pageable);
+		Page<HotelListingPageCacheDto> page = hotelService.getAllHotels(pageable);
 		return ResponseEntity.ok(PageUtils.toPagedResponse(page));
 	}
 
@@ -80,18 +82,18 @@ public class HotelController {
 	// Get hotels sorted by lowest price - Public access
 	@PreAuthorize("permitAll()")
 	@GetMapping("/sortedByLowestPrice")
-	public ResponseEntity<PagedResponse<HotelWithLowestPriceProjection>> getAllHotelsSortedByLowestPrice(
+	public ResponseEntity<PagedResponse<HotelListingPageCacheDto>> getAllHotelsSortedByLowestPrice(
 			@PageableDefault(size = 10) Pageable pageable) {
-		Page<HotelWithLowestPriceProjection> page = hotelService.getAllHotelsSortedByLowestPrice(pageable);
+		Page<HotelListingPageCacheDto> page = hotelService.getAllHotelsSortedByLowestPrice(pageable);
 		return ResponseEntity.ok(PageUtils.toPagedResponse(page));
 	}
 
 	// Get hotels sorted by highest price - Public access
 	@PreAuthorize("permitAll()")
 	@GetMapping("/sortedByHighestPrice")
-	public ResponseEntity<PagedResponse<HotelWithLowestPriceProjection>> getAllHotelsSortedByHighestPrice(
+	public ResponseEntity<PagedResponse<HotelListingPageCacheDto>> getAllHotelsSortedByHighestPrice(
 			@PageableDefault(size = 10) Pageable pageable) {
-		Page<HotelWithLowestPriceProjection> page = hotelService.getAllHotelsSortedByHighestPrice(pageable);
+		Page<HotelListingPageCacheDto> page = hotelService.getAllHotelsSortedByHighestPrice(pageable);
 		return ResponseEntity.ok(PageUtils.toPagedResponse(page));
 	}
 
@@ -105,17 +107,18 @@ public class HotelController {
 	// Search hotels - Public access
 	@PreAuthorize("permitAll()")
 	@GetMapping("/search")
-	public ResponseEntity<PagedResponse<HotelWithLowestPriceProjection>> searchHotels(
+	public ResponseEntity<PagedResponse<HotelSearchPageCacheDto>> searchHotels(
 			@RequestParam(required = false) String district, 
 			@RequestParam(required = false) String locality,
 			@RequestParam(required = false) String hotelType,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
 
-		Page<HotelWithLowestPriceProjection> results = hotelService.searchHotels(district, locality, hotelType, page, size);
+		Page<HotelSearchPageCacheDto> results = hotelService.searchHotels(district, locality, hotelType, page, size);
 		return ResponseEntity.ok(PageUtils.toPagedResponse(results));
 	}
 
 	// Get top three hotels - Public access
+	@PreAuthorize("permitAll()")
 	@GetMapping("/topThree")
 	public ResponseEntity<List<HotelWithPriceProjection>> getTopThreeHotels() {
 		return ResponseEntity.ok(hotelService.getTopThreeHotels());
