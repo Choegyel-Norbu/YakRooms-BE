@@ -11,7 +11,6 @@ import com.yakrooms.be.dto.RoomStatusDTO;
 import com.yakrooms.be.dto.RoomBookedDatesDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.dto.response.RoomResponse;
-import com.yakrooms.be.projection.RoomStatusProjection;
 
 @Service
 public interface RoomService {
@@ -29,9 +28,9 @@ public interface RoomService {
 
 	public Page<RoomResponseDTO> getAvailableRooms(Long hotelId, Pageable pageable);
 
-	Page<RoomStatusProjection> getRoomStatusByHotelId(Long hotelId, Pageable pageable);
+	Page<RoomStatusDTO> getRoomStatusByHotelId(Long hotelId, Pageable pageable);
 	
-	Page<RoomStatusProjection> getRoomStatusByHotelIdAndRoomNumber(Long hotelId, String roomNumber, Pageable pageable);
+	Page<RoomStatusDTO> getRoomStatusByHotelIdAndRoomNumber(Long hotelId, String roomNumber, Pageable pageable);
 	
 	/**
 	 * Get all booked dates for a specific room.

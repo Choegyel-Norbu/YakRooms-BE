@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
 import com.yakrooms.be.dto.RoomBookedDatesDTO;
+import com.yakrooms.be.dto.RoomStatusDTO;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.dto.response.PagedResponse;
-import com.yakrooms.be.projection.RoomStatusProjection;
 import com.yakrooms.be.service.RoomService;
 import com.yakrooms.be.service.RoomAvailabilityScheduler;
 import com.yakrooms.be.util.PageUtils;
@@ -106,21 +106,21 @@ public class RoomController {
 	// Get room status for hotel management - Only HOTEL_ADMIN and STAFF can access
 	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/status/{hotelId}")
-	public ResponseEntity<PagedResponse<RoomStatusProjection>> getRoomStatus(@PathVariable Long hotelId, Pageable pageable) {
-		Page<RoomStatusProjection> statusPage = roomService.getRoomStatusByHotelId(hotelId, pageable);
+	public ResponseEntity<PagedResponse<RoomStatusDTO>> getRoomStatus(@PathVariable Long hotelId, Pageable pageable) {
+		Page<RoomStatusDTO> statusPage = roomService.getRoomStatusByHotelId(hotelId, pageable);
 		return ResponseEntity.ok(PageUtils.toPagedResponse(statusPage));
 	}
 
 	// Search rooms by room number - Only HOTEL_ADMIN and STAFF can access
 	@PreAuthorize("hasAnyRole('HOTEL_ADMIN', 'STAFF')")
 	@GetMapping("/status/{hotelId}/search")
-	public ResponseEntity<PagedResponse<RoomStatusProjection>> getRoomStatusByRoomNumber(
+	public ResponseEntity<PagedResponse<RoomStatusDTO>> getRoomStatusByRoomNumber(
 			@PathVariable Long hotelId,
 			@RequestParam String roomNumber,
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size) {
 		Pageable pageable = PageRequest.of(page, size);
-		Page<RoomStatusProjection> statusPage = roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable);
+		Page<RoomStatusDTO> statusPage = roomService.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber, pageable);
 		return ResponseEntity.ok(PageUtils.toPagedResponse(statusPage));
 	}
 	

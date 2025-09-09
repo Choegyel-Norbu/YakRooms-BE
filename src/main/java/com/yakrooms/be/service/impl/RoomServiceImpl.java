@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yakrooms.be.dto.RoomResponseDTO;
+import com.yakrooms.be.dto.RoomStatusDTO;
 import com.yakrooms.be.dto.mapper.RoomMapper;
+import com.yakrooms.be.dto.mapper.RoomStatusMapper;
 import com.yakrooms.be.dto.request.RoomRequest;
 import com.yakrooms.be.dto.response.RoomResponse;
 import com.yakrooms.be.dto.RoomBookedDatesDTO;
@@ -40,6 +42,7 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final RoomMapper roomMapper;
+    private final RoomStatusMapper roomStatusMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final BookingRepository bookingRepository;
 
@@ -47,11 +50,13 @@ public class RoomServiceImpl implements RoomService {
     public RoomServiceImpl(RoomRepository roomRepository,
                           HotelRepository hotelRepository,
                           RoomMapper roomMapper,
+                          RoomStatusMapper roomStatusMapper,
                           SimpMessagingTemplate messagingTemplate,
                           BookingRepository bookingRepository) {
         this.roomRepository = roomRepository;
         this.hotelRepository = hotelRepository;
         this.roomMapper = roomMapper;
+        this.roomStatusMapper = roomStatusMapper;
         this.messagingTemplate = messagingTemplate;
         this.bookingRepository = bookingRepository;
     }
@@ -178,12 +183,13 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RoomStatusProjection> getRoomStatusByHotelIdAndRoomNumber(Long hotelId, String roomNumber, Pageable pageable) {
+    public Page<RoomStatusDTO> getRoomStatusByHotelIdAndRoomNumber(Long hotelId, String roomNumber, Pageable pageable) {
         validateInput(hotelId, "Hotel ID cannot be null");
         if (roomNumber == null || roomNumber.trim().isEmpty()) {
             throw new IllegalArgumentException("Room number cannot be null or empty");
         }
-        return roomRepository.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber.trim(), pageable);
+        Page<RoomStatusProjection> projectionPage = roomRepository.getRoomStatusByHotelIdAndRoomNumber(hotelId, roomNumber.trim(), pageable);
+        return roomStatusMapper.toDtoPage(projectionPage);
     }
 
     // Alternative methods returning RoomResponse instead of RoomResponseDTO
@@ -389,9 +395,10 @@ public class RoomServiceImpl implements RoomService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Page<RoomStatusProjection> getRoomStatusByHotelId(Long hotelId, Pageable pageable) {
+	public Page<RoomStatusDTO> getRoomStatusByHotelId(Long hotelId, Pageable pageable) {
 		validateInput(hotelId, "Hotel ID cannot be null");
-		return roomRepository.getRoomStatusByHotelId(hotelId, pageable);
+		Page<RoomStatusProjection> projectionPage = roomRepository.getRoomStatusByHotelId(hotelId, pageable);
+		return roomStatusMapper.toDtoPage(projectionPage);
 	}
     
 }
