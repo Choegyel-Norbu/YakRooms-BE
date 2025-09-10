@@ -7,8 +7,8 @@ import org.hibernate.annotations.BatchSize;
 
 
 import com.yakrooms.be.model.enums.HotelType;
-import com.yakrooms.be.model.entity.Review;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Objects;
@@ -75,6 +75,12 @@ public class Hotel {
     @Enumerated(EnumType.STRING)
     @Column(name = "hotel_type", length = 50)
     private HotelType hotelType;
+
+    @Column(name = "checkin_time")
+    private LocalTime checkinTime;
+
+    @Column(name = "checkout_time")
+    private LocalTime checkoutTime;
 
     @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
     @BatchSize(size = 20)
@@ -352,6 +358,22 @@ public class Hotel {
         this.hotelType = hotelType;
     }
 
+    public LocalTime getCheckinTime() {
+        return checkinTime;
+    }
+
+    public void setCheckinTime(LocalTime checkinTime) {
+        this.checkinTime = checkinTime;
+    }
+
+    public LocalTime getCheckoutTime() {
+        return checkoutTime;
+    }
+
+    public void setCheckoutTime(LocalTime checkoutTime) {
+        this.checkoutTime = checkoutTime;
+    }
+
     public Set<User> getUsers() {
         return users;
     }
@@ -455,6 +477,8 @@ public class Hotel {
                 ", district='" + district + '\'' +
                 ", locality='" + locality + '\'' +
                 ", hotelType=" + hotelType +
+                ", checkinTime=" + checkinTime +
+                ", checkoutTime=" + checkoutTime +
                 ", isVerified=" + isVerified +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +

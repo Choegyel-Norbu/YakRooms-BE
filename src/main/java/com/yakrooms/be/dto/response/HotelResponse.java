@@ -1,6 +1,7 @@
 package com.yakrooms.be.dto.response;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import com.yakrooms.be.model.enums.HotelType;
@@ -24,6 +25,8 @@ public class HotelResponse {
 	private String idProofUrl;
 	private List<String> amenities;
 	private HotelType hotelType;
+	private LocalTime checkinTime;
+	private LocalTime checkoutTime;
 
 	public Long getId() {
 		return id;
@@ -159,6 +162,22 @@ public class HotelResponse {
 
 	public void setAmenities(List<String> amenities) {
 		this.amenities = amenities;
+	}
+
+	public LocalTime getCheckinTime() {
+		return checkinTime;
+	}
+
+	public void setCheckinTime(LocalTime checkinTime) {
+		this.checkinTime = checkinTime;
+	}
+
+	public LocalTime getCheckoutTime() {
+		return checkoutTime;
+	}
+
+	public void setCheckoutTime(LocalTime checkoutTime) {
+		this.checkoutTime = checkoutTime;
 	}
 
 }

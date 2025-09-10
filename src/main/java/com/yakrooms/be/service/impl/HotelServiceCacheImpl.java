@@ -320,7 +320,9 @@ public class HotelServiceCacheImpl implements HotelService {
             cacheDto.getCreatedAt(),
             cacheDto.getPhotoUrls(),
             cacheDto.getAmenities(),
-            cacheDto.getHotelType() != null ? cacheDto.getHotelType().toString() : null
+            cacheDto.getHotelType() != null ? cacheDto.getHotelType().toString() : null,
+            null, // checkinTime - not available in cache DTO
+            null  // checkoutTime - not available in cache DTO
         );
     }
 

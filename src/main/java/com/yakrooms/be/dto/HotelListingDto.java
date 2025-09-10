@@ -1,12 +1,12 @@
 package com.yakrooms.be.dto;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.yakrooms.be.model.enums.HotelType;
 import com.yakrooms.be.projection.HotelListingProjection;
 
 public class HotelListingDto {
@@ -22,6 +22,8 @@ public class HotelListingDto {
     private List<String> photoUrls;
     private List<String> amenities;
     private String hotelType;
+    private LocalTime checkinTime;
+    private LocalTime checkoutTime;
     
     public HotelListingDto() {
     }
@@ -29,7 +31,7 @@ public class HotelListingDto {
     public HotelListingDto(Long id, String name, String address, String district, String locality,
                           String description, String phone, Boolean isVerified, 
                           LocalDateTime createdAt, List<String> photoUrls, 
-                          List<String> amenities, String hotelType) {
+                          List<String> amenities, String hotelType, LocalTime checkinTime, LocalTime checkoutTime) {
         this.id = id;
         this.name = name;
         this.address = address;
@@ -42,6 +44,8 @@ public class HotelListingDto {
         this.photoUrls = photoUrls;
         this.amenities = amenities;
         this.hotelType = hotelType;
+        this.checkinTime = checkinTime;
+        this.checkoutTime = checkoutTime;
     }
     
     public static HotelListingDto fromProjection(HotelListingProjection projection) {
@@ -56,6 +60,8 @@ public class HotelListingDto {
         dto.setIsVerified(projection.getIsVerified());
         dto.setCreatedAt(projection.getCreatedAt());
         dto.setHotelType(projection.getHotelType());
+        dto.setCheckinTime(projection.getCheckinTime());
+        dto.setCheckoutTime(projection.getCheckoutTime());
         dto.setPhotoUrls(parseCommaSeparatedList(projection.getPhotoUrls()));
         dto.setAmenities(parseCommaSeparatedList(projection.getAmenities()));
         return dto;
@@ -163,6 +169,22 @@ public class HotelListingDto {
     
     public void setHotelType(String hotelType) {
         this.hotelType = hotelType;
+    }
+    
+    public LocalTime getCheckinTime() {
+        return checkinTime;
+    }
+    
+    public void setCheckinTime(LocalTime checkinTime) {
+        this.checkinTime = checkinTime;
+    }
+    
+    public LocalTime getCheckoutTime() {
+        return checkoutTime;
+    }
+    
+    public void setCheckoutTime(LocalTime checkoutTime) {
+        this.checkoutTime = checkoutTime;
     }
     
     @Override

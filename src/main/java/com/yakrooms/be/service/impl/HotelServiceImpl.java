@@ -333,7 +333,6 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Cacheable(value = "hotelDetails", key = "#hotelId")
     public HotelResponse getHotelById(Long hotelId) {
         if (hotelId == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");

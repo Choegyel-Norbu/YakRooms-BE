@@ -37,6 +37,8 @@ public class HotelMapper {
         response.setLicenseUrl(hotel.getLicenseUrl());
         response.setIdProofUrl(hotel.getIdProofUrl());
         response.setHotelType(hotel.getHotelType());
+        response.setCheckinTime(hotel.getCheckinTime());
+        response.setCheckoutTime(hotel.getCheckoutTime());
         
         // Copy lists (create new lists to avoid reference issues)
         if (hotel.getPhotoUrls() != null) {
@@ -71,6 +73,8 @@ public class HotelMapper {
         response.setLicenseUrl(projection.getLicenseUrl());
         response.setIdProofUrl(projection.getIdProofUrl());
         response.setHotelType(projection.getHotelType());
+        response.setCheckinTime(projection.getCheckinTime());
+        response.setCheckoutTime(projection.getCheckoutTime());
         
         // Handle comma-separated strings from database
         if (projection.getAmenities() != null) {
@@ -106,13 +110,16 @@ public class HotelMapper {
         hotel.setIdProofUrl(dto.getIdProofUrl());
         hotel.setLatitude(dto.getLatitude());
         hotel.setLongitude(dto.getLongitude());
+        hotel.setCheckinTime(dto.getCheckinTime());
+        hotel.setCheckoutTime(dto.getCheckoutTime());
         
-        hotel.setHotelType(dto.getHoteType()); // Note: using getHoteType() as per your HotelRequest
-        
-        try {
-            hotel.setHotelType(HotelType.valueOf(dto.getHotelType().toUpperCase()));
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("Invalid hotel type: " + dto.getHotelType());
+        // Set hotel type with proper validation
+        if (dto.getHotelType() != null) {
+            try {
+                hotel.setHotelType(HotelType.valueOf(dto.getHotelType().toUpperCase()));
+            } catch (IllegalArgumentException | NullPointerException e) {
+                throw new IllegalArgumentException("Invalid hotel type: " + dto.getHotelType());
+            }
         }
         
         // Copy lists (create new sets to avoid reference issues)
@@ -175,10 +182,18 @@ public class HotelMapper {
         
         if (dto.getHotelType() != null) {
             try {
-                entity.setHotelType(com.yakrooms.be.model.enums.HotelType.valueOf(dto.getHotelType()));
+                entity.setHotelType(com.yakrooms.be.model.enums.HotelType.valueOf(dto.getHotelType().toUpperCase()));
             } catch (IllegalArgumentException e) {
                 // Optionally log or handle invalid hotelType string
             }
+        }
+        
+        if (dto.getCheckinTime() != null) {
+            entity.setCheckinTime(dto.getCheckinTime());
+        }
+        
+        if (dto.getCheckoutTime() != null) {
+            entity.setCheckoutTime(dto.getCheckoutTime());
         }
         
         if (dto.getPhotoUrls() != null) {

@@ -251,15 +251,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             WHERE month_start < LAST_DAY(CURRENT_DATE - INTERVAL 1 MONTH) + INTERVAL 1 DAY
         )
         SELECT 
+            h.name as hotelName,
             ms.month_year as monthYear,
             COALESCE(SUM(b.total_price), 0) as totalRevenue,
             COUNT(b.id) as bookingCount,
             COALESCE(AVG(b.total_price), 0) as averageBookingValue
         FROM month_series ms
+        CROSS JOIN hotels h
         LEFT JOIN booking b ON DATE_FORMAT(b.created_at, '%Y-%m') = ms.month_year
             AND b.status IN ('CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT')
             AND b.hotel_id = :hotelId
-        GROUP BY ms.month_year
+        WHERE h.id = :hotelId
+        GROUP BY h.name, ms.month_year
         ORDER BY ms.month_year
         """, nativeQuery = true)
     List<MonthlyRevenueStatsDTO> getMonthlyRevenueStats(@Param("hotelId") Long hotelId,

@@ -1,5 +1,6 @@
 package com.yakrooms.be.dto.request;
 
+import java.time.LocalTime;
 import java.util.List;
 
 import com.yakrooms.be.model.enums.HotelType;
@@ -22,6 +23,8 @@ public class HotelRequest {
 	private String hotelType;
 	private String latitude;
 	private String longitude;
+	private LocalTime checkinTime;
+	private LocalTime checkoutTime;
 
 	public String getLatitude() {
 		return latitude;
@@ -149,6 +152,22 @@ public class HotelRequest {
 
 	public void setWebsiteUrl(String websiteUrl) {
 		this.websiteUrl = websiteUrl;
+	}
+
+	public LocalTime getCheckinTime() {
+		return checkinTime;
+	}
+
+	public void setCheckinTime(LocalTime checkinTime) {
+		this.checkinTime = checkinTime;
+	}
+
+	public LocalTime getCheckoutTime() {
+		return checkoutTime;
+	}
+
+	public void setCheckoutTime(LocalTime checkoutTime) {
+		this.checkoutTime = checkoutTime;
 	}
 
 }
