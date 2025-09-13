@@ -20,10 +20,14 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     // Basic find methods - kept for simple use cases
     List<Room> findByHotelId(Long hotelId);
 
-    // Batch delete operations
+    // Batch delete operations - returns count of deleted rows
     @Modifying
     @Query("DELETE FROM Room r WHERE r.hotel.id = :hotelId")
-    void deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
+    int deleteByHotelIdInBatch(@Param("hotelId") Long hotelId);
+    
+    // Check if any rooms exist for hotel before deletion
+    @Query("SELECT COUNT(r) FROM Room r WHERE r.hotel.id = :hotelId")
+    long countByHotelId(@Param("hotelId") Long hotelId);
 
     // Optimized single room fetch (basic data only)
     @Query("SELECT r FROM Room r " +

@@ -1,6 +1,5 @@
 package com.yakrooms.be.service.impl;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +49,6 @@ import com.yakrooms.be.service.CacheService;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.service.MailService;
 import com.yakrooms.be.service.NotificationService;
-import com.yakrooms.be.service.UploadThingService;
-import com.yakrooms.be.util.UploadThingUrlUtil;
 
 
 import jakarta.persistence.EntityNotFoundException;
@@ -76,7 +73,6 @@ public class HotelServiceImpl implements HotelService {
     private final CacheService cacheService;
     private final CacheMapper cacheMapper;
     private final NotificationService notificationService;
-    private final UploadThingService uploadThingService;
 
     public HotelServiceImpl(HotelRepository hotelRepository,
                            UserRepository userRepository,
@@ -90,8 +86,7 @@ public class HotelServiceImpl implements HotelService {
                            MailService mailService,
                            CacheService cacheService,
                            CacheMapper cacheMapper,
-                           NotificationService notificationService,
-                           UploadThingService uploadThingService) {
+                           NotificationService notificationService) {
         this.hotelRepository = hotelRepository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
@@ -105,7 +100,6 @@ public class HotelServiceImpl implements HotelService {
         this.cacheService = cacheService;
         this.cacheMapper = cacheMapper;
         this.notificationService = notificationService;
-        this.uploadThingService = uploadThingService;
     }
 
     @Override
@@ -254,12 +248,6 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
-        // Get users before deletion for cache eviction
-        List<User> users = userRepository.findByHotelIdWithRoles(id);
-
-        // Delete UploadThing images before database deletion
-        deleteHotelImages(hotel);
-
         // Delete notifications first (they reference room_id)
         notificationRepository.deleteByHotelIdInBatch(id);
         log.info("Deleted notifications for hotel ID: {}", id);
@@ -269,8 +257,19 @@ public class HotelServiceImpl implements HotelService {
         log.info("Deleted bookings for hotel ID: {}", id);
 
         // Delete rooms in batch (this will cascade to room items and other room-related entities)
-        roomRepository.deleteByHotelIdInBatch(id);
-        log.info("Deleted rooms for hotel ID: {}", id);
+        // Check if rooms exist before attempting deletion to avoid optimistic locking issues
+        long roomCount = roomRepository.countByHotelId(id);
+        if (roomCount > 0) {
+            try {
+                int deletedRooms = roomRepository.deleteByHotelIdInBatch(id);
+                log.info("Deleted {} rooms for hotel ID: {}", deletedRooms, id);
+            } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+                log.warn("Some rooms for hotel ID {} were already deleted by another process, continuing with hotel deletion", id);
+                // Continue with hotel deletion - this is not a critical error
+            }
+        } else {
+            log.info("No rooms found for hotel ID: {}, skipping room deletion", id);
+        }
 
         // Delete staff in batch
         staffRepository.deleteByHotelIdInBatch(id);
@@ -285,6 +284,7 @@ public class HotelServiceImpl implements HotelService {
         log.info("Deleted restaurant for hotel ID: {}", id);
 
         // Update users in batch
+        List<User> users = userRepository.findByHotelIdWithRoles(id);
         users.forEach(user -> {
             user.setHotel(null);
             user.removeRole(Role.HOTEL_ADMIN);
@@ -292,91 +292,9 @@ public class HotelServiceImpl implements HotelService {
         userRepository.saveAll(users);
         log.info("Updated {} users for hotel ID: {}", users.size(), id);
 
-        // Evict cache entries
-        cacheService.evictHotelDetailsFromCache(id);
-        cacheService.evictHotelListingsFromCache();
-        cacheService.evictHotelSearchFromCache();
-        cacheService.evictTopHotelsFromCache();
-        
-        // Evict user-specific caches for affected users
-        users.forEach(user -> cacheService.evictUserHotelsFromCache(user.getId()));
-
         // Delete hotel
         hotelRepository.delete(hotel);
         log.info("Deleted hotel with ID: {}", id);
-    }
-
-    /**
-     * Deletes all UploadThing images associated with a hotel.
-     * This includes hotel photos, logo, license, ID proof, and all room images.
-     * 
-     * @param hotel The hotel whose images should be deleted
-     */
-    private void deleteHotelImages(Hotel hotel) {
-        List<String> allImageUrls = new ArrayList<>();
-        
-        // Collect hotel images
-        
-        if (hotel.getLicenseUrl() != null) {
-            allImageUrls.add(hotel.getLicenseUrl());
-        }
-        if (hotel.getIdProofUrl() != null) {
-            allImageUrls.add(hotel.getIdProofUrl());
-        }
-        if (hotel.getPhotoUrls() != null) {
-            allImageUrls.addAll(hotel.getPhotoUrls());
-        }
-        
-        // Collect room images
-        if (hotel.getRooms() != null) {
-            hotel.getRooms().forEach(room -> {
-                if (room.getImageUrl() != null) {
-                    allImageUrls.addAll(room.getImageUrl());
-                }
-            });
-        }
-        
-        // Extract file keys and delete images
-        if (!allImageUrls.isEmpty()) {
-            try {
-                List<String> fileKeys = extractFileKeysFromUrls(allImageUrls);
-                if (!fileKeys.isEmpty()) {
-                    uploadThingService.deleteFilesAsync(fileKeys);
-                    log.info("Initiated deletion of {} UploadThing images for hotel ID: {}", 
-                            fileKeys.size(), hotel.getId());
-                }
-            } catch (Exception e) {
-                log.error("Failed to delete UploadThing images for hotel ID: {}, error: {}", 
-                         hotel.getId(), e.getMessage(), e);
-                // Don't throw exception - continue with hotel deletion even if image deletion fails
-            }
-        }
-    }
-
-    /**
-     * Extracts file keys from UploadThing URLs, filtering out invalid URLs.
-     * 
-     * @param urls List of image URLs
-     * @return List of file keys extracted from valid UploadThing URLs
-     */
-    private List<String> extractFileKeysFromUrls(List<String> urls) {
-        List<String> fileKeys = new ArrayList<>();
-        
-        for (String url : urls) {
-            if (url != null && !url.trim().isEmpty()) {
-                try {
-                    if (UploadThingUrlUtil.isValidUploadThingUrl(url)) {
-                        String fileKey = UploadThingUrlUtil.extractFileKey(url);
-                        fileKeys.add(fileKey);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to extract file key from URL: {}, error: {}", url, e.getMessage());
-                    // Continue processing other URLs
-                }
-            }
-        }
-        
-        return fileKeys;
     }
 
     @Override
