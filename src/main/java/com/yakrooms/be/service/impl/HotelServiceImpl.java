@@ -292,6 +292,16 @@ public class HotelServiceImpl implements HotelService {
         userRepository.saveAll(users);
         log.info("Updated {} users for hotel ID: {}", users.size(), id);
 
+        // Evict all hotel-related caches before deleting the hotel
+        cacheService.evictHotelDetailsFromCache(id);
+        cacheService.evictAllHotelCaches();
+        cacheService.evictTopHotelsFromCache();
+        
+        // Evict user-specific caches for affected users
+        users.forEach(user -> cacheService.evictUserHotelsFromCache(user.getId()));
+        
+        log.info("Evicted all hotel caches before deleting hotel with ID: {}", id);
+
         // Delete hotel
         hotelRepository.delete(hotel);
         log.info("Deleted hotel with ID: {}", id);
