@@ -309,13 +309,12 @@ public class HotelServiceImpl implements HotelService {
     }
 
     @Override
-    @Transactional
     public Map<String, Object> verifyHotel(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
-        // Single database query to fetch hotel and check verification status
+        // Read operation - no transaction needed for read-only query
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
@@ -325,14 +324,19 @@ public class HotelServiceImpl implements HotelService {
             return buildVerificationResult(hotel, true, false, "Hotel was already verified, no email sent");
         }
 
-        // Perform verification update
-
+        // Perform verification update with minimal transaction
         hotel.setVerified(true);
-        hotel = hotelRepository.save(hotel);
+        hotel = updateHotelVerificationStatus(hotel);
         log.info("Verified hotel with ID: {}", id);
         
-        // Cache operations and email sending are handled after transaction commits
+        // Cache operations and email sending - no database connection needed
         return handlePostVerificationOperations(hotel);
+    }
+
+    @Transactional
+    private Hotel updateHotelVerificationStatus(Hotel hotel) {
+        // Minimal transaction - only for the update operation
+        return hotelRepository.save(hotel);
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
