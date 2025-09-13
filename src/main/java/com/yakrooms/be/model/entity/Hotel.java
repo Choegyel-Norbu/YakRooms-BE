@@ -82,6 +82,15 @@ public class Hotel {
     @Column(name = "checkout_time")
     private LocalTime checkoutTime;
 
+    @Column(name = "deletion_requested", nullable = false)
+    private boolean deletionRequested = false;
+
+    @Column(name = "deletion_reason", columnDefinition = "TEXT")
+    private String deletionReason;
+
+    @Column(name = "deletion_requested_at")
+    private LocalDateTime deletionRequestedAt;
+
     @OneToMany(mappedBy = "hotel", fetch = FetchType.LAZY)
     @BatchSize(size = 20)
     private Set<User> users = new HashSet<>();
@@ -139,6 +148,7 @@ public class Hotel {
         this.amenities = new HashSet<>();
         this.photoUrls = new HashSet<>();
         this.isVerified = false;
+        this.deletionRequested = false;
     }
 
     public Hotel(String name, String email, String phone, String address, String district, String locality) {
@@ -372,6 +382,30 @@ public class Hotel {
 
     public void setCheckoutTime(LocalTime checkoutTime) {
         this.checkoutTime = checkoutTime;
+    }
+
+    public boolean isDeletionRequested() {
+        return deletionRequested;
+    }
+
+    public void setDeletionRequested(boolean deletionRequested) {
+        this.deletionRequested = deletionRequested;
+    }
+
+    public String getDeletionReason() {
+        return deletionReason;
+    }
+
+    public void setDeletionReason(String deletionReason) {
+        this.deletionReason = deletionReason;
+    }
+
+    public LocalDateTime getDeletionRequestedAt() {
+        return deletionRequestedAt;
+    }
+
+    public void setDeletionRequestedAt(LocalDateTime deletionRequestedAt) {
+        this.deletionRequestedAt = deletionRequestedAt;
     }
 
     public Set<User> getUsers() {

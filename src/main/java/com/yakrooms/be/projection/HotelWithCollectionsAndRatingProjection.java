@@ -26,6 +26,9 @@ public interface HotelWithCollectionsAndRatingProjection {
     HotelType getHotelType();
     LocalTime getCheckinTime();
     LocalTime getCheckoutTime();
+    boolean getDeletionRequested();
+    String getDeletionReason();
+    java.time.LocalDateTime getDeletionRequestedAt();
     Set<String> getAmenities();
     Set<String> getPhotoUrls();
     String getPhotoUrl();

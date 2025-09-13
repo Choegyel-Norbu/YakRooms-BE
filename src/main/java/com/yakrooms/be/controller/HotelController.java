@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yakrooms.be.dto.HotelListingDto;
 import com.yakrooms.be.dto.request.HotelRequest;
+import com.yakrooms.be.dto.request.HotelDeletionRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.dto.response.PagedResponse;
-import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.dto.cache.HotelListingPageCacheDto;
 import com.yakrooms.be.dto.cache.HotelSearchPageCacheDto;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
@@ -79,6 +79,15 @@ public class HotelController {
 		return ResponseEntity.ok(PageUtils.toPagedResponse(hotels));
 	}
 
+	// Get hotels with deletion requests - Only SUPER_ADMIN can access
+	@PreAuthorize("hasRole('SUPER_ADMIN')")
+	@GetMapping("/deletion-requests")
+	public ResponseEntity<PagedResponse<HotelResponse>> getHotelsWithDeletionRequests(
+			@PageableDefault(size = 10) Pageable pageable) {
+		Page<HotelResponse> hotels = hotelService.getHotelsWithDeletionRequests(pageable);
+		return ResponseEntity.ok(PageUtils.toPagedResponse(hotels));
+	}
+
 	// Get hotels sorted by lowest price - Public access
 	@PreAuthorize("permitAll()")
 	@GetMapping("/sortedByLowestPrice")
@@ -124,8 +133,16 @@ public class HotelController {
 		return ResponseEntity.ok(hotelService.getTopThreeHotels());
 	}
 
-	// Delete a hotel by ID - Only HOTEL_ADMIN can delete
-	@PreAuthorize("hasRole('HOTEL_ADMIN')")
+	// Request hotel deletion - Only HOTEL_ADMIN can request deletion
+	@PreAuthorize("hasAnyRole('HOTEL_ADMIN')")
+	@PostMapping("/request-deletion")
+	public ResponseEntity<Map<String, Object>> requestHotelDeletion(@RequestBody HotelDeletionRequest request) {
+		Map<String, Object> result = hotelService.requestHotelDeletion(request);
+		return ResponseEntity.ok(result);
+	}
+
+	// Delete a hotel by ID - Only HOTEL_ADMIN can delete (existing method for confirmation)
+	@PreAuthorize("hasAnyRole('SUPER_ADMIN')")
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deleteHotel(@PathVariable Long id) {
 		hotelService.deleteHotel(id);

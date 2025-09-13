@@ -27,6 +27,9 @@ public class HotelResponse {
 	private HotelType hotelType;
 	private LocalTime checkinTime;
 	private LocalTime checkoutTime;
+	private boolean deletionRequested;
+	private String deletionReason;
+	private LocalDateTime deletionRequestedAt;
 
 	public Long getId() {
 		return id;
@@ -178,6 +181,30 @@ public class HotelResponse {
 
 	public void setCheckoutTime(LocalTime checkoutTime) {
 		this.checkoutTime = checkoutTime;
+	}
+
+	public boolean isDeletionRequested() {
+		return deletionRequested;
+	}
+
+	public void setDeletionRequested(boolean deletionRequested) {
+		this.deletionRequested = deletionRequested;
+	}
+
+	public String getDeletionReason() {
+		return deletionReason;
+	}
+
+	public void setDeletionReason(String deletionReason) {
+		this.deletionReason = deletionReason;
+	}
+
+	public LocalDateTime getDeletionRequestedAt() {
+		return deletionRequestedAt;
+	}
+
+	public void setDeletionRequestedAt(LocalDateTime deletionRequestedAt) {
+		this.deletionRequestedAt = deletionRequestedAt;
 	}
 
 }

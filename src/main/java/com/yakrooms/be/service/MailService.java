@@ -61,6 +61,24 @@ public class MailService {
 		}
 	}
 
+	public void sendHotelDeletionRequestEmail(String toEmail, String hotelName, String hotelOwnerName, String deletionReason) {
+		String htmlContent = generateHotelDeletionRequestHtml(hotelName, hotelOwnerName, deletionReason);
+
+		MimeMessage mimeMessage = mailSender.createMimeMessage();
+		try {
+			MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+			helper.setFrom(fromEmail);
+			helper.setTo(toEmail);
+			helper.setSubject("YakRooms: Hotel Deletion Request - " + hotelName);
+			helper.setText(htmlContent, true); // true = isHtml
+
+			mailSender.send(mimeMessage);
+		} catch (MessagingException e) {
+			throw new IllegalStateException("Failed to send hotel deletion request email", e);
+		}
+	}
+
 	public void sendPasscodeEmailToGuest(String toEmail, String guestName, String passcode, String hotelName, String roomNumber, LocalDate checkInDate, LocalDate checkOutDate, Long bookingId) {
 		try {
 			String htmlContent = generatePasscodeEmailHtml(guestName, passcode, hotelName, roomNumber, checkInDate, checkOutDate, bookingId);
@@ -292,5 +310,73 @@ public class MailService {
 			</html>
 			""", hotelName, roomNumber, guestName, guestEmail, 
 			checkInDate.format(DATE_FORMATTER), checkOutDate.format(DATE_FORMATTER), bookingId);
+	}
+
+	private String generateHotelDeletionRequestHtml(String hotelName, String hotelOwnerName, String deletionReason) {
+		return String.format("""
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>Hotel Deletion Request - YakRooms</title>
+				<style>
+					body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+					.container { max-width: 600px; margin: 0 auto; padding: 20px; }
+					.header { text-align: center; margin-bottom: 30px; }
+					.logo { font-size: 24px; font-weight: bold; }
+					.logo-yak { color: #667eea; }
+					.logo-rooms { color: #EAB308; }
+					.alert-box { background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+					.details { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+					.detail-row { display: flex; justify-content: space-between; margin: 10px 0; }
+					.label { font-weight: bold; color: #666; }
+					.value { color: #333; }
+					.reason-box { background-color: #fef3c7; border: 1px solid #EAB308; border-radius: 8px; padding: 15px; margin: 15px 0; }
+				</style>
+			</head>
+			<body>
+				<div class="container">
+					<div class="header">
+						<div class="logo">
+							<span class="logo-yak">Yak</span><span class="logo-rooms">Rooms</span>
+						</div>
+						<h1>Hotel Deletion Request</h1>
+					</div>
+					
+					<div class="alert-box">
+						<h2>Action Required!</h2>
+						<p>A hotel owner has requested to delete their hotel listing.</p>
+					</div>
+					
+					<div class="details">
+						<div class="detail-row">
+							<span class="label">Hotel Name:</span>
+							<span class="value">%s</span>
+						</div>
+						<div class="detail-row">
+							<span class="label">Hotel Owner:</span>
+							<span class="value">%s</span>
+						</div>
+						<div class="detail-row">
+							<span class="label">Request Date:</span>
+							<span class="value">%s</span>
+						</div>
+					</div>
+					
+					<div class="reason-box">
+						<h3>Deletion Reason:</h3>
+						<p>%s</p>
+					</div>
+					
+					<p><strong>Please review this request and take appropriate action through the admin panel.</strong></p>
+					
+					<p>Best regards,<br>YakRooms System</p>
+				</div>
+			</body>
+			</html>
+			""", hotelName, hotelOwnerName, 
+			java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy 'at' HH:mm")),
+			deletionReason);
 	}
 }

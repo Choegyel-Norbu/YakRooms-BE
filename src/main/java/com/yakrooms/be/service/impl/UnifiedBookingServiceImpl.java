@@ -100,7 +100,11 @@ public class UnifiedBookingServiceImpl implements UnifiedBookingService {
             
             // Create the booking
             Booking booking = createBookingEntity(request, "IMMEDIATE");
-            booking.setStatus(BookingStatus.CONFIRMED);
+            if(booking.getUser() == null) { 
+                booking.setStatus(BookingStatus.CHECKED_IN);
+            }else{
+                booking.setStatus(BookingStatus.CONFIRMED);
+            }
             
             // Save the booking
             Booking savedBooking = bookingRepository.save(booking);

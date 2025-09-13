@@ -47,4 +47,29 @@ public class NotificationController {
         notificationService.deleteAllNotifications(user);
         return ResponseEntity.noContent().build();
     }
+
+    // Delete a specific notification by ID - All authenticated users can delete their own notifications
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HOTEL_ADMIN', 'STAFF', 'GUEST')")
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<Void> deleteNotificationById(@PathVariable Long notificationId) {
+        notificationService.deleteNotificationById(notificationId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Delete multiple notifications by IDs - All authenticated users can delete their own notifications
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'HOTEL_ADMIN', 'STAFF', 'GUEST')")
+    @DeleteMapping("/bulk")
+    public ResponseEntity<Void> deleteNotificationsByIds(@RequestBody List<Long> notificationIds) {
+        notificationService.deleteNotificationsByIds(notificationIds);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Get all hotel deletion request notifications - Only SUPER_ADMIN can access
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
+    @GetMapping("/hotel-deletion-requests")
+    public ResponseEntity<List<NotificationDTO>> getAllHotelDeletionRequestNotifications() {
+        List<Notification> notifications = notificationService.getAllHotelDeletionRequestNotifications();
+        List<NotificationDTO> dtos = notifications.stream().map(NotificationMapper::toDto).toList();
+        return ResponseEntity.ok(dtos);
+    }
 } 

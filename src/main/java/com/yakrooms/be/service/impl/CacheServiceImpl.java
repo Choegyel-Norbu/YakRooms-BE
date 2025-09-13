@@ -300,6 +300,10 @@ public class CacheServiceImpl implements CacheService {
         evictHotelListingsFromCache();
         evictHotelSearchFromCache();
         evictTopHotelsFromCache();
+        evictHotelListingsPageFromCache();
+        evictHotelSearchPageFromCache();
+        // Note: Not evicting user-specific caches as they require user IDs
+        // User hotel caches should be evicted individually when needed
         log.info("Evicted all hotel-related caches");
     }
 

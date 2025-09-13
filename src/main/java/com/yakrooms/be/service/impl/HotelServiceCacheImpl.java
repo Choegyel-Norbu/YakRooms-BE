@@ -19,6 +19,7 @@ import com.yakrooms.be.dto.HotelListingDto;
 import com.yakrooms.be.dto.cache.*;
 import com.yakrooms.be.dto.mapper.CacheMapper;
 import com.yakrooms.be.dto.request.HotelRequest;
+import com.yakrooms.be.dto.request.HotelDeletionRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.exception.ResourceNotFoundException;
 import com.yakrooms.be.model.entity.User;
@@ -507,5 +508,49 @@ public class HotelServiceCacheImpl implements HotelService {
             @Override
             public Double getAvgRating() { return null; } // HotelTopCacheDto doesn't have averageRating field
         };
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> requestHotelDeletion(HotelDeletionRequest request) {
+        // Hotel deletion requests should be handled by the primary service
+        log.info("Hotel deletion request should be handled by the primary service. Use HotelServiceImpl directly.");
+        throw new UnsupportedOperationException("Hotel deletion requests should be handled by the primary service. Use HotelServiceImpl directly.");
+    }
+
+    @Override
+    public Page<HotelResponse> getHotelsWithDeletionRequests(Pageable pageable) {
+        // Admin operations typically don't need caching as they're infrequent
+        log.debug("Fetching hotels with deletion requests - bypassing cache");
+        return hotelRepository.findByDeletionRequestedTrue(pageable).map(hotel -> {
+            // Convert hotel entity to HotelResponse
+            HotelResponse response = new HotelResponse();
+            response.setId(hotel.getId());
+            response.setName(hotel.getName());
+            response.setEmail(hotel.getEmail());
+            response.setPhone(hotel.getPhone());
+            response.setAddress(hotel.getAddress());
+            response.setDistrict(hotel.getDistrict());
+            response.setLocality(hotel.getLocality());
+            response.setLogoUrl(hotel.getLogoUrl());
+            response.setDescription(hotel.getDescription());
+            response.setVerified(hotel.isVerified());
+            response.setWebsiteUrl(hotel.getWebsiteUrl());
+            response.setCreatedAt(hotel.getCreatedAt());
+            response.setLicenseUrl(hotel.getLicenseUrl());
+            response.setIdProofUrl(hotel.getIdProofUrl());
+            response.setHotelType(hotel.getHotelType());
+            response.setDeletionRequested(hotel.isDeletionRequested());
+            response.setDeletionReason(hotel.getDeletionReason());
+            response.setDeletionRequestedAt(hotel.getDeletionRequestedAt());
+            // Handle collections safely
+            if (hotel.getPhotoUrls() != null) {
+                response.setPhotoUrls(new java.util.ArrayList<>(hotel.getPhotoUrls()));
+            }
+            if (hotel.getAmenities() != null) {
+                response.setAmenities(new java.util.ArrayList<>(hotel.getAmenities()));
+            }
+            return response;
+        });
     }
 }

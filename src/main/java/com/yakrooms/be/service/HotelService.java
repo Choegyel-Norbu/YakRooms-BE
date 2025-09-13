@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.yakrooms.be.dto.HotelListingDto;
 import com.yakrooms.be.dto.request.HotelRequest;
+import com.yakrooms.be.dto.request.HotelDeletionRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
-import com.yakrooms.be.projection.HotelWithLowestPriceProjection;
 import com.yakrooms.be.dto.cache.HotelListingPageCacheDto;
 import com.yakrooms.be.dto.cache.HotelSearchPageCacheDto;
 import com.yakrooms.be.projection.HotelWithPriceProjection;
@@ -31,5 +31,9 @@ public interface HotelService {
     public Page<HotelResponse> getAllHotelsForSuperAdmin(Pageable pageable);
     Page<HotelListingPageCacheDto> getAllHotelsSortedByLowestPrice(Pageable pageable);
     Page<HotelListingPageCacheDto> getAllHotelsSortedByHighestPrice(Pageable pageable);
+    
+    // Hotel deletion request methods
+    Map<String, Object> requestHotelDeletion(HotelDeletionRequest request);
+    Page<HotelResponse> getHotelsWithDeletionRequests(Pageable pageable);
 
 }

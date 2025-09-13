@@ -7,9 +7,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -21,12 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import com.yakrooms.be.dto.HotelListingDto;
+import com.yakrooms.be.dto.cache.HotelListingCacheDto;
 import com.yakrooms.be.dto.cache.HotelListingPageCacheDto;
 import com.yakrooms.be.dto.cache.HotelSearchPageCacheDto;
 import com.yakrooms.be.dto.cache.HotelTopCacheDto;
 import com.yakrooms.be.dto.mapper.CacheMapper;
 import com.yakrooms.be.dto.mapper.HotelMapper;
 import com.yakrooms.be.dto.request.HotelRequest;
+import com.yakrooms.be.dto.request.HotelDeletionRequest;
 import com.yakrooms.be.dto.response.HotelResponse;
 import com.yakrooms.be.exception.ResourceConflictException;
 import com.yakrooms.be.exception.ResourceNotFoundException;
@@ -49,6 +48,7 @@ import com.yakrooms.be.repository.UserRepository;
 import com.yakrooms.be.service.CacheService;
 import com.yakrooms.be.service.HotelService;
 import com.yakrooms.be.service.MailService;
+import com.yakrooms.be.service.NotificationService;
 
 
 import jakarta.persistence.EntityNotFoundException;
@@ -72,6 +72,7 @@ public class HotelServiceImpl implements HotelService {
     private final MailService mailService;
     private final CacheService cacheService;
     private final CacheMapper cacheMapper;
+    private final NotificationService notificationService;
 
     public HotelServiceImpl(HotelRepository hotelRepository,
                            UserRepository userRepository,
@@ -84,7 +85,8 @@ public class HotelServiceImpl implements HotelService {
                            HotelMapper hotelMapper,
                            MailService mailService,
                            CacheService cacheService,
-                           CacheMapper cacheMapper) {
+                           CacheMapper cacheMapper,
+                           NotificationService notificationService) {
         this.hotelRepository = hotelRepository;
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
@@ -97,11 +99,11 @@ public class HotelServiceImpl implements HotelService {
         this.mailService = mailService;
         this.cacheService = cacheService;
         this.cacheMapper = cacheMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
     @Transactional
-    @CacheEvict(value = {"hotelListings", "searchResults", "topHotels"}, allEntries = true)
     public HotelResponse createHotel(HotelRequest request, Long userId) {
         validateCreateHotelRequest(request, userId);
 
@@ -124,21 +126,39 @@ public class HotelServiceImpl implements HotelService {
         Hotel savedHotel = hotelRepository.save(hotel);
         log.info("Created hotel with ID: {} for user: {}", savedHotel.getId(), userId);
         
+        // Evict all hotel-related caches to ensure new hotel appears in listings
+        cacheService.evictAllHotelCaches();
+        // Also evict user-specific cache for this user
+        cacheService.evictUserHotelsFromCache(userId);
+        log.info("Evicted all hotel caches after creating hotel with ID: {}", savedHotel.getId());
+        
         return hotelMapper.toDto(savedHotel);
     }
 
     @Override
-    @Cacheable(value = "userHotels", key = "#userId")
     public HotelListingDto getListingForUser(Long userId) {
         if (userId == null) {
             throw new IllegalArgumentException("User ID cannot be null");
+        }
+
+        // Try to get from cache first
+        Optional<HotelListingCacheDto> cached = cacheService.getUserHotelsFromCache(userId);
+        if (cached.isPresent()) {
+            log.debug("Retrieved user hotels from cache for user ID: {}", userId);
+            return convertCacheDtoToHotelListingDto(cached.get());
         }
 
         log.debug("Fetching hotel listing for user from database: {}", userId);
         HotelListingProjection projection = hotelRepository.findHotelListingByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("No hotel found for user ID: " + userId));
 
-        return HotelListingDto.fromProjection(projection);
+        HotelListingDto result = HotelListingDto.fromProjection(projection);
+        
+        // Convert to cache DTO and store for future requests
+        HotelListingCacheDto cacheDto = cacheMapper.toHotelListingCacheDto(projection);
+        cacheService.putUserHotelsInCache(userId, cacheDto);
+
+        return result;
     }
 
     @Override
@@ -183,10 +203,6 @@ public class HotelServiceImpl implements HotelService {
 
     @Override
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = "hotelDetails", key = "#id"),
-        @CacheEvict(value = {"hotelListings", "searchResults", "topHotels"}, allEntries = true)
-    })
     public HotelResponse updateHotel(Long id, HotelRequest request) {
         validateUpdateHotelRequest(id, request);
 
@@ -205,6 +221,19 @@ public class HotelServiceImpl implements HotelService {
         
         Hotel savedHotel = hotelRepository.save(hotel);
         log.info("Updated hotel with ID: {}", id);
+        
+        // Evict hotel-specific caches and all hotel-related caches
+        cacheService.evictHotelDetailsFromCache(id);
+        cacheService.evictAllHotelCaches();
+        
+        // Evict user-specific cache for hotel owners
+        if (savedHotel.getUsers() != null) {
+            savedHotel.getUsers().forEach(user -> {
+                cacheService.evictUserHotelsFromCache(user.getId());
+            });
+        }
+        
+        log.info("Evicted all hotel caches after updating hotel with ID: {}", id);
         
         return hotelMapper.toDto(savedHotel);
     }
@@ -563,5 +592,96 @@ public class HotelServiceImpl implements HotelService {
         };
     }
 
+    /**
+     * Convert HotelListingCacheDto to HotelListingDto
+     * Helper method for cache-to-service DTO conversion
+     */
+    private HotelListingDto convertCacheDtoToHotelListingDto(HotelListingCacheDto cacheDto) {
+        return new HotelListingDto(
+            cacheDto.getId(),
+            cacheDto.getName(),
+            cacheDto.getAddress(),
+            cacheDto.getDistrict(),
+            cacheDto.getLocality(),
+            cacheDto.getDescription(),
+            cacheDto.getPhone(),
+            cacheDto.isVerified(),
+            cacheDto.getCreatedAt(),
+            cacheDto.getPhotoUrls(),
+            cacheDto.getAmenities(),
+            cacheDto.getHotelType() != null ? cacheDto.getHotelType().toString() : null,
+            null, // checkinTime - not available in cache DTO
+            null  // checkoutTime - not available in cache DTO
+        );
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> requestHotelDeletion(HotelDeletionRequest request) {
+        log.info("Processing hotel deletion request for hotel ID: {}", request.getHotelId());
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // Find the hotel
+            Hotel hotel = hotelRepository.findById(request.getHotelId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + request.getHotelId()));
+            
+            // Check if deletion is already requested
+            if (hotel.isDeletionRequested()) {
+                result.put("success", false);
+                result.put("message", "Hotel deletion request already exists");
+                result.put("alreadyRequested", true);
+                return result;
+            }
+            
+            // Update hotel with deletion request details
+            hotel.setDeletionRequested(true);
+            hotel.setDeletionReason(request.getDeletionReason());
+            hotel.setDeletionRequestedAt(java.time.LocalDateTime.now());
+            
+            hotelRepository.save(hotel);
+            log.info("Updated hotel {} with deletion request", hotel.getId());
+            
+            // Find hotel owner for notification
+            User hotelOwner = userRepository.findByHotelIdAndRole(hotel.getId(), Role.HOTEL_ADMIN)
+                    .orElse(null);
+            
+                com.yakrooms.be.model.entity.Notification notification = new com.yakrooms.be.model.entity.Notification();
+                notification.setUser(hotelOwner);
+                notification.setBooking(null); // No booking associated with hotel deletion
+                notification.setTitle("Hotel Deletion Request");
+                notification.setMessage("Rquest for hotel deletion");
+                notification.setType(com.yakrooms.be.model.enums.NotificationType.HOTEL_DELETION_REQUEST.name());
+                notification.setRead(false);
+                notification.setCreatedAt(java.time.LocalDateTime.now());
+                
+                notificationRepository.save(notification);
+            
+            result.put("success", true);
+            result.put("message", "Hotel deletion request submitted successfully");
+            result.put("hotelId", hotel.getId());
+            result.put("hotelName", hotel.getName());
+            result.put("emailSent", null);
+            result.put("adminsNotified",null);
+            
+        } catch (Exception e) {
+            log.error("Error processing hotel deletion request: {}", e.getMessage(), e);
+            result.put("success", false);
+            result.put("message", "Failed to process hotel deletion request: " + e.getMessage());
+            result.put("error", e.getMessage());
+        }
+        
+        return result;
+    }
+
+    @Override
+    public Page<HotelResponse> getHotelsWithDeletionRequests(Pageable pageable) {
+        log.debug("Fetching hotels with deletion requests with pagination: {}", pageable);
+        
+        Page<Hotel> hotels = hotelRepository.findByDeletionRequestedTrue(pageable);
+        
+        return hotels.map(hotelMapper::toDto);
+    }
 
 }

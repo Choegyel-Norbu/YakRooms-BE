@@ -47,6 +47,9 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
                 h.hotel_type as hotelType,
                 h.checkin_time as checkinTime,
                 h.checkout_time as checkoutTime,
+                h.deletion_requested as deletionRequested,
+                h.deletion_reason as deletionReason,
+                h.deletion_requested_at as deletionRequestedAt,
                 GROUP_CONCAT(DISTINCT ha.amenity) as amenities,
                 GROUP_CONCAT(DISTINCT hp.url) as photoUrls,
                 SUBSTRING_INDEX(GROUP_CONCAT(DISTINCT hp.url), ',', 1) as photoUrl,
@@ -271,4 +274,7 @@ public interface HotelRepository extends JpaRepository<Hotel, Long>, JpaSpecific
     // Verification status check - optimized with index
     @Query("SELECT CASE WHEN COUNT(h) > 0 THEN true ELSE false END FROM Hotel h WHERE h.id = :id AND h.isVerified = true")
     boolean isHotelVerified(@Param("id") Long id);
+
+    // Find hotels with deletion requests - optimized with index
+    Page<Hotel> findByDeletionRequestedTrue(Pageable pageable);
 }

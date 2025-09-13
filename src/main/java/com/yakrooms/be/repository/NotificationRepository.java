@@ -35,4 +35,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query(value = "DELETE FROM notifications WHERE user_id = :userId AND type = 'BOOKING_CREATED'", nativeQuery = true)
     void deleteBookingCreatedByUserId(@Param("userId") Long userId);
+    
+    // Find all hotel deletion request notifications
+    @Query("SELECT n FROM Notification n WHERE n.type = 'HOTEL_DELETION_REQUEST' ORDER BY n.createdAt DESC")
+    List<Notification> findByHotelDeletionRequestType();
 } 

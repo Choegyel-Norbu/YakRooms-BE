@@ -11,6 +11,8 @@ public interface NotificationService {
     List<Notification> getAllNotificationsByUserId(Long userId);
     void markAllAsRead(User user);
     void deleteAllNotifications(User user);
+    void deleteNotificationById(Long notificationId);
+    void deleteNotificationsByIds(List<Long> notificationIds);
     
     // ========== UNIFIED NOTIFICATION CREATION ==========
     
@@ -41,4 +43,10 @@ public interface NotificationService {
      * @return The created notification
      */
     Notification createCancellationApprovalNotification(Booking booking);
+    
+    /**
+     * Gets all notifications with type HOTEL_DELETION_REQUEST
+     * @return List of hotel deletion request notifications
+     */
+    List<Notification> getAllHotelDeletionRequestNotifications();
 } 

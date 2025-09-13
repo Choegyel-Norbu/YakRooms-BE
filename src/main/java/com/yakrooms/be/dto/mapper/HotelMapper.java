@@ -39,6 +39,9 @@ public class HotelMapper {
         response.setHotelType(hotel.getHotelType());
         response.setCheckinTime(hotel.getCheckinTime());
         response.setCheckoutTime(hotel.getCheckoutTime());
+        response.setDeletionRequested(hotel.isDeletionRequested());
+        response.setDeletionReason(hotel.getDeletionReason());
+        response.setDeletionRequestedAt(hotel.getDeletionRequestedAt());
         
         // Copy lists (create new lists to avoid reference issues)
         if (hotel.getPhotoUrls() != null) {
@@ -75,6 +78,9 @@ public class HotelMapper {
         response.setHotelType(projection.getHotelType());
         response.setCheckinTime(projection.getCheckinTime());
         response.setCheckoutTime(projection.getCheckoutTime());
+        response.setDeletionRequested(projection.getDeletionRequested());
+        response.setDeletionReason(projection.getDeletionReason());
+        response.setDeletionRequestedAt(projection.getDeletionRequestedAt());
         
         // Handle comma-separated strings from database
         if (projection.getAmenities() != null) {

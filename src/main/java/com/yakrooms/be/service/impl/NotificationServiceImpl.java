@@ -60,6 +60,66 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.deleteBookingCreatedByUserId(user.getId());
     }
 
+    @Override
+    @Transactional
+    public void deleteNotificationById(Long notificationId) {
+        if (notificationId == null) {
+            throw new IllegalArgumentException("Notification ID cannot be null");
+        }
+        
+        Optional<Notification> notification = notificationRepository.findById(notificationId);
+        if (notification.isEmpty()) {
+            throw new RuntimeException("Notification not found with ID: " + notificationId);
+        }
+        
+        notificationRepository.deleteById(notificationId);
+        logger.info("Deleted notification with ID: {}", notificationId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteNotificationsByIds(List<Long> notificationIds) {
+        if (notificationIds == null || notificationIds.isEmpty()) {
+            throw new IllegalArgumentException("Notification IDs list cannot be null or empty");
+        }
+        
+        // Remove null values and duplicates
+        List<Long> validIds = notificationIds.stream()
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        
+        if (validIds.isEmpty()) {
+            throw new IllegalArgumentException("No valid notification IDs provided");
+        }
+        
+        // Check which notifications exist
+        List<Notification> existingNotifications = notificationRepository.findAllById(validIds);
+        List<Long> existingIds = existingNotifications.stream()
+                .map(Notification::getId)
+                .toList();
+        
+        // Find missing IDs
+        List<Long> missingIds = validIds.stream()
+                .filter(id -> !existingIds.contains(id))
+                .toList();
+        
+        if (!missingIds.isEmpty()) {
+            logger.warn("Some notification IDs not found: {}", missingIds);
+        }
+        
+        // Delete existing notifications
+        if (!existingIds.isEmpty()) {
+            notificationRepository.deleteAllById(existingIds);
+            logger.info("Bulk deleted {} notifications with IDs: {}", existingIds.size(), existingIds);
+        }
+        
+        // If no notifications were found, throw exception
+        if (existingIds.isEmpty()) {
+            throw new RuntimeException("No notifications found with the provided IDs: " + validIds);
+        }
+    }
+
     // ========== UNIFIED NOTIFICATION CREATION ==========
 
     @Override
@@ -171,6 +231,12 @@ public class NotificationServiceImpl implements NotificationService {
             "Cancellation Request Approved",
             createCancellationApprovalMessage(booking)
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Notification> getAllHotelDeletionRequestNotifications() {
+        return notificationRepository.findByHotelDeletionRequestType();
     }
 
     // ========== HELPER METHODS ==========
