@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -310,61 +311,77 @@ public class HotelServiceImpl implements HotelService {
     @Override
     @Transactional
     public Map<String, Object> verifyHotel(Long id) {
-        Map<String, Object> result = new HashMap<>();
-        
         if (id == null) {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
-        // Check if already verified to avoid unnecessary DB write
+        // Check if already verified to avoid unnecessary DB operations
         if (hotelRepository.isHotelVerified(id)) {
             log.info("Hotel with ID: {} is already verified", id);
             
             Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
             
-            result.put("hotelVerified", true);
-            result.put("hotelId", id);
-            result.put("hotelName", hotel.getName());
-            result.put("alreadyVerified", true);
-            result.put("emailSent", false);
-            result.put("emailError", "Hotel was already verified, no email sent");
-            
-            return result;
+            return buildVerificationResult(hotel, true, false, "Hotel was already verified, no email sent");
         }
 
+        // Perform database operations in transaction
         Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
 
         hotel.setVerified(true);
-        hotelRepository.save(hotel);
+        hotel = hotelRepository.save(hotel);
         log.info("Verified hotel with ID: {}", id);
         
-        result.put("hotelVerified", true);
-        result.put("hotelId", id);
-        result.put("hotelName", hotel.getName());
-        result.put("alreadyVerified", false);
+        // Cache operations and email sending are handled after transaction commits
+        return handlePostVerificationOperations(hotel);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    private Map<String, Object> handlePostVerificationOperations(Hotel hotel) {
+        // Evict caches outside of transaction
+        try {
+            cacheService.evictHotelDetailsFromCache(hotel.getId());
+            cacheService.evictAllHotelCaches();
+            log.debug("Evicted hotel caches for hotel ID: {}", hotel.getId());
+        } catch (Exception e) {
+            log.warn("Failed to evict caches for hotel ID: {}, continuing with email processing", hotel.getId(), e);
+        }
         
-        // Evict DTO-based caches as well
-        cacheService.evictHotelDetailsFromCache(id);
-        cacheService.evictAllHotelCaches();
+        // Handle email sending
+        String emailError = null;
+        boolean emailSent = false;
         
-        // Try to send email synchronously for immediate feedback
         if (StringUtils.hasText(hotel.getEmail())) {
             try {
                 mailService.sendHotelVerificationEmail(hotel.getEmail(), hotel.getName());
                 log.info("Verification email sent for hotel: {}", hotel.getName());
-                result.put("emailSent", true);
-                result.put("emailAddress", hotel.getEmail());
+                emailSent = true;
             } catch (Exception e) {
                 log.error("Failed to send verification email for hotel: {}", hotel.getName(), e);
-                result.put("emailSent", false);
-                result.put("emailError", e.getMessage());
-                result.put("emailAddress", hotel.getEmail());
+                emailError = e.getMessage();
             }
         } else {
-            result.put("emailSent", false);
-            result.put("emailError", "No email address provided for hotel");
+            emailError = "No email address provided for hotel";
+        }
+        
+        return buildVerificationResult(hotel, false, emailSent, emailError);
+    }
+
+    private Map<String, Object> buildVerificationResult(Hotel hotel, boolean alreadyVerified, boolean emailSent, String emailError) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("hotelVerified", true);
+        result.put("hotelId", hotel.getId());
+        result.put("hotelName", hotel.getName());
+        result.put("alreadyVerified", alreadyVerified);
+        result.put("emailSent", emailSent);
+        
+        if (emailError != null) {
+            result.put("emailError", emailError);
+        }
+        
+        if (emailSent && StringUtils.hasText(hotel.getEmail())) {
+            result.put("emailAddress", hotel.getEmail());
         }
         
         return result;
