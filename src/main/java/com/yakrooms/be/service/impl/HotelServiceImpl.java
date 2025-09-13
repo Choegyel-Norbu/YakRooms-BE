@@ -315,19 +315,17 @@ public class HotelServiceImpl implements HotelService {
             throw new IllegalArgumentException("Hotel ID cannot be null");
         }
 
-        // Check if already verified to avoid unnecessary DB operations
-        if (hotelRepository.isHotelVerified(id)) {
-            log.info("Hotel with ID: {} is already verified", id);
-            
-            Hotel hotel = hotelRepository.findById(id)
+        // Single database query to fetch hotel and check verification status
+        Hotel hotel = hotelRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
-            
+
+        // Check if already verified
+        if (hotel.isVerified()) {
+            log.info("Hotel with ID: {} is already verified", id);
             return buildVerificationResult(hotel, true, false, "Hotel was already verified, no email sent");
         }
 
-        // Perform database operations in transaction
-        Hotel hotel = hotelRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Hotel not found with id: " + id));
+        // Perform verification update
 
         hotel.setVerified(true);
         hotel = hotelRepository.save(hotel);
