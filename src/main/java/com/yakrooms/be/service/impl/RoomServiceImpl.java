@@ -10,9 +10,11 @@ import java.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -127,15 +129,23 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
+    @Transactional
     public void deleteRoom(Long roomId) {
         validateInput(roomId, "Room ID cannot be null");
 
-        if (!roomRepository.existsById(roomId)) {
+        try {
+            // Use deleteById which handles non-existent entities gracefully
+            roomRepository.deleteById(roomId);
+            logger.info("Deleted room with ID: {}", roomId);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            // Room was already deleted by another process
+            logger.warn("Room with ID {} was already deleted by another process", roomId);
+            throw new ResourceNotFoundException("Room not found with id: " + roomId);
+        } catch (EmptyResultDataAccessException e) {
+            // Room doesn't exist
+            logger.warn("Attempted to delete non-existent room with ID: {}", roomId);
             throw new ResourceNotFoundException("Room not found with id: " + roomId);
         }
-
-        roomRepository.deleteById(roomId);
-        logger.info("Deleted room with ID: {}", roomId);
     }
 
     @Override
